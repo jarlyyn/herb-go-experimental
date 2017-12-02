@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,30 +13,52 @@ import (
 const DefaultLoginPrefix = "/login/"
 const DefaultAuthPrefix = "/auth/"
 
+var ErrAuthParamsError = errors.New("external auth params error")
+
 type ContextName string
 
-const ResultContextName = ContextName("herbgo-thirtpartauth-result")
+const ResultContextName = ContextName("authresult")
 
 type DataIndex string
 
+const DataIndexName = DataIndex("Name")
 const DataIndexEmail = DataIndex("Email")
 const DataIndexNickname = DataIndex("Nickname")
 const DataIndexAvatar = DataIndex("Avatar")
 const DataIndexProfileURL = DataIndex("ProfileURL")
 const DataIndexAccessToken = DataIndex("AccessToken")
+const DataIndexGender = DataIndex("ProfileURL")
+const GenderMale = "M"
+const GenderFemale = "F"
 
 func DefaultNotFoundAction(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
 type Driver interface {
-	LoginAction() func(w http.ResponseWriter, r *http.Request)
-	Auth(r *http.Request) (*Result, error)
+	ExternalLogin(service *Service, w http.ResponseWriter, r *http.Request)
+	AuthRequest(service *Service, r *http.Request) (*Result, error)
 }
 type Service struct {
 	Driver  Driver
 	Auth    *Auth
 	Keyword string
+}
+
+func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
+	s.Driver.ExternalLogin(s, w, r)
+}
+
+func (s *Service) AuthRequest(r *http.Request) (*Result, error) {
+	return s.Driver.AuthRequest(s, r)
+}
+
+func (s *Service) GetLoginUrl() string {
+	return s.Auth.Host + s.Auth.LoginPrefix + s.Keyword
+}
+
+func (s *Service) GetAuthUrl() string {
+	return s.Auth.Host + s.Auth.AuthPrefix + s.Keyword
 }
 
 type Data map[DataIndex][]string
@@ -143,12 +166,16 @@ func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request))
 		path := r.URL.Path
 		if keyword = strings.TrimPrefix(r.RequestURI, a.LoginPrefix); len(path) < len(keyword) {
 			if service = a.GetService(keyword); service != nil {
-				service.Driver.LoginAction()(w, r)
+				service.Login(w, r)
 				return
 			}
 		} else if keyword = strings.TrimPrefix(r.RequestURI, a.AuthPrefix); len(path) < len(keyword) {
 			if service = a.GetService(keyword); service != nil {
-				result, err := service.Driver.Auth(r)
+				result, err := service.AuthRequest(r)
+				if err == ErrAuthParamsError {
+					a.NotFoundAction(w, r)
+					return
+				}
 				if err != nil {
 					panic(err)
 				}
