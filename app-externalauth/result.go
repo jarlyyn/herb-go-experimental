@@ -40,3 +40,9 @@ type Result struct {
 	Account string
 	Data    Data
 }
+
+func NewResult() *Result {
+	return &Result{
+		Data: map[DataIndex][]string{},
+	}
+}

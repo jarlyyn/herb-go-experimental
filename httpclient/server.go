@@ -25,13 +25,15 @@ func (s *Server) NewRequest(method string, path string, params url.Values, body 
 	if err != nil {
 		return nil, err
 	}
+	q := u.Query()
 	if params != nil {
 		for k, vs := range params {
 			for _, v := range vs {
-				u.Query().Add(k, v)
+				q.Add(k, v)
 			}
 		}
 	}
+	u.RawQuery = q.Encode()
 	req, err := http.NewRequest(method, u.String(), bytes.NewReader(body))
 	if err != nil {
 		return nil, err

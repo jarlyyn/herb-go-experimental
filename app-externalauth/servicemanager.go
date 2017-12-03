@@ -9,6 +9,11 @@ type MapServiceManager struct {
 	Services map[string]*Service
 }
 
+func NewMapServiceManager() *MapServiceManager {
+	return &MapServiceManager{
+		Services: map[string]*Service{},
+	}
+}
 func (m *MapServiceManager) GetService(a *Auth, keyword string) (*Service, error) {
 	s, ok := m.Services[keyword]
 	if ok {
@@ -29,4 +34,4 @@ func (m *MapServiceManager) RegisterService(a *Auth, keyword string, driver Driv
 
 }
 
-var DefaultServiceManager = &MapServiceManager{}
+var DefaultServiceManager = NewMapServiceManager()

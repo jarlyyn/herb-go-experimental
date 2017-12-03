@@ -1,6 +1,7 @@
 package wechatwork
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -14,17 +15,28 @@ const StateLength = 128
 const oauthURL = "https://open.weixin.qq.com/connect/oauth2/authorize"
 const qrauthURL = "https://open.work.weixin.qq.com/wwopen/sso/qrConnect"
 
+var TokenMask = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
+
 type Session struct {
 	State string
 }
 
+func mustHTMLRedirect(w http.ResponseWriter, url string) {
+	w.WriteHeader(http.StatusOK)
+	html := fmt.Sprintf(`<html><head><meta http-equiv="refresh" content="0; URL='%s'" /></head></html>`, url)
+	_, err := w.Write([]byte(html))
+	if err != nil {
+		panic(err)
+	}
+}
 func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) (*auth.Result, error) {
 	var authsession = &Session{}
-	var code = r.URL.Query().Get("code")
+	q := r.URL.Query()
+	var code = q.Get("code")
 	if code == "" {
 		return nil, nil
 	}
-	var state = r.URL.Query().Get("state")
+	var state = q.Get("state")
 	if state == "" {
 		return nil, auth.ErrAuthParamsError
 	}
@@ -46,7 +58,7 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 	if info == nil {
 		return nil, nil
 	}
-	result := &auth.Result{}
+	result := auth.NewResult()
 	result.Keyword = service.Keyword
 	result.Account = info.UserID
 	result.Data.SetValue(auth.DataIndexAvatar, info.Avatar)
@@ -75,7 +87,7 @@ func NewOauthDriver(agent *Agent, scope string) *OauthAuthDriver {
 }
 
 func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := cache.RandMaskedBytes(cache.TokenMask, StateLength)
+	bytes, err := cache.RandMaskedBytes(TokenMask, StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -91,13 +103,15 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	if err != nil {
 		panic(err)
 	}
-	u.Query().Set("appid", d.agent.CorpID)
-	u.Query().Set("agentid", d.agent.AgentID)
-	u.Query().Set("scope", d.scope)
-	u.Query().Set("state", state)
-	u.Query().Set("redirect_uri", service.GetAuthUrl())
+	q := u.Query()
+	q.Set("appid", d.agent.CorpID)
+	q.Set("agentid", d.agent.AgentID)
+	q.Set("scope", d.scope)
+	q.Set("state", state)
+	q.Set("redirect_uri", service.GetAuthUrl())
+	u.RawQuery = q.Encode()
 	u.Fragment = "wechat_redirect"
-	http.Redirect(w, r, u.String(), http.StatusFound)
+	mustHTMLRedirect(w, u.String())
 }
 func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*auth.Result, error) {
 	return authRequestWithAgent(d.agent, service, r)
@@ -114,7 +128,7 @@ func NewQRAuthDriver(agent *Agent) *QRAuthDriver {
 }
 
 func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := cache.RandMaskedBytes(cache.TokenMask, StateLength)
+	bytes, err := cache.RandMaskedBytes(TokenMask, StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -130,11 +144,13 @@ func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWrite
 	if err != nil {
 		panic(err)
 	}
-	u.Query().Set("appid", d.agent.CorpID)
-	u.Query().Set("agentid", d.agent.AgentID)
-	u.Query().Set("state", state)
-	u.Query().Set("redirect_uri", service.GetAuthUrl())
-	http.Redirect(w, r, u.String(), http.StatusFound)
+	q := u.Query()
+	q.Set("appid", d.agent.CorpID)
+	q.Set("agentid", d.agent.AgentID)
+	q.Set("state", state)
+	q.Set("redirect_uri", service.GetAuthUrl())
+	u.RawQuery = q.Encode()
+	mustHTMLRedirect(w, u.String())
 }
 func (d *QRAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*auth.Result, error) {
 	return authRequestWithAgent(d.agent, service, r)

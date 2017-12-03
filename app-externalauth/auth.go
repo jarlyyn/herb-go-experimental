@@ -27,7 +27,7 @@ const DataIndexNickname = DataIndex("Nickname")
 const DataIndexAvatar = DataIndex("Avatar")
 const DataIndexProfileURL = DataIndex("ProfileURL")
 const DataIndexAccessToken = DataIndex("AccessToken")
-const DataIndexGender = DataIndex("ProfileURL")
+const DataIndexGender = DataIndex("Gender")
 const GenderMale = "M"
 const GenderFemale = "F"
 
@@ -47,7 +47,7 @@ type Auth struct {
 	LoginPrefix    string
 	AuthPrefix     string
 	NotFoundAction func(w http.ResponseWriter, r *http.Request)
-	SessionStore   session.Store
+	SessionStore   *session.Store
 }
 
 func (a *Auth) GetServiceManager() ServiceManager {
@@ -69,7 +69,7 @@ func (a *Auth) MustRegisterService(keyword string, driver Driver) *Service {
 func (a *Auth) GetService(keyword string) (*Service, error) {
 	return a.GetServiceManager().GetService(a, keyword)
 }
-func New(path string, store session.Store) (*Auth, error) {
+func New(path string, store *session.Store) (*Auth, error) {
 	u, err := url.Parse(path)
 	if err != nil {
 		return nil, err
@@ -85,6 +85,14 @@ func New(path string, store session.Store) (*Auth, error) {
 	return &a, nil
 }
 
+func MustNew(path string, store *session.Store) *Auth {
+	a, err := New(path, store)
+	if err != nil {
+		panic(err)
+	}
+	return a
+
+}
 func (a *Auth) MustGetResult(req *http.Request) *Result {
 	data := req.Context().Value(ResultContextName)
 	if data != nil {
@@ -106,7 +114,7 @@ func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request))
 		var service *Service
 		var keyword string
 		path := r.URL.Path
-		if keyword = strings.TrimPrefix(r.RequestURI, a.LoginPrefix); len(path) < len(keyword) {
+		if keyword = strings.TrimPrefix(path, a.LoginPrefix); len(keyword) < len(path) {
 			service, err = a.GetService(keyword)
 			if err != nil {
 				panic(err)
@@ -115,7 +123,7 @@ func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request))
 				service.Login(w, r)
 				return
 			}
-		} else if keyword = strings.TrimPrefix(r.RequestURI, a.AuthPrefix); len(path) < len(keyword) {
+		} else if keyword = strings.TrimPrefix(path, a.AuthPrefix); len(keyword) < len(path) {
 			service, err = a.GetService(keyword)
 			if err != nil {
 				panic(err)

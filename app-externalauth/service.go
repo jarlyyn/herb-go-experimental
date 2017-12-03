@@ -17,9 +17,9 @@ func (s *Service) AuthRequest(r *http.Request) (*Result, error) {
 }
 
 func (s *Service) GetLoginUrl() string {
-	return s.Auth.Host + s.Auth.LoginPrefix + s.Keyword
+	return s.Auth.Host + s.Auth.Path + s.Auth.LoginPrefix + s.Keyword
 }
 
 func (s *Service) GetAuthUrl() string {
-	return s.Auth.Host + s.Auth.AuthPrefix + s.Keyword
+	return s.Auth.Host + s.Auth.Path + s.Auth.AuthPrefix + s.Keyword
 }
