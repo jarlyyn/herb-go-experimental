@@ -11,10 +11,15 @@ var Server = client.Server{
 var apiGetUserInfo = Server.CreateApi("GET", "/cgi-bin/user/getuserinfo")
 var apiGetToken = Server.CreateApi("GET", "/cgi-bin/gettoken")
 var apiGetUserDetail = Server.CreateApi("POST", "/cgi-bin/user/getuserdetail")
+var apiUserGet = Server.CreateApi("GET", "/cgi-bin/user/get")
 
 const ApiErrAccessTokenWrong = 40014
 const ApiErrAccessTokenOutOfDate = 42001
 const ApiErrSuccess = 0
+const ApiErrUserUnaccessible = 50002
+
+const ApiResultGenderMale = "1"
+const ApiResultGenderFemale = "2"
 
 type resultApiError struct {
 	Errcode int    `json:"errcode"`
@@ -29,7 +34,7 @@ type resultAccessToken struct {
 }
 
 type resultUserInfo struct {
-	UserId     string `json:"UserId"`
+	UserID     string `json:"UserId"`
 	UserTicket string `json:"user_ticket"`
 }
 type paramsUserDetail struct {
@@ -45,6 +50,15 @@ type resultUserDetail struct {
 	Avatar   string `json:"avatar"`
 }
 
+type resultUserGet struct {
+	UserID   string `json:"userid"`
+	Name     string `json:"name"`
+	Position string `json:"position"`
+	Mobile   string `json:"mobile"`
+	Gender   string `json:"gender"`
+	Email    string `json:"email"`
+	Avatar   string `json:"avatar"`
+}
 type apiError struct {
 	Code int
 	Body string

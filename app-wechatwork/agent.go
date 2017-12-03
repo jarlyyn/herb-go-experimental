@@ -53,7 +53,6 @@ func (a *Agent) GrantAccessToken() error {
 func (a *Agent) CallApiWithAccessToken(api *client.Api, params url.Values, body interface{}, v interface{}) error {
 	var apierr resultApiError
 	var err error
-	var b = []byte{}
 	if a.AccessToken() == "" {
 		err := a.GrantAccessToken()
 		if err != nil {
@@ -135,21 +134,24 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	info.UserID = result.UserId
-	if result.UserTicket != "" {
-		var userdetail = &resultUserDetail{}
-		pud := paramsUserDetail{UserTicket: result.UserTicket}
-		err = a.CallApiWithAccessToken(apiGetUserDetail, nil, pud, userdetail)
-		if err != nil {
-			return nil, err
-		}
-		info.Name = userdetail.Name
-		info.Email = userdetail.Email
-		info.Gender = userdetail.Gender
-		info.Mobile = userdetail.Mobile
-		info.Avatar = userdetail.Avatar
-	} else {
-
+	if result.UserID == "" {
+		return nil, nil
 	}
+	var getuser = &resultUserGet{}
+	userGetParam := url.Values{}
+	userGetParam.Add("userid", result.UserID)
+	err = a.CallApiWithAccessToken(apiUserGet, userGetParam, nil, getuser)
+	if err != nil {
+		if getApiErrCode(err) == ApiErrUserUnaccessible {
+			return nil, nil
+		}
+		return nil, err
+	}
+	info.UserID = result.UserID
+	info.Avatar = getuser.Avatar
+	info.Email = getuser.Email
+	info.Gender = getuser.Gender
+	info.Mobile = getuser.Mobile
+	info.Name = getuser.Name
 	return info, nil
 }

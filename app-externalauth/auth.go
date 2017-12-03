@@ -39,71 +39,9 @@ type Driver interface {
 	ExternalLogin(service *Service, w http.ResponseWriter, r *http.Request)
 	AuthRequest(service *Service, r *http.Request) (*Result, error)
 }
-type Service struct {
-	Driver  Driver
-	Auth    *Auth
-	Keyword string
-}
-
-func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
-	s.Driver.ExternalLogin(s, w, r)
-}
-
-func (s *Service) AuthRequest(r *http.Request) (*Result, error) {
-	return s.Driver.AuthRequest(s, r)
-}
-
-func (s *Service) GetLoginUrl() string {
-	return s.Auth.Host + s.Auth.LoginPrefix + s.Keyword
-}
-
-func (s *Service) GetAuthUrl() string {
-	return s.Auth.Host + s.Auth.AuthPrefix + s.Keyword
-}
-
-type Data map[DataIndex][]string
-
-func (d *Data) Value(index DataIndex) string {
-	data, ok := (*d)[index]
-	if ok == false || len(data) == 0 {
-		return ""
-	}
-	return data[0]
-}
-
-func (d *Data) Values(index DataIndex) []string {
-	data, ok := (*d)[index]
-	if ok == false {
-		return nil
-	}
-	return data
-}
-
-func (d *Data) SetValue(index DataIndex, value string) {
-	(*d)[index] = []string{value}
-}
-
-func (d *Data) SetValues(index DataIndex, values []string) {
-	(*d)[index] = values
-}
-
-func (d *Data) AddValue(index DataIndex, value string) {
-	data, ok := (*d)[index]
-	if ok == false {
-		data = []string{}
-	}
-	data = append(data, value)
-	(*d)[index] = data
-}
-
-type Result struct {
-	Keyword string
-	Account string
-	Data    Data
-}
 
 type Auth struct {
-	Services       map[string]*Service
+	ServiceManager ServiceManager
 	Host           string
 	Path           string
 	LoginPrefix    string
@@ -112,6 +50,25 @@ type Auth struct {
 	SessionStore   session.Store
 }
 
+func (a *Auth) GetServiceManager() ServiceManager {
+	if a.ServiceManager != nil {
+		return a.ServiceManager
+	}
+	return DefaultServiceManager
+}
+func (a *Auth) RegisterService(keyword string, driver Driver) (*Service, error) {
+	return a.GetServiceManager().RegisterService(a, keyword, driver)
+}
+func (a *Auth) MustRegisterService(keyword string, driver Driver) *Service {
+	s, err := a.GetServiceManager().RegisterService(a, keyword, driver)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+func (a *Auth) GetService(keyword string) (*Service, error) {
+	return a.GetServiceManager().GetService(a, keyword)
+}
 func New(path string, store session.Store) (*Auth, error) {
 	u, err := url.Parse(path)
 	if err != nil {
@@ -127,15 +84,6 @@ func New(path string, store session.Store) (*Auth, error) {
 	}
 	return &a, nil
 }
-func (a *Auth) RegisterService(keyword string, driver Driver) *Service {
-	s := &Service{
-		Driver:  driver,
-		Auth:    a,
-		Keyword: keyword,
-	}
-	a.Services[keyword] = s
-	return s
-}
 
 func (a *Auth) MustGetResult(req *http.Request) *Result {
 	data := req.Context().Value(ResultContextName)
@@ -148,29 +96,31 @@ func (a *Auth) MustGetResult(req *http.Request) *Result {
 	return &Result{}
 }
 
-func (a *Auth) GetService(keyword string) *Service {
-	s, ok := a.Services[keyword]
-	if ok {
-		return s
-	}
-	return nil
-}
 func (a *Auth) SetResult(r *http.Request, result *Result) {
 	ctx := context.WithValue(r.Context(), ResultContextName, result)
 	*r = *r.WithContext(ctx)
 }
 func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		var service *Service
 		var keyword string
 		path := r.URL.Path
 		if keyword = strings.TrimPrefix(r.RequestURI, a.LoginPrefix); len(path) < len(keyword) {
-			if service = a.GetService(keyword); service != nil {
+			service, err = a.GetService(keyword)
+			if err != nil {
+				panic(err)
+			}
+			if service != nil {
 				service.Login(w, r)
 				return
 			}
 		} else if keyword = strings.TrimPrefix(r.RequestURI, a.AuthPrefix); len(path) < len(keyword) {
-			if service = a.GetService(keyword); service != nil {
+			service, err = a.GetService(keyword)
+			if err != nil {
+				panic(err)
+			}
+			if service != nil {
 				result, err := service.AuthRequest(r)
 				if err == ErrAuthParamsError {
 					a.NotFoundAction(w, r)
