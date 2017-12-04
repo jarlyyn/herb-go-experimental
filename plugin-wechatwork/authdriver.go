@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/jarlyyn/herb-go-experimental/httpclient"
+
 	cache "github.com/herb-go/herb/cache"
 	"github.com/herb-go/herb/cache-session"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
@@ -52,6 +54,9 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 		return nil, err
 	}
 	info, err := agent.GetUserInfo(code)
+	if httpclient.CompareApiErrCode(err, ApiErrOauthCodeWrong) {
+		return nil, auth.ErrAuthParamsError
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package client
+package httpclient
 
 import (
 	"bytes"
@@ -13,8 +13,8 @@ type Server struct {
 	Headers http.Header
 }
 
-func (s *Server) CreateApi(method string, path string) *Api {
-	return &Api{
+func (s *Server) EndPoint(method string, path string) *EndPoint {
+	return &EndPoint{
 		Server: s,
 		Method: method,
 		Path:   path,
@@ -64,28 +64,28 @@ func (s *Server) NewXMLRequest(method string, path string, params url.Values, v 
 	return s.NewRequest(method, path, params, b)
 }
 
-type Api struct {
+type EndPoint struct {
 	Server *Server
 	Path   string
 	Method string
 }
 
-func (a *Api) NewRequest(params url.Values, body []byte) (*http.Request, error) {
-	return a.Server.NewRequest(a.Method, a.Path, params, body)
+func (e *EndPoint) NewRequest(params url.Values, body []byte) (*http.Request, error) {
+	return e.Server.NewRequest(e.Method, e.Path, params, body)
 }
 
-func (a *Api) NewJSONRequest(params url.Values, v interface{}) (*http.Request, error) {
+func (e *EndPoint) NewJSONRequest(params url.Values, v interface{}) (*http.Request, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
 	}
-	return a.NewRequest(params, b)
+	return e.NewRequest(params, b)
 }
 
-func (a *Api) NewXMLRequest(params url.Values, v interface{}) (*http.Request, error) {
+func (e *EndPoint) NewXMLRequest(params url.Values, v interface{}) (*http.Request, error) {
 	b, err := xml.Marshal(v)
 	if err != nil {
 		return nil, err
 	}
-	return a.NewRequest(params, b)
+	return e.NewRequest(params, b)
 }

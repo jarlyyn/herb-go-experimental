@@ -1,4 +1,4 @@
-package client
+package httpclient
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var ErrMsgLengthLimit = 1024
+var ErrMsgLengthLimit = 512
 var DefaultTimeout = 120
 
 type Service struct {
@@ -63,14 +63,50 @@ func (r *Result) UnmarshalXML(v interface{}) error {
 	return xml.Unmarshal(r.BodyContent, &v)
 }
 func (r Result) Error() string {
-	msg := fmt.Sprintf("http error %s : %s", r.StatusCode, string(r.BodyContent))
+	msg := fmt.Sprintf("http error [%s] %s : %s", r.Response.Request.RequestURI, r.StatusCode, string(r.BodyContent))
 	return msg[:ErrMsgLengthLimit]
 }
 
+func (r *Result) NewAPICodeErr(code interface{}) *APICodeErr {
+	return NewAPICodeErr(r.Request.RequestURI, code, r.BodyContent)
+
+}
 func GetErrorStatusCode(err error) int {
 	r, ok := err.(Result)
 	if ok {
 		return r.StatusCode
 	}
 	return 0
+}
+
+func NewAPICodeErr(url string, code interface{}, content []byte) *APICodeErr {
+	return &APICodeErr{
+		URI:     url,
+		Code:    fmt.Sprint(code),
+		Content: content,
+	}
+}
+
+type APICodeErr struct {
+	URI     string
+	Code    string
+	Content []byte
+}
+
+func (r APICodeErr) Error() string {
+	msg := fmt.Sprintf("api error [%s] code %s : %s", r.URI, r.Code, string(r.Content))
+	return msg[:ErrMsgLengthLimit]
+}
+
+func GetAPIErrCode(err error) string {
+	r, ok := err.(APICodeErr)
+	if ok {
+		return r.Code
+	}
+	return ""
+
+}
+
+func CompareApiErrCode(err error, code interface{}) bool {
+	return GetAPIErrCode(err) == fmt.Sprint(code)
 }

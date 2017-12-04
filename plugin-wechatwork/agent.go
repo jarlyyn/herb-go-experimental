@@ -3,16 +3,20 @@ package wechatwork
 import (
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"sync"
 
-	client "github.com/jarlyyn/herb-go-experimental/httpclient"
+	"github.com/jarlyyn/herb-go-experimental/app-externalauth"
+
+	"github.com/jarlyyn/herb-go-experimental/httpclient"
 )
 
 type Agent struct {
 	CorpID        string
 	AgentID       string
 	Secret        string
-	ClientService client.Service
+	ClientService httpclient.Service
 	accessToken   string
 	lock          sync.Mutex
 }
@@ -21,6 +25,25 @@ func (a *Agent) AccessToken() string {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	return a.accessToken
+}
+func (a *Agent) sendMessage(b *bodyMessagePost) (*resultMessagePost, error) {
+	result := &resultMessagePost{}
+	err := a.CallApiWithAccessToken(apiMessagePost, nil, b, result)
+	return result, err
+}
+func (a *Agent) SendTextMessageToUsers(users []string, content string) (*resultMessagePost, error) {
+	var err error
+	message := &bodyMessagePost{}
+	message.ToUser = strings.Join(users, "|")
+	message.AgentID, err = strconv.Atoi(a.AgentID)
+	message.MsgType = "text"
+	message.Text = &bodyMessagePostText{
+		Content: content,
+	}
+	if err != nil {
+		return nil, err
+	}
+	return a.sendMessage(message)
 }
 
 func (a *Agent) GrantAccessToken() error {
@@ -43,15 +66,15 @@ func (a *Agent) GrantAccessToken() error {
 	if err != nil {
 		return err
 	}
-	if result.Errcode != 0 || result.Errmsg == "" || result.Access_token == "" {
-		return rep
+	if result.Errcode != 0 || result.Errmsg == "" || result.AccessToken == "" {
+		return rep.NewAPICodeErr(result.Errcode)
 	}
-	a.accessToken = result.Access_token
+	a.accessToken = result.AccessToken
 	return nil
 }
 
-func (a *Agent) CallApiWithAccessToken(api *client.Api, params url.Values, body interface{}, v interface{}) error {
-	var apierr resultApiError
+func (a *Agent) CallApiWithAccessToken(api *httpclient.EndPoint, params url.Values, body interface{}, v interface{}) error {
+	var apierr resultAPIError
 	var err error
 	if a.AccessToken() == "" {
 		err := a.GrantAccessToken()
@@ -79,12 +102,12 @@ func (a *Agent) CallApiWithAccessToken(api *client.Api, params url.Values, body 
 	if resp.StatusCode != http.StatusOK {
 		return resp
 	}
-	apierr = resultApiError{}
+	apierr = resultAPIError{}
 	err = resp.UnmarshalJSON(&apierr)
 	if err != nil {
 		return err
 	}
-	if apierr.Errcode == ApiErrAccessTokenOutOfDate || apierr.Errcode == ApiErrAccessTokenWrong {
+	if httpclient.CompareApiErrCode(err, ApiErrAccessTokenOutOfDate) || httpclient.CompareApiErrCode(err, ApiErrAccessTokenWrong) {
 		err := a.GrantAccessToken()
 		if err != nil {
 			return err
@@ -101,14 +124,14 @@ func (a *Agent) CallApiWithAccessToken(api *client.Api, params url.Values, body 
 		if resp.StatusCode != http.StatusOK {
 			return resp
 		}
-		apierr = resultApiError{}
+		apierr = resultAPIError{}
 		err = resp.UnmarshalJSON(&apierr)
 		if err != nil {
 			return err
 		}
 	}
 	if apierr.Errcode != 0 {
-		return newApiError(apierr.Errcode, string(resp.BodyContent))
+		return resp.NewAPICodeErr(apierr.Errcode)
 	}
 	return resp.UnmarshalJSON(&v)
 }
@@ -132,6 +155,9 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	params.Set("code", code)
 	err := a.CallApiWithAccessToken(apiGetUserInfo, params, nil, result)
 	if err != nil {
+		if httpclient.CompareApiErrCode(err, ApiErrOauthCodeWrong) {
+			return nil, auth.ErrAuthParamsError
+		}
 		return nil, err
 	}
 	if result.UserID == "" {
@@ -142,7 +168,7 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	userGetParam.Add("userid", result.UserID)
 	err = a.CallApiWithAccessToken(apiUserGet, userGetParam, nil, getuser)
 	if err != nil {
-		if getApiErrCode(err) == ApiErrUserUnaccessible {
+		if httpclient.CompareApiErrCode(err, ApiErrUserUnaccessible) || httpclient.CompareApiErrCode(err, ApiErrNoPrivilege) {
 			return nil, nil
 		}
 		return nil, err
