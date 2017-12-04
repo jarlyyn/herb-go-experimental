@@ -16,13 +16,22 @@ type Service struct {
 	TimeoutInSecond int
 }
 
+var DefaultService = &Service{}
+
 func (s *Service) Client() *Client {
-	timeout := s.TimeoutInSecond
+	var cs *Service
+	if s != nil {
+		cs = s
+	} else {
+		cs = DefaultService
+	}
+
+	timeout := cs.TimeoutInSecond
 	if timeout == 0 {
 		timeout = DefaultTimeout
 	}
 	c := http.Client{
-		Timeout: time.Duration(s.TimeoutInSecond) * time.Second,
+		Timeout: time.Duration(cs.TimeoutInSecond) * time.Second,
 	}
 	return &Client{Client: &c}
 }
