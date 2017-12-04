@@ -62,7 +62,7 @@ func (a *Agent) GrantAccessToken() error {
 		return rep
 	}
 	result := &resultAccessToken{}
-	err = rep.UnmarshalJSON(&result)
+	err = rep.UnmarshalJSON(result)
 	if err != nil {
 		return err
 	}

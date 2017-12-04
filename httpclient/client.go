@@ -63,12 +63,15 @@ func (r *Result) UnmarshalXML(v interface{}) error {
 	return xml.Unmarshal(r.BodyContent, &v)
 }
 func (r Result) Error() string {
-	msg := fmt.Sprintf("http error [%s] %s : %s", r.Response.Request.RequestURI, r.StatusCode, string(r.BodyContent))
-	return msg[:ErrMsgLengthLimit]
+	msg := fmt.Sprintf("http error [ %s ] %s : %s", r.Response.Request.URL.String(), r.Status, string(r.BodyContent))
+	if len(msg) > ErrMsgLengthLimit {
+		msg = msg[:ErrMsgLengthLimit]
+	}
+	return msg
 }
 
 func (r *Result) NewAPICodeErr(code interface{}) *APICodeErr {
-	return NewAPICodeErr(r.Request.RequestURI, code, r.BodyContent)
+	return NewAPICodeErr(r.Response.Request.URL.String(), code, r.BodyContent)
 
 }
 func GetErrorStatusCode(err error) int {
@@ -94,8 +97,11 @@ type APICodeErr struct {
 }
 
 func (r APICodeErr) Error() string {
-	msg := fmt.Sprintf("api error [%s] code %s : %s", r.URI, r.Code, string(r.Content))
-	return msg[:ErrMsgLengthLimit]
+	msg := fmt.Sprintf("api error [ %s] code %d : %s", r.URI, r.Code, string(r.Content))
+	if len(msg) > ErrMsgLengthLimit {
+		msg = msg[:ErrMsgLengthLimit]
+	}
+	return msg
 }
 
 func GetAPIErrCode(err error) string {

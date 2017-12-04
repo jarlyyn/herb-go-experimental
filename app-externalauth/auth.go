@@ -28,6 +28,10 @@ const DataIndexAvatar = DataIndex("Avatar")
 const DataIndexProfileURL = DataIndex("ProfileURL")
 const DataIndexAccessToken = DataIndex("AccessToken")
 const DataIndexGender = DataIndex("Gender")
+const DataIndexCompany = DataIndex("Company")
+const DataIndexID = DataIndex("ID")
+const DataIndexLocation = DataIndex("Location")
+const DataIndexWebsite = DataIndex("Website")
 const GenderMale = "M"
 const GenderFemale = "F"
 
