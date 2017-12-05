@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jarlyyn/herb-go-experimental/app-externalauth"
-
 	"github.com/jarlyyn/herb-go-experimental/httpclient"
 )
 
@@ -137,12 +135,13 @@ func (a *Agent) CallApiWithAccessToken(api *httpclient.EndPoint, params url.Valu
 }
 
 type Userinfo struct {
-	UserID string
-	Name   string
-	Mobile string
-	Email  string
-	Gender string
-	Avatar string
+	UserID     string
+	Name       string
+	Mobile     string
+	Email      string
+	Gender     string
+	Avatar     string
+	Department []int
 }
 
 func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
@@ -155,9 +154,6 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	params.Set("code", code)
 	err := a.CallApiWithAccessToken(apiGetUserInfo, params, nil, result)
 	if err != nil {
-		if httpclient.CompareApiErrCode(err, ApiErrOauthCodeWrong) {
-			return nil, auth.ErrAuthParamsError
-		}
 		return nil, err
 	}
 	if result.UserID == "" {
@@ -179,5 +175,19 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	info.Gender = getuser.Gender
 	info.Mobile = getuser.Mobile
 	info.Name = getuser.Name
+	info.Department = getuser.Department
 	return info, nil
+}
+
+func (a *Agent) GetDepartmentList(id string) (*[]DepartmentInfo, error) {
+	params := url.Values{}
+	if id != "" {
+		params.Set("id", id)
+	}
+	var result = &resultDepartmentList{}
+	err := a.CallApiWithAccessToken(apiDepartmentList, params, nil, result)
+	if err != nil {
+		return nil, err
+	}
+	return result.Department, nil
 }

@@ -49,6 +49,7 @@ func (c *Client) Fetch(req *http.Request) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	bodyContent, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

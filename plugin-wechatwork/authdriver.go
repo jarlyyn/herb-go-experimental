@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/jarlyyn/herb-go-experimental/httpclient"
 
@@ -17,6 +18,7 @@ const StateLength = 128
 const oauthURL = "https://open.weixin.qq.com/connect/oauth2/authorize"
 const qrauthURL = "https://open.work.weixin.qq.com/wwopen/sso/qrConnect"
 
+var DataIndexDepartment = auth.DataIndex("WechatWorkDartment")
 var TokenMask = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
 
 type Session struct {
@@ -76,6 +78,9 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 	}
 	result.Data.SetValue(auth.DataIndexName, info.Name)
 	result.Data.SetValue(auth.DataIndexNickname, info.Name)
+	for _, v := range info.Department {
+		result.Data.AddValue(DataIndexDepartment, strconv.Itoa(v))
+	}
 	return result, nil
 }
 

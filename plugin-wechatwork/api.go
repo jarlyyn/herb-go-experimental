@@ -13,6 +13,7 @@ var apiGetToken = Server.EndPoint("GET", "/cgi-bin/gettoken")
 var apiGetUserDetail = Server.EndPoint("POST", "/cgi-bin/user/getuserdetail")
 var apiUserGet = Server.EndPoint("GET", "/cgi-bin/user/get")
 var apiMessagePost = Server.EndPoint("POST", "/cgi-bin/message/send")
+var apiDepartmentList = Server.EndPoint("GET", "/cgi-bin/department/list")
 
 const ApiErrAccessTokenWrong = 40014
 const ApiErrAccessTokenOutOfDate = 42001
@@ -74,11 +75,21 @@ type resultUserDetail struct {
 }
 
 type resultUserGet struct {
-	UserID   string `json:"userid"`
+	UserID     string `json:"userid"`
+	Name       string `json:"name"`
+	Position   string `json:"position"`
+	Mobile     string `json:"mobile"`
+	Gender     string `json:"gender"`
+	Email      string `json:"email"`
+	Avatar     string `json:"avatar"`
+	Department []int  `json:"department"`
+}
+type DepartmentInfo struct {
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
-	Position string `json:"position"`
-	Mobile   string `json:"mobile"`
-	Gender   string `json:"gender"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar"`
+	ParentID int    `json:"parentid"`
+	Order    int    `json:"order"`
+}
+type resultDepartmentList struct {
+	Department *[]DepartmentInfo `json:"department"`
 }
