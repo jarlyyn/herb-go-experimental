@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/herb-go/herb/user"
 	"github.com/jarlyyn/herb-go-experimental/httpclient"
-	"github.com/jarlyyn/herb-go-experimental/user"
 
 	cache "github.com/herb-go/herb/cache"
 	"github.com/herb-go/herb/cache-session"

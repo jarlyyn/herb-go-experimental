@@ -1,6 +1,6 @@
 package auth
 
-import "github.com/jarlyyn/herb-go-experimental/user"
+import "github.com/herb-go/herb/user"
 
 type Result struct {
 	user.UserAccount

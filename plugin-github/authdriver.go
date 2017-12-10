@@ -9,8 +9,8 @@ import (
 
 	"github.com/herb-go/herb/cache"
 	session "github.com/herb-go/herb/cache-session"
+	user "github.com/herb-go/herb/user"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
-	user "github.com/jarlyyn/herb-go-experimental/user"
 )
 
 const StateLength = 128
@@ -58,7 +58,6 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	q.Set("state", state)
 	q.Set("redirect_uri", service.GetAuthUrl())
 	u.RawQuery = q.Encode()
-	u.Fragment = "wechat_redirect"
 	http.Redirect(w, r, u.String(), 302)
 }
 
