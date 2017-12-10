@@ -10,6 +10,7 @@ const ParamsIndexUsername = ParamsIndex("Username")
 const ParamsIndexName = ParamsIndex("Username")
 const ParamsIndexObjectID = ParamsIndex("ObjectID")
 const ParamsIndexObjectName = ParamsIndex("ObjectName")
+const ParamsIndexObjectList = ParamsIndex("ObjectList")
 const ParamsIndexTime = ParamsIndex("Time")
 
 type Message struct {
