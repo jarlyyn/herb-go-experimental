@@ -10,6 +10,7 @@ import (
 	"github.com/herb-go/herb/cache"
 	session "github.com/herb-go/herb/cache-session"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
+	user "github.com/jarlyyn/herb-go-experimental/user"
 )
 
 const StateLength = 128
@@ -94,25 +95,25 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	if result.AccessToken == "" {
 		return nil, auth.ErrAuthParamsError
 	}
-	user, err := d.client.GetUser(result.AccessToken)
+	u, err := d.client.GetUser(result.AccessToken)
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
+	if u == nil {
 		return nil, nil
 	}
 	authresult := auth.NewResult()
-	authresult.Account = user.Login
+	authresult.Account = u.Login
 	authresult.Keyword = service.Keyword
-	authresult.Data.SetValue(auth.DataIndexAccessToken, result.AccessToken)
-	authresult.Data.SetValue(auth.DataIndexAvatar, user.AvatarURL)
-	authresult.Data.SetValue(auth.DataIndexEmail, user.Email)
-	authresult.Data.SetValue(auth.DataIndexName, user.Name)
-	authresult.Data.SetValue(auth.DataIndexNickname, user.Login)
-	authresult.Data.SetValue(auth.DataIndexProfileURL, user.HTMLURL)
-	authresult.Data.SetValue(auth.DataIndexID, strconv.Itoa(user.ID))
-	authresult.Data.SetValue(auth.DataIndexCompany, user.Company)
-	authresult.Data.SetValue(auth.DataIndexLocation, user.Location)
-	authresult.Data.SetValue(auth.DataIndexWebsite, user.Blog)
+	authresult.Data.SetValue(user.ProfileIndexAccessToken, result.AccessToken)
+	authresult.Data.SetValue(user.ProfileIndexAvatar, u.AvatarURL)
+	authresult.Data.SetValue(user.ProfileIndexEmail, u.Email)
+	authresult.Data.SetValue(user.ProfileIndexName, u.Name)
+	authresult.Data.SetValue(user.ProfileIndexNickname, u.Login)
+	authresult.Data.SetValue(user.ProfileIndexProfileURL, u.HTMLURL)
+	authresult.Data.SetValue(user.ProfileIndexID, strconv.Itoa(u.ID))
+	authresult.Data.SetValue(user.ProfileIndexCompany, u.Company)
+	authresult.Data.SetValue(user.ProfileIndexLocation, u.Location)
+	authresult.Data.SetValue(user.ProfileIndexWebsite, u.Blog)
 	return authresult, nil
 }
