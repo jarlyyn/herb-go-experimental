@@ -3,16 +3,16 @@ package github
 import (
 	"net/http"
 
-	"github.com/jarlyyn/herb-go-experimental/httpclient"
+	"github.com/herb-go/herb/fetch"
 )
 
-var Server = httpclient.Server{
+var Server = fetch.Server{
 	Host: "https://github.com",
 	Headers: http.Header{
 		"Accept": []string{"application/json"},
 	},
 }
-var APIServer = httpclient.Server{
+var APIServer = fetch.Server{
 	Host: "https://api.github.com",
 	Headers: http.Header{
 		"Accept": []string{"application/json"},

@@ -1,10 +1,10 @@
 package wechatwork
 
 import (
-	"github.com/jarlyyn/herb-go-experimental/httpclient"
+	"github.com/herb-go/herb/fetch"
 )
 
-var Server = httpclient.Server{
+var Server = fetch.Server{
 	Host: "https://qyapi.weixin.qq.com",
 }
 

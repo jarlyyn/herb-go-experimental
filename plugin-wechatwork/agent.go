@@ -7,14 +7,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jarlyyn/herb-go-experimental/httpclient"
+	"github.com/herb-go/herb/fetch"
 )
 
 type Agent struct {
 	CorpID        string
 	AgentID       string
 	Secret        string
-	ClientService httpclient.Service
+	ClientService fetch.Service
 	accessToken   string
 	lock          sync.Mutex
 }
@@ -71,7 +71,7 @@ func (a *Agent) GrantAccessToken() error {
 	return nil
 }
 
-func (a *Agent) CallApiWithAccessToken(api *httpclient.EndPoint, params url.Values, body interface{}, v interface{}) error {
+func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, body interface{}, v interface{}) error {
 	var apierr resultAPIError
 	var err error
 	if a.AccessToken() == "" {
@@ -105,7 +105,7 @@ func (a *Agent) CallApiWithAccessToken(api *httpclient.EndPoint, params url.Valu
 	if err != nil {
 		return err
 	}
-	if httpclient.CompareApiErrCode(err, ApiErrAccessTokenOutOfDate) || httpclient.CompareApiErrCode(err, ApiErrAccessTokenWrong) {
+	if fetch.CompareApiErrCode(err, ApiErrAccessTokenOutOfDate) || fetch.CompareApiErrCode(err, ApiErrAccessTokenWrong) {
 		err := a.GrantAccessToken()
 		if err != nil {
 			return err
@@ -164,7 +164,7 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	userGetParam.Add("userid", result.UserID)
 	err = a.CallApiWithAccessToken(apiUserGet, userGetParam, nil, getuser)
 	if err != nil {
-		if httpclient.CompareApiErrCode(err, ApiErrUserUnaccessible) || httpclient.CompareApiErrCode(err, ApiErrNoPrivilege) {
+		if fetch.CompareApiErrCode(err, ApiErrUserUnaccessible) || fetch.CompareApiErrCode(err, ApiErrNoPrivilege) {
 			return nil, nil
 		}
 		return nil, err

@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/jarlyyn/herb-go-experimental/httpclient"
+	"github.com/herb-go/herb/fetch"
 )
 
 type Client struct {
 	ClientID      string
 	ClientSecret  string
-	ClientService httpclient.Service
+	ClientService fetch.Service
 }
 
 func (c *Client) GetAccessToken(code string) (*ResultAPIAccessToken, error) {

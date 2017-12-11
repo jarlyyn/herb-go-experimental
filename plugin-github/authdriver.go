@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/jarlyyn/herb-go-experimental/httpclient"
+	"github.com/herb-go/herb/fetch"
 
 	"github.com/herb-go/herb/cache"
 	session "github.com/herb-go/herb/cache-session"
@@ -85,7 +85,7 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	}
 	result, err := d.client.GetAccessToken(code)
 	if err != nil {
-		statuscode := httpclient.GetErrorStatusCode(err)
+		statuscode := fetch.GetErrorStatusCode(err)
 		if statuscode > 400 && statuscode < 500 {
 			return nil, auth.ErrAuthParamsError
 		}
