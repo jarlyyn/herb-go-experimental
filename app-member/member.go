@@ -1,6 +1,9 @@
 package member
 
 import (
+	"errors"
+	"reflect"
+
 	"github.com/herb-go/herb/cache"
 	"github.com/herb-go/herb/cache-session"
 	"github.com/herb-go/herb/user"
@@ -10,10 +13,14 @@ const prefixCacheMember = "M"
 const prefixCacheAccount = "A"
 const prefixCacheData = "D"
 
+var ErrDataServiceNotFound = errors.New("error data service not found")
+var ErrDataMustBePtr = errors.New("error must post a pointer to get data")
+var ErrDataNil = errors.New("error null data")
+var ErrDataTypeNotMatch = errors.New("user data type not match")
+
 type Member struct {
-	UID      string
-	Nickname string
-	Enabled  bool
+	UID     string
+	Enabled bool
 }
 
 type MemberService struct {
@@ -25,16 +32,14 @@ type AccountsService struct {
 	Accounts     func(uid string) ([]user.UserAccount, error)
 	AccountToUID func(user.UserAccount) (string, error)
 }
-type DataService struct {
-	Data func(uid string, v interface{}) error
-}
+type DataService func(uid string) (v interface{}, err error)
 type Service struct {
 	UIDField        *session.Field
 	ContentName     string
 	Cache           cache.Cacheable
 	MemberService   *MemberService
 	AccountsService *AccountsService
-	DataService     map[string]*DataService
+	DataServices    map[string]DataService
 }
 
 func (s *Service) MemberCache() cache.Cacheable {
@@ -46,9 +51,6 @@ func (s *Service) CacheMember(m Member) error {
 }
 func (s *Service) CleanUserMemberCache(uid string) error {
 	return s.MemberCache().Del(uid)
-}
-func (s *Service) CleanUserAccountsCache(uid string) error {
-	return s.AccountsCache().Del(uid)
 }
 func (s *Service) GetUserMember(uid string) (*Member, error) {
 	var member = Member{}
@@ -80,4 +82,59 @@ func (s *Service) GetUserAccounts(uid string) ([]user.UserAccount, error) {
 		}
 	}
 	return accounts, err
+}
+func (s *Service) DataCache(field string) cache.Cacheable {
+	c := cache.NewNode(s.Cache, prefixCacheData)
+	return cache.NewNode(c, field)
+}
+func (s *Service) CacheData(field string, uid string, v interface{}) error {
+	c := cache.NewNode(s.Cache, prefixCacheData)
+	return cache.NewNode(c, field).Set(uid, v, 0)
+}
+func (s *Service) CleanDataCache(field string, uid string) error {
+	c := cache.NewNode(s.Cache, prefixCacheData)
+	return cache.NewNode(c, field).Del(uid)
+}
+func (s *Service) Data(field string, uid string, v interface{}) (err error) {
+	var data interface{}
+	var c = s.DataCache(field)
+	err = c.Get(uid, v)
+	if err == cache.ErrNotFound {
+		ds, ok := s.DataServices[field]
+		if ok == false {
+			return ErrDataServiceNotFound
+		}
+		data, err = ds(uid)
+		if err != nil {
+			return err
+		}
+		err = cp(v, data)
+		if err != nil {
+			return err
+		}
+		err = c.Set(uid, v, cache.DefualtTTL)
+	}
+	return err
+}
+
+func cp(v interface{}, data interface{}) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = r.(error)
+		}
+	}()
+	var vv = reflect.ValueOf(v)
+	if vv.Kind() != reflect.Ptr {
+		return ErrDataMustBePtr
+	}
+	if data == nil {
+		return ErrDataNil
+	}
+	var d = reflect.Indirect(reflect.ValueOf(data))
+	if vv.Elem().Type() != d.Type() {
+		return ErrDataTypeNotMatch
+	}
+	vv.Elem().Set(d)
+	return nil
+
 }
