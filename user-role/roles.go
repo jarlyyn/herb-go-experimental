@@ -1,5 +1,7 @@
 package role
 
+import "net/http"
+
 type Roles []Role
 
 func getValueMapCache(roles Roles) map[int]map[string]map[string]bool {
@@ -18,6 +20,9 @@ func getValueMapCache(roles Roles) map[int]map[string]map[string]bool {
 		}
 	}
 	return valuemap
+}
+func (rules *Roles) Rule(*http.Request) (Rule, error) {
+	return rules, nil
 }
 func (rules *Roles) Execute(roles ...Role) (bool, error) {
 	if len(roles) == 0 {
@@ -53,4 +58,12 @@ func (rules *Roles) Execute(roles ...Role) (bool, error) {
 	}
 	//All Match fail
 	return false, nil
+}
+
+func NewRoles(rolenames ...string) *Roles {
+	var roles = make(Roles, len(rolenames))
+	for k := range rolenames {
+		roles[k] = *New(rolenames[k])
+	}
+	return &roles
 }

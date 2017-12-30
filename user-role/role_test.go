@@ -92,6 +92,9 @@ func TestRules(t *testing.T) {
 	var roleDataCN = "CN"
 	var fieldname2 = "field2"
 	var roleData2 = "data2"
+	var rolename2 = "admin"
+	var role = New(rolename)
+	var role2 = New(rolename2)
 	var roleCN = New(rolename)
 	roleCN.AddData(fieldname1, roleDataCN)
 	var ruleCN = New(rolename)
@@ -111,6 +114,15 @@ func TestRules(t *testing.T) {
 	roleWithData2.AddData(fieldname2, roleData2)
 	var ruleWithData2 = Roles{*roleWithData2}
 	result, _ = rulesCN.Execute()
+	if result != false {
+		t.Error(result)
+	}
+	var rules = Roles{*role}
+	result, _ = rules.Execute(*role)
+	if result != true {
+		t.Error(result)
+	}
+	result, _ = rules.Execute(*role2)
 	if result != false {
 		t.Error(result)
 	}
