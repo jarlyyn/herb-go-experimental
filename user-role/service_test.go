@@ -27,7 +27,7 @@ func (s *roleservice) Roles(uid string) (*Roles, error) {
 func TestServuce(t *testing.T) {
 	var testRule = "test"
 	var testHeader = "testheader"
-	var authority = Authority{
+	var service = Service{
 		RoleService: &roleservice{},
 		Identifier: &identifier{
 			Headername: testHeader,
@@ -35,7 +35,7 @@ func TestServuce(t *testing.T) {
 	}
 	var app = middleware.New()
 	app.
-		Use(authority.RolesAuthorizeOrForbiddenMiddleware(testRule)).
+		Use(service.RolesAuthorizeOrForbiddenMiddleware(testRule)).
 		HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("ok"))
 		})
