@@ -8,9 +8,9 @@ import (
 type Banned bool
 type BannedMap map[string]Banned
 
-type BannedService struct {
-	Banned func(uid ...string) (BannedMap, error)
-	Ban    func(uid string, enabeld bool) error
+type BannedService interface {
+	Banned(uid ...string) (BannedMap, error)
+	Ban(uid string, enabeld bool) error
 }
 type ServiceBanned struct {
 	service *Service

@@ -113,6 +113,10 @@ func TestRules(t *testing.T) {
 	roleWithData2.AddData(fieldname1, roleDataUS, roleDataCN)
 	roleWithData2.AddData(fieldname2, roleData2)
 	var ruleWithData2 = Roles{*roleWithData2}
+	result, _ = NewRoles().Execute()
+	if result != true {
+		t.Error(result)
+	}
 	result, _ = rulesCN.Execute()
 	if result != false {
 		t.Error(result)

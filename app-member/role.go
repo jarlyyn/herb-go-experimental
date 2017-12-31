@@ -1,19 +1,20 @@
 package member
 
 import (
+	"net/http"
+
 	"github.com/herb-go/herb/cache"
 	cachedmap "github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
+	role "github.com/jarlyyn/herb-go-experimental/user-role"
 )
 
-type UserRoles []string
+type Roles map[string]role.Roles
 
-type Roles map[string]UserRoles
-
-type RoleService struct {
-	Role func(uid ...string) (Roles, error)
-}
 type ServiceRole struct {
 	service *Service
+}
+type RolesService interface {
+	Roles(uid ...string) (Roles, error)
 }
 
 func (s *ServiceRole) Load(roles Roles, keys ...string) error {
@@ -22,7 +23,7 @@ func (s *ServiceRole) Load(roles Roles, keys ...string) error {
 		s.Cache(),
 		s.loader(roles),
 		func(key string) error {
-			roles[key] = UserRoles{}
+			roles[key] = role.Roles{}
 			return nil
 		},
 		keys...,
@@ -38,7 +39,7 @@ func (s *ServiceRole) Clean(uid string) error {
 }
 func (s *ServiceRole) loader(roles Roles) func(keys ...string) error {
 	return func(keys ...string) error {
-		data, err := s.service.RoleService.Role(keys...)
+		data, err := s.service.RoleService.Roles(keys...)
 		if err != nil {
 			return err
 		}
@@ -47,4 +48,35 @@ func (s *ServiceRole) loader(roles Roles) func(keys ...string) error {
 		}
 		return nil
 	}
+}
+
+type Authorizer struct {
+	Service     *Service
+	RuleService role.RuleService
+}
+
+func (a *Authorizer) Authorize(r *http.Request) (bool, error) {
+	uid, err := a.Service.IdentifyRequest(r)
+	if err != nil {
+		return false, err
+	}
+	if uid == "" {
+		return false, nil
+	}
+	rolesmap, err := a.Service.RoleService.Roles(uid)
+	if err != nil {
+		return false, err
+	}
+	if rolesmap == nil {
+		return false, err
+	}
+	roles := rolesmap[uid]
+	if roles == nil {
+		return false, nil
+	}
+	rm, err := a.RuleService.Rule(r)
+	if err != nil {
+		return false, err
+	}
+	return rm.Execute(roles...)
 }

@@ -6,10 +6,10 @@ import (
 )
 
 type Salts map[string]string
-type PasswordService struct {
-	Salts          func(uid ...string) (Salts, error)
-	VerifyPassword func(uid string, password string) (bool, error)
-	UpdatePassword func(uid string, password string) error
+type PasswordService interface {
+	Salts(uid ...string) (Salts, error)
+	VerifyPassword(uid string, password string) (bool, error)
+	UpdatePassword(uid string, password string) error
 }
 type ServicePassword struct {
 	service *Service

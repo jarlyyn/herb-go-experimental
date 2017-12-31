@@ -4,12 +4,15 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/jarlyyn/herb-go-experimental/user-role"
+
 	"github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
 
 	"context"
 
 	"github.com/herb-go/herb/cache"
 	"github.com/herb-go/herb/cache-session"
+	"github.com/herb-go/herb/user"
 )
 
 const prefixCacheBanned = "B"
@@ -31,10 +34,10 @@ type Service struct {
 	SessionSaltFieldName string
 	ContextName          ContextType
 	Cache                cache.Cacheable
-	BannedService        *BannedService
-	AccountsService      *AccountsService
-	PasswordService      *PasswordService
-	RoleService          *RoleService
+	BannedService        BannedService
+	AccountsService      AccountsService
+	PasswordService      PasswordService
+	RoleService          RolesService
 	DataServices         map[string]reflect.Type
 }
 
@@ -60,7 +63,11 @@ func (s *Service) Data() *ServiceData {
 		service: s,
 	}
 }
-
+func (s *Service) Roles() *ServiceRole {
+	return &ServiceRole{
+		service: s,
+	}
+}
 func (s *Service) RegisterData(key string, data cachedmap.CachedMap) error {
 	var value = reflect.Indirect(reflect.ValueOf(data))
 	if value.Kind() != reflect.Map {
@@ -70,8 +77,8 @@ func (s *Service) RegisterData(key string, data cachedmap.CachedMap) error {
 	return nil
 }
 
-func (s *Service) Middlewares() *Middlewares {
-	return &Middlewares{
+func (s *Service) Middleware() *Middleware {
+	return &Middleware{
 		service: s,
 	}
 }
@@ -112,7 +119,7 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 	}
 	var members = s.GetMembersFromRequest(r)
 	if s.BannedService != nil {
-		err = members.LoadBanned(uid)
+		_, err = members.LoadBanned(uid)
 		if err != nil {
 			return "", err
 		}
@@ -121,7 +128,7 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 		}
 	}
 	if s.PasswordService != nil {
-		err = members.LoadSalt(uid)
+		_, err = members.LoadSalt(uid)
 		if err != nil {
 			return "", err
 		}
@@ -137,4 +144,10 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 }
 func (s *Service) Logout(r *http.Request) error {
 	return s.UIDField().Logout(r)
+}
+
+func (s *Service) Authorizer(rs role.RuleService) user.Authorizer {
+	return &Authorizer{
+		Service: s,
+	}
 }

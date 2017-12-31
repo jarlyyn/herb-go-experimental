@@ -23,8 +23,14 @@ func (a *Authorizer) Authorize(r *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if uid == "" {
+		return false, nil
+	}
 	roles, err := a.Service.RoleService.Roles(uid)
 	if err != nil {
+		return false, err
+	}
+	if roles == nil {
 		return false, err
 	}
 	rm, err := a.RuleService.Rule(r)

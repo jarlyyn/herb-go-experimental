@@ -45,11 +45,11 @@ func (s *ServiceAccounts) Load(accounts Accounts, keys ...string) error {
 	)
 }
 
-type AccountsService struct {
-	Accounts               func(uid ...string) (Accounts, error)
-	AccountToUID           func(user.UserAccount) (uid string, err error)
-	Register               func(accounts Accounts) (uid string, err error)
-	AccountToUIDOrRegister func(user.UserAccount) (uid string, err error)
-	BindAccounts           func(uid string, accounts Accounts) error
-	UnbindAccounts         func(uid string, accounts Accounts) error
+type AccountsService interface {
+	Accounts(uid ...string) (Accounts, error)
+	AccountToUID(user.UserAccount) (uid string, err error)
+	Register(accounts Accounts) (uid string, err error)
+	AccountToUIDOrRegister(user.UserAccount) (uid string, err error)
+	BindAccounts(uid string, accounts Accounts) error
+	UnbindAccounts(uid string, accounts Accounts) error
 }

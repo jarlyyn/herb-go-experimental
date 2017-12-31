@@ -25,6 +25,9 @@ func (rules *Roles) Rule(*http.Request) (Rule, error) {
 	return rules, nil
 }
 func (rules *Roles) Execute(roles ...Role) (bool, error) {
+	if len(*rules) == 0 {
+		return true, nil
+	}
 	if len(roles) == 0 {
 		return false, nil
 	}

@@ -1,5 +1,5 @@
 package member
 
-type Middlewares struct {
+type Middleware struct {
 	service *Service
 }
