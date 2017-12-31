@@ -17,28 +17,29 @@ import (
 
 const prefixCacheBanned = "B"
 const prefixCacheAccount = "A"
-const prefixCacheSalt = "S"
+const prefixCacheRevoke = "V"
 const prefixCacheData = "D"
 const prefixCacheRole = "R"
 
 const DefaultSessionUIDFieldName = "herb-member-uid"
-const DefaultSessionSaltFieldName = "herb-member-salt"
+const DefaultSessionRevokeFieldName = "herb-member-revoke"
 
 type ContextType string
 
 var DefaultContextName = ContextType("members")
 
 type Service struct {
-	SessionStore         *session.Store
-	SessionUIDFieldName  string
-	SessionSaltFieldName string
-	ContextName          ContextType
-	Cache                cache.Cacheable
-	BannedService        BannedService
-	AccountsService      AccountsService
-	PasswordService      PasswordService
-	RoleService          RolesService
-	DataServices         map[string]reflect.Type
+	SessionStore           *session.Store
+	SessionUIDFieldName    string
+	SessionRevokeFieldName string
+	ContextName            ContextType
+	Cache                  cache.Cacheable
+	BannedService          BannedService
+	AccountsService        AccountsService
+	RevokeService          RevokeService
+	PasswordService        PasswordService
+	RoleService            RolesService
+	DataServices           map[string]reflect.Type
 }
 
 func (s *Service) Accounts() *ServiceAccounts {
@@ -54,6 +55,12 @@ func (s *Service) Password() *ServicePassword {
 
 func (s *Service) Banned() *ServiceBanned {
 	return &ServiceBanned{
+		service: s,
+	}
+}
+
+func (s *Service) Revoke() *ServiceRevoke {
+	return &ServiceRevoke{
 		service: s,
 	}
 }
@@ -77,11 +84,6 @@ func (s *Service) RegisterData(key string, data cachedmap.CachedMap) error {
 	return nil
 }
 
-func (s *Service) Middleware() *Middleware {
-	return &Middleware{
-		service: s,
-	}
-}
 func (s *Service) GetMembersFromRequest(r *http.Request) (members *Members) {
 	var contextName = s.ContextName
 	if contextName == "" {
@@ -105,10 +107,10 @@ func (s *Service) UIDField() *session.Field {
 	}
 	return s.SessionStore.Field(fieldName)
 }
-func (s *Service) SaltField() *session.Field {
-	var fieldName = s.SessionSaltFieldName
+func (s *Service) RevokeField() *session.Field {
+	var fieldName = s.SessionRevokeFieldName
 	if fieldName == "" {
-		fieldName = DefaultSessionSaltFieldName
+		fieldName = DefaultSessionRevokeFieldName
 	}
 	return s.SessionStore.Field(fieldName)
 }
@@ -127,16 +129,16 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 			return "", nil
 		}
 	}
-	if s.PasswordService != nil {
-		_, err = members.LoadSalt(uid)
+	if s.RevokeService != nil {
+		_, err = members.LoadRevokeTokens(uid)
 		if err != nil {
 			return "", err
 		}
-		var salt, err = s.SaltField().IdentifyRequest(r)
+		var revoke, err = s.RevokeField().IdentifyRequest(r)
 		if err != nil {
 			return "", err
 		}
-		if members.Salts[uid] == "" || salt != members.Salts[uid] {
+		if members.RevokeTokens[uid] == "" || revoke != members.RevokeTokens[uid] {
 			return "", nil
 		}
 	}
