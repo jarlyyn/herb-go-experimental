@@ -16,9 +16,15 @@ func unmarshalMapElement(mapvalue reflect.Value, creator func(string) error, key
 	if err != nil {
 		return err
 	}
-	var v = mapvalue.MapIndex(reflect.ValueOf(key)).Interface()
-	err = cache.UnmarshalMsgpack(data, &v)
-	return err
+	var v = reflect.New(mapvalue.Type().Elem())
+	var vi = v.Interface()
+	// var v = mapvalue.MapIndex(reflect.ValueOf(key)).Addr().Interface()
+	err = cache.UnmarshalMsgpack(data, &vi)
+	if err != nil {
+		return err
+	}
+	mapvalue.SetMapIndex(reflect.ValueOf(key), v.Elem())
+	return nil
 }
 func Load(cm interface{}, c cache.Cacheable, loader func(keys ...string) error, creator func(string) error, keys ...string) error {
 	var keysmap = make(map[string]bool, len(keys))

@@ -119,26 +119,21 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 	if err != nil {
 		return "", err
 	}
-	var members = s.GetMembersFromRequest(r)
-	if s.BannedService != nil {
-		_, err = members.LoadBanned(uid)
-		if err != nil {
-			return "", err
-		}
-		if members.BannedMap[uid] == true {
-			return "", nil
-		}
+	if uid == "" {
+		return "", nil
 	}
+	var members = s.GetMembersFromRequest(r)
 	if s.RevokeService != nil {
 		_, err = members.LoadRevokeTokens(uid)
 		if err != nil {
 			return "", err
 		}
-		var revoke, err = s.RevokeField().IdentifyRequest(r)
+		var revoke string
+		err = s.RevokeField().Get(r, &revoke)
 		if err != nil {
 			return "", err
 		}
-		if members.RevokeTokens[uid] == "" || revoke != members.RevokeTokens[uid] {
+		if revoke != members.RevokeTokens[uid] {
 			return "", nil
 		}
 	}
@@ -152,4 +147,43 @@ func (s *Service) Authorizer(rs role.RuleService) user.Authorizer {
 	return &Authorizer{
 		Service: s,
 	}
+}
+func (s *Service) LoginRequiredMiddleware(unauthorizedAction http.HandlerFunc) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return user.LoginRequiredMiddleware(s, unauthorizedAction)
+}
+
+func (s *Service) LogoutMiddleware() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return user.LogoutMiddleware(s)
+}
+
+func (s *Service) AuthorizeMiddleware(rs role.RuleService, unauthorizedAction http.HandlerFunc) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return user.AuthorizeMiddleware(s.Authorizer(rs), unauthorizedAction)
+}
+
+func (s *Service) BannedMiddleware() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return user.AuthorizeMiddleware(s.Authorizer(nil), nil)
+}
+
+func (s *Service) RolesAuthorizeMiddleware(ruleNames ...string) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	var rs = role.NewRoles(ruleNames...)
+	return s.AuthorizeMiddleware(rs, nil)
+}
+
+func (s *Service) Login(r *http.Request, id string) error {
+	err := s.UIDField().Login(r, id)
+	if err != nil {
+		return err
+	}
+	if s.RevokeService != nil {
+		member := s.GetMembersFromRequest(r)
+		tokens, err := member.LoadRevokeTokens(id)
+		if err != nil {
+			return err
+		}
+		err = s.RevokeField().Set(r, tokens[id])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

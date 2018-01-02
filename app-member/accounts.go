@@ -12,7 +12,7 @@ type ServiceAccounts struct {
 	service *Service
 }
 
-func (s *ServiceAccounts) Loader(accounts Accounts) func(keys ...string) error {
+func (s *ServiceAccounts) loader(accounts Accounts) func(keys ...string) error {
 	return func(keys ...string) error {
 		data, err := s.service.AccountsService.Accounts(keys...)
 		if err != nil {
@@ -36,7 +36,7 @@ func (s *ServiceAccounts) Load(accounts Accounts, keys ...string) error {
 	return cachedmap.Load(
 		accounts,
 		s.Cache(),
-		s.Loader(accounts),
+		s.loader(accounts),
 		func(key string) error {
 			accounts[key] = user.UserAccounts{}
 			return nil
@@ -45,11 +45,35 @@ func (s *ServiceAccounts) Load(accounts Accounts, keys ...string) error {
 	)
 }
 
+func (s *ServiceAccounts) Register(account user.UserAccount) (uid string, err error) {
+	return s.service.AccountsService.Register(account)
+}
+func (s *ServiceAccounts) AccountToUID(account user.UserAccount) (uid string, err error) {
+	return s.service.AccountsService.AccountToUID(account)
+}
+func (s *ServiceAccounts) AccountToUIDOrRegister(account user.UserAccount) (uid string, err error) {
+	return s.service.AccountsService.AccountToUIDOrRegister(account)
+}
+func (s *ServiceAccounts) BindAccounts(uid string, account user.UserAccount) error {
+	err := s.Clean(uid)
+	if err != nil {
+		return err
+	}
+	return s.service.AccountsService.BindAccounts(uid, account)
+}
+func (s *ServiceAccounts) UnbindAccounts(uid string, account user.UserAccount) error {
+	err := s.Clean(uid)
+	if err != nil {
+		return err
+	}
+	return s.service.AccountsService.UnbindAccounts(uid, account)
+}
+
 type AccountsService interface {
 	Accounts(uid ...string) (Accounts, error)
-	AccountToUID(user.UserAccount) (uid string, err error)
-	Register(accounts Accounts) (uid string, err error)
-	AccountToUIDOrRegister(user.UserAccount) (uid string, err error)
-	BindAccounts(uid string, accounts Accounts) error
-	UnbindAccounts(uid string, accounts Accounts) error
+	AccountToUID(account user.UserAccount) (uid string, err error)
+	Register(account user.UserAccount) (uid string, err error)
+	AccountToUIDOrRegister(account user.UserAccount) (uid string, err error)
+	BindAccounts(uid string, account user.UserAccount) error
+	UnbindAccounts(uid string, account user.UserAccount) error
 }

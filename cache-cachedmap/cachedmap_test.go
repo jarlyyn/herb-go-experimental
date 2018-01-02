@@ -186,3 +186,157 @@ func TestMapLoad(t *testing.T) {
 		t.Error(val)
 	}
 }
+
+func TestMapNodeLoad(t *testing.T) {
+	rawData = map[string]int{
+		valueKey:            startValue,
+		valueKeyAadditional: startValue,
+		valueKeyChanged:     startValue,
+	}
+	c := newTestCache(-1).Node("test")
+	var err error
+	var tm = testmodelmap{}
+	err = Load(&tm, c, loader(&tm), creator(&tm), valueKey, valueKeyAadditional)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if val := tm[valueKey].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKey].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	rawData[valueKey] = changedValue
+	rawData[valueKeyAadditional] = changedValue
+	rawData[valueKeyChanged] = changedValue
+	err = Load(&tm, c, loader(&tm), creator(&tm), valueKeyAadditional, valueKeyChanged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val := tm[valueKey].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKey].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	if val := tm[valueKeyChanged].Content; val != changedValue {
+		t.Error(val)
+	}
+	if val := tm[valueKeyChanged].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+}
+
+func TestMapCollectionLoad(t *testing.T) {
+	rawData = map[string]int{
+		valueKey:            startValue,
+		valueKeyAadditional: startValue,
+		valueKeyChanged:     startValue,
+	}
+	c := newTestCache(3600).Collection("test")
+	var err error
+	var tm = testmodelmap{}
+	err = Load(&tm, c, loader(&tm), creator(&tm), valueKey, valueKeyAadditional)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if val := tm[valueKey].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKey].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	rawData[valueKey] = changedValue
+	rawData[valueKeyAadditional] = changedValue
+	rawData[valueKeyChanged] = changedValue
+	err = Load(&tm, c, loader(&tm), creator(&tm), valueKeyAadditional, valueKeyChanged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val := tm[valueKey].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKey].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Content; val != startValue {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+	if val := tm[valueKeyChanged].Content; val != changedValue {
+		t.Error(val)
+	}
+	if val := tm[valueKeyChanged].Keyword; val != creatorKeyword {
+		t.Error(val)
+	}
+}
+
+var rawString map[string]string
+
+type teststringmap map[string]string
+
+func (m *teststringmap) NewMapElement(key string) error {
+	(*m)[key] = ""
+	return nil
+}
+func (m *teststringmap) LoadMapElements(keys ...string) error {
+	for _, v := range keys {
+		(*m)[v] = rawString[v]
+	}
+	return nil
+}
+func TestString(t *testing.T) {
+	rawString = map[string]string{
+		valueKey:            valueKey,
+		valueKeyAadditional: valueKeyAadditional,
+		valueKeyChanged:     valueKeyChanged,
+	}
+	c := newTestCache(3600).Collection("test")
+	var err error
+	var tm = teststringmap{}
+	err = LoadCachedMap(&tm, c, valueKey, valueKeyAadditional)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if val := tm[valueKey]; val != valueKey {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional]; val != valueKeyAadditional {
+		t.Error(val)
+	}
+	err = LoadCachedMap(&tm, c, valueKey, valueKeyAadditional)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if val := tm[valueKey]; val != valueKey {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional]; val != valueKeyAadditional {
+		t.Error(val)
+	}
+
+}
