@@ -76,11 +76,14 @@ func (s *Service) Roles() *ServiceRole {
 	}
 }
 func (s *Service) RegisterData(key string, data cachedmap.CachedMap) error {
-	var value = reflect.Indirect(reflect.ValueOf(data))
+	if s.DataServices == nil {
+		s.DataServices = map[string]reflect.Type{}
+	}
+	var value = reflect.ValueOf(data)
 	if value.Kind() != reflect.Map {
 		return ErrRegisteredDataNotMap
 	}
-	s.DataServices[key] = value.Type().Elem()
+	s.DataServices[key] = value.Type()
 	return nil
 }
 

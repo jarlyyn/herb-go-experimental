@@ -158,13 +158,13 @@ type userProfiles map[string]user.Profile
 
 var rawUserProfiles = map[string]user.Profile{}
 
-func (p *userProfiles) NewMapElement(key string) error {
-	(*p)[key] = user.Profile{}
+func (p userProfiles) NewMapElement(key string) error {
+	p[key] = user.Profile{}
 	return nil
 }
-func (p *userProfiles) LoadMapElements(keys ...string) error {
+func (p userProfiles) LoadMapElements(keys ...string) error {
 	for _, v := range keys {
-		(*p)[v] = rawUserProfiles[v]
+		p[v] = rawUserProfiles[v]
 	}
 	return nil
 }

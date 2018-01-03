@@ -2,6 +2,7 @@ package member
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -10,13 +11,16 @@ import (
 	"github.com/jarlyyn/herb-go-experimental/user-role"
 
 	"github.com/herb-go/herb/cache"
-
 	"github.com/herb-go/herb/cache-session"
 	"github.com/herb-go/herb/middleware"
+	"github.com/herb-go/herb/user"
 
 	_ "github.com/herb-go/herb/cache/drivers/freecache"
 	"github.com/herb-go/herb/middleware-httprouter"
 )
+
+var dataProfileKey = "profile"
+var profileData = "herb"
 
 func actionLogin(w http.ResponseWriter, r *http.Request) {
 	uid, err := service.Accounts().AccountToUID(*newTestAccount(r.Header.Get("account")))
@@ -40,6 +44,56 @@ func actionEcho(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type memberResult struct {
+	Accounts user.UserAccounts
+	Banned   bool
+	Revoke   string
+	Role     role.Roles
+	Profile  user.Profile
+}
+
+func actionMember(w http.ResponseWriter, r *http.Request) {
+	var result = memberResult{}
+	uid, err := service.IdentifyRequest(r)
+	if err != nil {
+		panic(err)
+	}
+	var member = service.GetMembersFromRequest(r)
+	accounts, err := member.LoadAccount(uid)
+	if err != nil {
+		panic(err)
+	}
+	result.Accounts = accounts[uid]
+	banned, err := member.LoadBanned(uid)
+	if err != nil {
+		panic(err)
+	}
+	result.Banned = banned[uid]
+	revoke, err := member.LoadRevokeTokens(uid)
+	if err != nil {
+		panic(err)
+	}
+	result.Revoke = revoke[uid]
+	roles, err := member.LoadRoles(uid)
+	if err != nil {
+		panic(err)
+	}
+	result.Role = roles[uid]
+	profiles, err := member.LoadData(dataProfileKey, uid)
+	if err != nil {
+		panic(err)
+	}
+	result.Profile = profiles.(userProfiles)[uid]
+	bs, err := json.Marshal(result)
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(bs)
+	if err != nil {
+		panic(err)
+	}
+}
+
 var service *Service
 
 func initRouter(service *Service, router *httprouter.Router) {
@@ -56,6 +110,12 @@ func initRouter(service *Service, router *httprouter.Router) {
 			service.RolesAuthorizeMiddleware("role"),
 		).
 		HandleFunc(actionEcho)
+	router.POST("/member").
+		Use(
+			service.LoginRequiredMiddleware(nil),
+			service.RolesAuthorizeMiddleware(),
+		).
+		HandleFunc(actionMember)
 
 }
 func initService(service *Service) {
@@ -73,6 +133,7 @@ func initService(service *Service) {
 	service.RevokeService = newTestRevokeService()
 	service.PasswordService = newTestPasswordService()
 	service.RoleService = newTestRoleService()
+	service.RegisterData(dataProfileKey, *newTestUesrProfiles())
 }
 func TestService(t *testing.T) {
 	var accountNormalUser = "normalUserAccount"
@@ -85,10 +146,14 @@ func TestService(t *testing.T) {
 	var router = httprouter.New()
 	initRouter(service, router)
 	app.Handle(router)
+	rawUserProfiles = map[string]user.Profile{}
 	uid, err := service.Accounts().Register(*newTestAccount(accountNormalUser))
 	if err != nil {
 		t.Fatal(err)
 	}
+	rawUserProfiles[uid] = user.Profile{}
+	var userprofile = rawUserProfiles[uid]
+	userprofile.SetValue(user.ProfileIndexNickname, profileData)
 	err = service.Password().UpdatePassword(uid, password)
 	if err != nil {
 		t.Fatal(err)
@@ -163,7 +228,7 @@ func TestService(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Error(resp.StatusCode)
 	}
-	_, err = service.Revoke().Revoke(uid)
+	revoketoken, err := service.Revoke().Revoke(uid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,7 +334,7 @@ func TestService(t *testing.T) {
 		t.Error(resp.StatusCode)
 	}
 	var roleservice = service.RoleService.(*testRoleService)
-	(*roleservice)[uid] = *role.NewRoles("role")
+	(*roleservice)[uid] = *role.NewRoles("role", "role2")
 
 	req, err = http.NewRequest("POST", s.URL+"/role", nil)
 	if err != nil {
@@ -321,10 +386,50 @@ func TestService(t *testing.T) {
 	}
 
 	resp.Body.Close()
+
+	req, err = http.NewRequest("POST", s.URL+"/member", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+
+	var memberresult = memberResult{}
+	err = json.Unmarshal(content, &memberresult)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(memberresult.Accounts) != 2 ||
+		!memberresult.Accounts.Exists(newTestAccount(accountNormalUser)) ||
+		!memberresult.Accounts.Exists(newTestAccount(accountNew)) {
+		t.Error(memberresult.Accounts)
+	}
+	if memberresult.Banned != false {
+		t.Error(memberresult.Banned)
+	}
+	if memberresult.Revoke != revoketoken {
+		t.Error(memberresult.Revoke)
+	}
+	if len(memberresult.Role) != 2 {
+		t.Error(memberresult.Role)
+	}
+
+	if resp.StatusCode != 200 {
+		t.Error(resp.StatusCode)
+	}
+
 	err = service.Accounts().UnbindAccounts(uid, *newTestAccount(accountNew))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	req, err = http.NewRequest("POST", s.URL+"/login", nil)
 	req.Header.Add("account", accountNew)
 	if err != nil {

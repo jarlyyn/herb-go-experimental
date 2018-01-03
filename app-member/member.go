@@ -43,7 +43,7 @@ func NewMembers(s *Service) *Members {
 		RevokeTokens: RevokeTokens{},
 	}
 	member.Dataset = make(map[string]cachedmap.CachedMap, len(s.DataServices))
-	var mapvalue = reflect.ValueOf(member.Data)
+	var mapvalue = reflect.ValueOf(member.Dataset)
 	for k := range s.DataServices {
 		d := reflect.MakeMap(s.DataServices[k])
 		mapvalue.SetMapIndex(reflect.ValueOf(k), d)
