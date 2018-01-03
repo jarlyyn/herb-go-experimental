@@ -58,14 +58,24 @@ func (s *testAccountService) BindAccounts(uid string, account user.UserAccount) 
 		s.AccountsMap[uid] = user.UserAccounts{}
 	}
 	accounts := s.AccountsMap[uid]
-	return accounts.Bind(&account)
+	err := accounts.Bind(&account)
+	if err != nil {
+		return err
+	}
+	s.AccountsMap[uid] = accounts
+	return nil
 }
 func (s *testAccountService) UnbindAccounts(uid string, account user.UserAccount) error {
 	if s.AccountsMap[uid] == nil {
 		return user.ErrAccountUnbindNotExists
 	}
 	accounts := s.AccountsMap[uid]
-	return accounts.Unbind(&account)
+	err := accounts.Unbind(&account)
+	if err != nil {
+		return err
+	}
+	s.AccountsMap[uid] = accounts
+	return nil
 }
 
 func newTestAccountService() *testAccountService {

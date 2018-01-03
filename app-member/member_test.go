@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/jarlyyn/herb-go-experimental/user-role"
+
 	"github.com/herb-go/herb/cache"
 
 	"github.com/herb-go/herb/cache-session"
@@ -48,6 +50,13 @@ func initRouter(service *Service, router *httprouter.Router) {
 			service.BannedMiddleware(),
 		).
 		HandleFunc(actionEcho)
+	router.POST("/role").
+		Use(
+			service.LoginRequiredMiddleware(nil),
+			service.RolesAuthorizeMiddleware("role"),
+		).
+		HandleFunc(actionEcho)
+
 }
 func initService(service *Service) {
 	var store = session.NewClientStore([]byte("12345"), -1)
@@ -67,6 +76,8 @@ func initService(service *Service) {
 }
 func TestService(t *testing.T) {
 	var accountNormalUser = "normalUserAccount"
+	var accountNew = "accountNew"
+	var password = "password"
 	service = &Service{}
 	initService(service)
 	var app = middleware.New()
@@ -77,6 +88,17 @@ func TestService(t *testing.T) {
 	uid, err := service.Accounts().Register(*newTestAccount(accountNormalUser))
 	if err != nil {
 		t.Fatal(err)
+	}
+	err = service.Password().UpdatePassword(uid, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := service.Password().VerifyPassword(uid, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != true {
+		t.Error(result)
 	}
 	var s = httptest.NewServer(app)
 	defer s.Close()
@@ -108,6 +130,10 @@ func TestService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if resp.Header.Get("uid") != uid {
+		t.Error(resp.Header.Get("uid"))
+	}
+
 	resp.Body.Close()
 	req, err = http.NewRequest("POST", s.URL+"/echo", nil)
 	if err != nil {
@@ -195,6 +221,11 @@ func TestService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	result, err = service.Password().VerifyPassword(uid, password)
+	if err != ErrUserBanned {
+		t.Fatal(err)
+	}
+
 	req, err = http.NewRequest("POST", s.URL+"/echo", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -211,6 +242,7 @@ func TestService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	req, err = http.NewRequest("POST", s.URL+"/echo", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -224,4 +256,86 @@ func TestService(t *testing.T) {
 		t.Error(resp.StatusCode)
 	}
 
+	req, err = http.NewRequest("POST", s.URL+"/role", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 403 {
+		t.Error(resp.StatusCode)
+	}
+	var roleservice = service.RoleService.(*testRoleService)
+	(*roleservice)[uid] = *role.NewRoles("role")
+
+	req, err = http.NewRequest("POST", s.URL+"/role", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 403 {
+		t.Error(resp.StatusCode)
+	}
+	err = service.Roles().Clean(uid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err = http.NewRequest("POST", s.URL+"/role", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 200 {
+		t.Error(resp.StatusCode)
+	}
+	err = service.Accounts().BindAccounts(uid, *newTestAccount(accountNew))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err = http.NewRequest("POST", s.URL+"/login", nil)
+	req.Header.Add("account", accountNew)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 200 {
+		t.Error(resp.StatusCode)
+	}
+
+	if resp.Header.Get("uid") != uid {
+		t.Error(resp.Header.Get("uid"))
+	}
+
+	resp.Body.Close()
+	err = service.Accounts().UnbindAccounts(uid, *newTestAccount(accountNew))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err = http.NewRequest("POST", s.URL+"/login", nil)
+	req.Header.Add("account", accountNew)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Header.Get("uid") != "" {
+		t.Error(resp.Header.Get("uid"))
+	}
+	resp.Body.Close()
 }

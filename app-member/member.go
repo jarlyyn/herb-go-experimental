@@ -16,16 +16,16 @@ type Members struct {
 }
 
 func (m *Members) LoadBanned(keys ...string) (BannedMap, error) {
-	return m.BannedMap, m.Service.Banned().Load(m.BannedMap, keys...)
+	return m.BannedMap, m.Service.Banned().Load(&m.BannedMap, keys...)
 }
 func (m *Members) LoadRevokeTokens(keys ...string) (RevokeTokens, error) {
-	return m.RevokeTokens, m.Service.Revoke().Load(m.RevokeTokens, keys...)
+	return m.RevokeTokens, m.Service.Revoke().Load(&m.RevokeTokens, keys...)
 }
 func (m *Members) LoadAccount(keys ...string) (Accounts, error) {
-	return m.Accounts, m.Service.Accounts().Load(m.Accounts, keys...)
+	return m.Accounts, m.Service.Accounts().Load(&m.Accounts, keys...)
 }
 func (m *Members) LoadRoles(keys ...string) (Roles, error) {
-	return m.Roles, m.Service.Roles().Load(m.Roles, keys...)
+	return m.Roles, m.Service.Roles().Load(&m.Roles, keys...)
 }
 func (m *Members) LoadData(field string, keys ...string) (cachedmap.CachedMap, error) {
 	return m.Dataset[field], m.Service.Data().Load(field, m.Dataset[field], keys...)

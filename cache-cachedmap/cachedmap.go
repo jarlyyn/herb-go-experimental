@@ -11,19 +11,22 @@ type CachedMap interface {
 	LoadMapElements(keys ...string) error
 }
 
-func unmarshalMapElement(mapvalue reflect.Value, creator func(string) error, key string, data []byte) (err error) {
+func unmarshalMapElement(cm interface{}, creator func(string) error, key string, data []byte) (err error) {
 	err = creator(key)
 	if err != nil {
 		return err
 	}
-	var v = reflect.New(mapvalue.Type().Elem())
-	var vi = v.Interface()
-	// var v = mapvalue.MapIndex(reflect.ValueOf(key)).Addr().Interface()
-	err = cache.UnmarshalMsgpack(data, &vi)
+	var mapvalue = reflect.Indirect(reflect.ValueOf(cm))
+	// var v = reflect.New(mapvalue.Type().Elem())
+	// var vi = v.Interface()
+	var v = mapvalue.MapIndex(reflect.ValueOf(key))
+	var vp = reflect.New(v.Type())
+	vp.Elem().Set(v)
+	err = cache.UnmarshalMsgpack(data, vp.Interface())
 	if err != nil {
 		return err
 	}
-	mapvalue.SetMapIndex(reflect.ValueOf(key), v.Elem())
+	mapvalue.SetMapIndex(reflect.ValueOf(key), vp.Elem())
 	return nil
 }
 func Load(cm interface{}, c cache.Cacheable, loader func(keys ...string) error, creator func(string) error, keys ...string) error {
@@ -59,7 +62,7 @@ func Load(cm interface{}, c cache.Cacheable, loader func(keys ...string) error, 
 			uncachedKeys[uncachedKeysLength] = k
 			uncachedKeysLength++
 		} else {
-			err = unmarshalMapElement(mapvalue, creator, k, results[k])
+			err = unmarshalMapElement(cm, creator, k, results[k])
 			if err != nil {
 				return err
 			}

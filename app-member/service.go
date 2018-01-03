@@ -145,7 +145,8 @@ func (s *Service) Logout(r *http.Request) error {
 
 func (s *Service) Authorizer(rs role.RuleService) user.Authorizer {
 	return &Authorizer{
-		Service: s,
+		Service:     s,
+		RuleService: rs,
 	}
 }
 func (s *Service) LoginRequiredMiddleware(unauthorizedAction http.HandlerFunc) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

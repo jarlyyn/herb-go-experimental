@@ -12,14 +12,14 @@ type ServiceAccounts struct {
 	service *Service
 }
 
-func (s *ServiceAccounts) loader(accounts Accounts) func(keys ...string) error {
+func (s *ServiceAccounts) loader(accounts *Accounts) func(keys ...string) error {
 	return func(keys ...string) error {
 		data, err := s.service.AccountsService.Accounts(keys...)
 		if err != nil {
 			return err
 		}
 		for k := range data {
-			accounts[k] = data[k]
+			(*accounts)[k] = data[k]
 		}
 		return nil
 	}
@@ -32,13 +32,13 @@ func (s *ServiceAccounts) Cache() cache.Cacheable {
 func (s *ServiceAccounts) Clean(uid string) error {
 	return s.Cache().Del(uid)
 }
-func (s *ServiceAccounts) Load(accounts Accounts, keys ...string) error {
+func (s *ServiceAccounts) Load(accounts *Accounts, keys ...string) error {
 	return cachedmap.Load(
 		accounts,
 		s.Cache(),
 		s.loader(accounts),
 		func(key string) error {
-			accounts[key] = user.UserAccounts{}
+			(*accounts)[key] = user.UserAccounts{}
 			return nil
 		},
 		keys...,

@@ -1,6 +1,7 @@
 package cachedmap
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -185,6 +186,11 @@ func TestMapLoad(t *testing.T) {
 	if val := tm[valueKeyChanged].Keyword; val != creatorKeyword {
 		t.Error(val)
 	}
+	var tm2 = testmodelmap{}
+	err = Load(&tm2, c, loader(&tm2), creator(&tm2), valueKeyAadditional, valueKeyChanged)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestMapNodeLoad(t *testing.T) {
@@ -237,6 +243,11 @@ func TestMapNodeLoad(t *testing.T) {
 	}
 	if val := tm[valueKeyChanged].Keyword; val != creatorKeyword {
 		t.Error(val)
+	}
+	var tm2 = testmodelmap{}
+	err = Load(&tm2, c, loader(&tm2), creator(&tm2), valueKeyAadditional, valueKeyChanged)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -308,7 +319,9 @@ func (m *teststringmap) LoadMapElements(keys ...string) error {
 	return nil
 }
 func TestString(t *testing.T) {
+	var emptyKey = "empty"
 	rawString = map[string]string{
+		emptyKey:            "",
 		valueKey:            valueKey,
 		valueKeyAadditional: valueKeyAadditional,
 		valueKeyChanged:     valueKeyChanged,
@@ -316,6 +329,21 @@ func TestString(t *testing.T) {
 	c := newTestCache(3600).Collection("test")
 	var err error
 	var tm = teststringmap{}
+	err = LoadCachedMap(&tm, c, valueKey, valueKeyAadditional, emptyKey, valueKeyChanged)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if val := tm[valueKey]; val != valueKey {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional]; val != valueKeyAadditional {
+		t.Error(val)
+	}
+	if val := tm[emptyKey]; val != "" {
+		t.Error(val)
+	}
+
 	err = LoadCachedMap(&tm, c, valueKey, valueKeyAadditional)
 	if err != nil {
 		t.Fatal(err)
@@ -327,16 +355,62 @@ func TestString(t *testing.T) {
 	if val := tm[valueKeyAadditional]; val != valueKeyAadditional {
 		t.Error(val)
 	}
+	var tm2 = teststringmap{}
+	err = LoadCachedMap(&tm2, c, valueKey, valueKeyAadditional, valueKeyChanged)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+}
+
+var rawBytes map[string][]byte
+
+type testbytesmap map[string][]byte
+
+func (m *testbytesmap) NewMapElement(key string) error {
+	(*m)[key] = []byte{}
+	return nil
+}
+func (m *testbytesmap) LoadMapElements(keys ...string) error {
+	for _, v := range keys {
+		(*m)[v] = rawBytes[v]
+	}
+	return nil
+}
+func TestBytes(t *testing.T) {
+	rawBytes = map[string][]byte{
+		valueKey:            []byte(valueKey),
+		valueKeyAadditional: []byte(valueKeyAadditional),
+		valueKeyChanged:     []byte(valueKeyChanged),
+	}
+	c := newTestCache(3600).Collection("test")
+	var err error
+	var tm = testbytesmap{}
 	err = LoadCachedMap(&tm, c, valueKey, valueKeyAadditional)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if val := tm[valueKey]; val != valueKey {
+	if val := tm[valueKey]; bytes.Compare(val, []byte(valueKey)) != 0 {
 		t.Error(val)
 	}
-	if val := tm[valueKeyAadditional]; val != valueKeyAadditional {
+	if val := tm[valueKeyAadditional]; bytes.Compare(val, []byte(valueKeyAadditional)) != 0 {
 		t.Error(val)
+	}
+	err = LoadCachedMap(&tm, c, valueKey, valueKeyAadditional)
+	if err != nil {
+		t.Fatal(err)
 	}
 
+	if val := tm[valueKey]; bytes.Compare(val, []byte(valueKey)) != 0 {
+		t.Error(val)
+	}
+	if val := tm[valueKeyAadditional]; bytes.Compare(val, []byte(valueKeyAadditional)) != 0 {
+		t.Error(val)
+	}
+	var tm2 = testbytesmap{}
+	err = LoadCachedMap(&tm2, c, valueKey, valueKeyAadditional)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

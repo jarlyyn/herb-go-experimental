@@ -15,14 +15,14 @@ type ServiceBanned struct {
 	service *Service
 }
 
-func (s *ServiceBanned) Load(bannedMap BannedMap, keys ...string) error {
+func (s *ServiceBanned) Load(bannedMap *BannedMap, keys ...string) error {
 	return cachedmap.Load(
 		bannedMap,
 		s.Cache(),
 		s.loader(bannedMap),
 		func(key string) error {
 			var val = false
-			bannedMap[key] = val
+			(*bannedMap)[key] = val
 			return nil
 		},
 		keys...,
@@ -44,14 +44,14 @@ func (s *ServiceBanned) Ban(uid string, banned bool) error {
 	return s.service.BannedService.Ban(uid, banned)
 }
 
-func (s *ServiceBanned) loader(bannedMap BannedMap) func(keys ...string) error {
+func (s *ServiceBanned) loader(bannedMap *BannedMap) func(keys ...string) error {
 	return func(keys ...string) error {
 		data, err := s.service.BannedService.Banned(keys...)
 		if err != nil {
 			return err
 		}
 		for k := range data {
-			bannedMap[k] = data[k]
+			(*bannedMap)[k] = data[k]
 		}
 		return nil
 	}

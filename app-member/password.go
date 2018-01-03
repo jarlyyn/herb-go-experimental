@@ -16,7 +16,7 @@ func (s *ServicePassword) UpdatePassword(uid string, password string) error {
 func (s *ServicePassword) VerifyPassword(uid string, password string) (bool, error) {
 	if s.service.BannedService != nil {
 		bannedMap := BannedMap{}
-		err := s.service.Banned().Load(bannedMap, uid)
+		err := s.service.Banned().Load(&bannedMap, uid)
 		if err != nil {
 			return false, err
 		}
