@@ -118,29 +118,29 @@ func initRouter(service *Service, router *httprouter.Router) {
 		HandleFunc(actionMember)
 
 }
-func initService(service *Service) {
+func testService() *Service {
+
 	var store = session.NewClientStore([]byte("12345"), -1)
-	service.SessionStore = store
 	config := json.RawMessage("{\"Size\": 10000000}")
 	c := cache.New()
 	err := c.Open("freecache", config, -1)
 	if err != nil {
 		panic(err)
 	}
-	service.Cache = c
+	service = NewWithSubCache(store, c)
 	service.AccountsService = newTestAccountService()
 	service.BannedService = newTestBannedService()
 	service.RevokeService = newTestRevokeService()
 	service.PasswordService = newTestPasswordService()
 	service.RoleService = newTestRoleService()
 	service.RegisterData(dataProfileKey, *newTestUesrProfiles())
+	return service
 }
 func TestService(t *testing.T) {
 	var accountNormalUser = "normalUserAccount"
 	var accountNew = "accountNew"
 	var password = "password"
-	service = &Service{}
-	initService(service)
+	service = testService()
 	var app = middleware.New()
 	app.Use(service.SessionStore.CookieMiddleware())
 	var router = httprouter.New()

@@ -26,7 +26,7 @@ func (s *ServiceAccounts) loader(accounts *Accounts) func(keys ...string) error 
 }
 
 func (s *ServiceAccounts) Cache() cache.Cacheable {
-	return cache.NewNode(s.service.Cache, prefixCacheAccount)
+	return s.service.AccountsCache
 }
 
 func (s *ServiceAccounts) Clean(uid string) error {

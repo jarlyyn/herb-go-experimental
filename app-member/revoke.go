@@ -16,7 +16,7 @@ type RevokeService interface {
 }
 
 func (s *ServiceRevoke) Cache() cache.Cacheable {
-	return cache.NewNode(s.service.Cache, prefixCacheRevoke)
+	return s.service.RevokeCache
 }
 
 func (s *ServiceRevoke) Clean(uid string) error {

@@ -30,7 +30,7 @@ func (s *ServiceBanned) Load(bannedMap *BannedMap, keys ...string) error {
 }
 
 func (s *ServiceBanned) Cache() cache.Cacheable {
-	return cache.NewNode(s.service.Cache, prefixCacheBanned)
+	return s.service.BannedCache
 }
 
 func (s *ServiceBanned) Clean(uid string) error {

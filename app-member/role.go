@@ -29,7 +29,7 @@ func (s *ServiceRole) Load(roles *Roles, keys ...string) error {
 }
 
 func (s *ServiceRole) Cache() cache.Cacheable {
-	return cache.NewNode(s.service.Cache, prefixCacheRole)
+	return s.service.RoleCache
 }
 
 func (s *ServiceRole) Clean(uid string) error {

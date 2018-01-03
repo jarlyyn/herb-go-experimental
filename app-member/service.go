@@ -1,6 +1,7 @@
 package member
 
 import (
+	"encoding/json"
 	"net/http"
 	"reflect"
 
@@ -33,13 +34,17 @@ type Service struct {
 	SessionUIDFieldName    string
 	SessionRevokeFieldName string
 	ContextName            ContextType
-	Cache                  cache.Cacheable
 	BannedService          BannedService
+	BannedCache            cache.Cacheable
 	AccountsService        AccountsService
+	AccountsCache          cache.Cacheable
 	RevokeService          RevokeService
+	RevokeCache            cache.Cacheable
 	PasswordService        PasswordService
 	RoleService            RolesService
+	RoleCache              cache.Cacheable
 	DataServices           map[string]reflect.Type
+	DataCache              cache.Cacheable
 }
 
 func (s *Service) Accounts() *ServiceAccounts {
@@ -190,4 +195,34 @@ func (s *Service) Login(r *http.Request, id string) error {
 		}
 	}
 	return nil
+}
+
+var dummyCache = cache.New()
+
+func New(store *session.Store) *Service {
+	return &Service{
+		SessionStore:  store,
+		BannedCache:   dummyCache,
+		AccountsCache: dummyCache,
+		RevokeCache:   dummyCache,
+		RoleCache:     dummyCache,
+		DataCache:     dummyCache,
+	}
+}
+
+func NewWithSubCache(store *session.Store, c cache.Cacheable) *Service {
+	var s = New(store)
+	s.BannedCache = cache.NewNode(c, prefixCacheBanned)
+	s.AccountsCache = cache.NewNode(c, prefixCacheAccount)
+	s.RevokeCache = cache.NewNode(c, prefixCacheRevoke)
+	s.RoleCache = cache.NewNode(c, prefixCacheRole)
+	s.DataCache = cache.NewNode(c, prefixCacheData)
+	return s
+}
+
+func init() {
+	var err = dummyCache.Open("dummycache", json.RawMessage(""), 1)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -10,8 +10,7 @@ type ServiceData struct {
 }
 
 func (s *ServiceData) Cache(field string) cache.Cacheable {
-	c := cache.NewNode(s.service.Cache, prefixCacheData)
-	return cache.NewNode(c, field)
+	return cache.NewNode(s.service.DataCache, field)
 }
 func (s *ServiceData) Clean(field string, uid string) error {
 	return s.Cache(field).Del(uid)
