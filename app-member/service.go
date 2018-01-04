@@ -45,8 +45,26 @@ type Service struct {
 	RoleCache              cache.Cacheable
 	DataServices           map[string]reflect.Type
 	DataCache              cache.Cacheable
+	AccountTypes           map[string]user.AccountType
 }
 
+type Installable interface {
+	InstallToService(service *Service)
+}
+
+func (s *Service) RegisterAccountType(keyword string, t user.AccountType) {
+	s.AccountTypes[keyword] = t
+}
+func (s *Service) Install(i Installable) {
+	i.InstallToService(s)
+}
+func (s *Service) NewAccount(keyword string, account string) (*user.UserAccount, error) {
+	accountType, ok := s.AccountTypes[keyword]
+	if ok == false {
+		return nil, ErrAccountKeywordNotRegistered
+	}
+	return accountType.NewAccount(keyword, account)
+}
 func (s *Service) Accounts() *ServiceAccounts {
 	return &ServiceAccounts{
 		service: s,
@@ -207,6 +225,8 @@ func New(store *session.Store) *Service {
 		RevokeCache:   dummyCache,
 		RoleCache:     dummyCache,
 		DataCache:     dummyCache,
+		DataServices:  map[string]reflect.Type{},
+		AccountTypes:  map[string]user.AccountType{},
 	}
 }
 

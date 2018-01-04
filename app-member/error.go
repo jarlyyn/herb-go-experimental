@@ -9,3 +9,5 @@ var ErrAccountRegisterExists = errors.New("account registered exists")
 var ErrUserBanned = errors.New("user banned")
 
 var ErrFeatureNotSupported = errors.New("feature not supported")
+
+var ErrAccountKeywordNotRegistered = errors.New("account keyword not regietered")

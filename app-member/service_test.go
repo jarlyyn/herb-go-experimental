@@ -9,10 +9,14 @@ type testAccountService struct {
 }
 
 func newTestAccount(uid string) *user.UserAccount {
-	return &user.UserAccount{
-		Keyword: "test",
-		Account: uid,
+	account, err := service.NewAccount("test", uid)
+	if err != nil {
+		panic(err)
 	}
+	return account
+}
+func (s *testAccountService) InstallToService(service *Service) {
+	service.AccountsService = s
 }
 func (s *testAccountService) Accounts(uid ...string) (Accounts, error) {
 	var a = map[string]user.UserAccounts{}
@@ -88,6 +92,9 @@ type testRevokeService struct {
 	Tokens map[string]string
 }
 
+func (s *testRevokeService) InstallToService(service *Service) {
+	service.RevokeService = s
+}
 func (s *testRevokeService) RevokeTokens(uid ...string) (RevokeTokens, error) {
 	var r = RevokeTokens{}
 	for _, v := range uid {
@@ -109,6 +116,10 @@ func newTestRevokeService() *testRevokeService {
 
 type testBannedService struct {
 	BannedMap BannedMap
+}
+
+func (s *testBannedService) InstallToService(service *Service) {
+	service.BannedService = s
 }
 
 func (s *testBannedService) Banned(uid ...string) (BannedMap, error) {
@@ -134,6 +145,9 @@ type testPasswordService struct {
 	Passwords map[string]string
 }
 
+func (s *testPasswordService) InstallToService(service *Service) {
+	service.PasswordService = s
+}
 func (s *testPasswordService) VerifyPassword(uid string, password string) (bool, error) {
 
 	pass := s.Passwords[uid]
@@ -175,6 +189,9 @@ func newTestUesrProfiles() *userProfiles {
 
 type testRoleService Roles
 
+func (s *testRoleService) InstallToService(service *Service) {
+	service.RoleService = s
+}
 func (s *testRoleService) Roles(uid ...string) (Roles, error) {
 	r := Roles{}
 	for _, v := range uid {

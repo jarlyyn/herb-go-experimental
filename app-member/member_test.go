@@ -128,12 +128,13 @@ func testService() *Service {
 		panic(err)
 	}
 	service = NewWithSubCache(store, c)
-	service.AccountsService = newTestAccountService()
-	service.BannedService = newTestBannedService()
-	service.RevokeService = newTestRevokeService()
-	service.PasswordService = newTestPasswordService()
-	service.RoleService = newTestRoleService()
+	service.Install(newTestAccountService())
+	service.Install(newTestBannedService())
+	service.Install(newTestRevokeService())
+	service.Install(newTestPasswordService())
+	service.Install(newTestRoleService())
 	service.RegisterData(dataProfileKey, *newTestUesrProfiles())
+	service.RegisterAccountType("test", user.CaseSensitiveAcountType)
 	return service
 }
 func TestService(t *testing.T) {

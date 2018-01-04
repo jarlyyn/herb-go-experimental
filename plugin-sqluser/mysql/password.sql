@@ -1,5 +1,5 @@
 CREATE TABLE password(
-    user_id VARCHAR(255) not null,
+    uid VARCHAR(255) not null,
     hash_method VARCHAR(255),
     salt VARCHAR(255) not null,
     password VARCHAR(255)
