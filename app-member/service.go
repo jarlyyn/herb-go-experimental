@@ -18,12 +18,12 @@ import (
 
 const prefixCacheBanned = "B"
 const prefixCacheAccount = "A"
-const prefixCacheRevoke = "V"
+const prefixCacheToken = "T"
 const prefixCacheData = "D"
 const prefixCacheRole = "R"
 
 const DefaultSessionUIDFieldName = "herb-member-uid"
-const DefaultSessionRevokeFieldName = "herb-member-revoke"
+const DefaultSessionMemberTokenFieldName = "herb-member-token"
 
 type ContextType string
 
@@ -32,14 +32,14 @@ var DefaultContextName = ContextType("members")
 type Service struct {
 	SessionStore           *session.Store
 	SessionUIDFieldName    string
-	SessionRevokeFieldName string
+	SessionMemberFieldName string
 	ContextName            ContextType
 	BannedService          BannedService
 	BannedCache            cache.Cacheable
 	AccountsService        AccountsService
 	AccountsCache          cache.Cacheable
-	RevokeService          RevokeService
-	RevokeCache            cache.Cacheable
+	TokenService           TokenService
+	TokenCache             cache.Cacheable
 	PasswordService        PasswordService
 	RoleService            RolesService
 	RoleCache              cache.Cacheable
@@ -82,8 +82,8 @@ func (s *Service) Banned() *ServiceBanned {
 	}
 }
 
-func (s *Service) Revoke() *ServiceRevoke {
-	return &ServiceRevoke{
+func (s *Service) Token() *ServiceToken {
+	return &ServiceToken{
 		service: s,
 	}
 }
@@ -133,10 +133,10 @@ func (s *Service) UIDField() *session.Field {
 	}
 	return s.SessionStore.Field(fieldName)
 }
-func (s *Service) RevokeField() *session.Field {
-	var fieldName = s.SessionRevokeFieldName
+func (s *Service) MemberTokenField() *session.Field {
+	var fieldName = s.SessionMemberFieldName
 	if fieldName == "" {
-		fieldName = DefaultSessionRevokeFieldName
+		fieldName = DefaultSessionMemberTokenFieldName
 	}
 	return s.SessionStore.Field(fieldName)
 }
@@ -149,17 +149,17 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 		return "", nil
 	}
 	var members = s.GetMembersFromRequest(r)
-	if s.RevokeService != nil {
-		_, err = members.LoadRevokeTokens(uid)
+	if s.TokenService != nil {
+		_, err = members.LoadTokens(uid)
 		if err != nil {
 			return "", err
 		}
-		var revoke string
-		err = s.RevokeField().Get(r, &revoke)
+		var token string
+		err = s.MemberTokenField().Get(r, &token)
 		if err != nil {
 			return "", err
 		}
-		if revoke != members.RevokeTokens[uid] {
+		if token != members.Tokens[uid] {
 			return "", nil
 		}
 	}
@@ -201,13 +201,13 @@ func (s *Service) Login(r *http.Request, id string) error {
 	if err != nil {
 		return err
 	}
-	if s.RevokeService != nil {
+	if s.TokenService != nil {
 		member := s.GetMembersFromRequest(r)
-		tokens, err := member.LoadRevokeTokens(id)
+		tokens, err := member.LoadTokens(id)
 		if err != nil {
 			return err
 		}
-		err = s.RevokeField().Set(r, tokens[id])
+		err = s.MemberTokenField().Set(r, tokens[id])
 		if err != nil {
 			return err
 		}
@@ -222,7 +222,7 @@ func New(store *session.Store) *Service {
 		SessionStore:  store,
 		BannedCache:   dummyCache,
 		AccountsCache: dummyCache,
-		RevokeCache:   dummyCache,
+		TokenCache:    dummyCache,
 		RoleCache:     dummyCache,
 		DataCache:     dummyCache,
 		DataServices:  map[string]reflect.Type{},
@@ -234,7 +234,7 @@ func NewWithSubCache(store *session.Store, c cache.Cacheable) *Service {
 	var s = New(store)
 	s.BannedCache = cache.NewNode(c, prefixCacheBanned)
 	s.AccountsCache = cache.NewNode(c, prefixCacheAccount)
-	s.RevokeCache = cache.NewNode(c, prefixCacheRevoke)
+	s.TokenCache = cache.NewNode(c, prefixCacheToken)
 	s.RoleCache = cache.NewNode(c, prefixCacheRole)
 	s.DataCache = cache.NewNode(c, prefixCacheData)
 	return s

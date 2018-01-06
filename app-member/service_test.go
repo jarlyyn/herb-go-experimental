@@ -88,29 +88,29 @@ func newTestAccountService() *testAccountService {
 	}
 }
 
-type testRevokeService struct {
-	Tokens map[string]string
+type testTokenService struct {
+	MemberTokens map[string]string
 }
 
-func (s *testRevokeService) InstallToService(service *Service) {
-	service.RevokeService = s
+func (s *testTokenService) InstallToService(service *Service) {
+	service.TokenService = s
 }
-func (s *testRevokeService) RevokeTokens(uid ...string) (RevokeTokens, error) {
-	var r = RevokeTokens{}
+func (s *testTokenService) Tokens(uid ...string) (Tokens, error) {
+	var r = Tokens{}
 	for _, v := range uid {
-		r[v] = s.Tokens[v]
+		r[v] = s.MemberTokens[v]
 	}
 	return r, nil
 
 }
-func (s *testRevokeService) Revoke(uid string) (string, error) {
+func (s *testTokenService) Revoke(uid string) (string, error) {
 	var ts = strconv.FormatInt(time.Now().UnixNano(), 10)
-	s.Tokens[uid] = ts
+	s.MemberTokens[uid] = ts
 	return ts, nil
 }
-func newTestRevokeService() *testRevokeService {
-	return &testRevokeService{
-		Tokens: map[string]string{},
+func newTestTokenService() *testTokenService {
+	return &testTokenService{
+		MemberTokens: map[string]string{},
 	}
 }
 

@@ -47,7 +47,7 @@ func actionEcho(w http.ResponseWriter, r *http.Request) {
 type memberResult struct {
 	Accounts user.UserAccounts
 	Banned   bool
-	Revoke   string
+	Token    string
 	Role     role.Roles
 	Profile  user.Profile
 }
@@ -69,11 +69,11 @@ func actionMember(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	result.Banned = banned[uid]
-	revoke, err := member.LoadRevokeTokens(uid)
+	token, err := member.LoadTokens(uid)
 	if err != nil {
 		panic(err)
 	}
-	result.Revoke = revoke[uid]
+	result.Token = token[uid]
 	roles, err := member.LoadRoles(uid)
 	if err != nil {
 		panic(err)
@@ -130,7 +130,7 @@ func testService() *Service {
 	service = NewWithSubCache(store, c)
 	service.Install(newTestAccountService())
 	service.Install(newTestBannedService())
-	service.Install(newTestRevokeService())
+	service.Install(newTestTokenService())
 	service.Install(newTestPasswordService())
 	service.Install(newTestRoleService())
 	service.RegisterData(dataProfileKey, *newTestUesrProfiles())
@@ -213,7 +213,7 @@ func TestService(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Error(resp.StatusCode)
 	}
-	_, err = service.RevokeService.Revoke(uid)
+	_, err = service.TokenService.Revoke(uid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +229,7 @@ func TestService(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Error(resp.StatusCode)
 	}
-	revoketoken, err := service.Revoke().Revoke(uid)
+	token, err := service.Token().Revoke(uid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -415,8 +415,8 @@ func TestService(t *testing.T) {
 	if memberresult.Banned != false {
 		t.Error(memberresult.Banned)
 	}
-	if memberresult.Revoke != revoketoken {
-		t.Error(memberresult.Revoke)
+	if memberresult.Token != token {
+		t.Error(memberresult.Token)
 	}
 	if len(memberresult.Role) != 2 {
 		t.Error(memberresult.Role)
