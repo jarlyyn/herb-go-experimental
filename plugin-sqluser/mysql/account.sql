@@ -6,6 +6,7 @@ CREATE TABLE account(
     COLLATE utf8_bin
     not null,
     created_time BIGINT not null,
-    PRIMARY KEY(keyword,account)
-  
+    PRIMARY KEY(keyword,account),
+    index (uid),
+    index (created_time,uid)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE=InnoDB;

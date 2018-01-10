@@ -6,6 +6,6 @@ CREATE TABLE password(
     CHARACTER SET utf8 
     COLLATE utf8_bin    
     not null,
-    created_time BIGINT not null,
-    PRIMARY KEY(id)    
+    updated_time BIGINT not null,
+    PRIMARY KEY(uid)    
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE=InnoDB; 
