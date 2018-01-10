@@ -44,6 +44,8 @@ var HashFuncMap = map[string]HashFunc{
 		var val = []byte(key + salt + password)
 		var s256 = sha256.New()
 		s256.Write(val)
+		val = s256.Sum(nil)
+		s256.Write(val)
 		return []byte(hex.EncodeToString(s256.Sum(nil))), nil
 	},
 }
@@ -138,7 +140,7 @@ func (a *AccountDataMapper) Unbind(uid string, account user.UserAccount) error {
 		return err
 	}
 	defer stmt.Rollback()
-	_, err = stmt.Exec("DELETE From "+a.DBTableName()+"WHERE uid=? and keyword=? and account=?", uid, account.Keyword, account.Account)
+	_, err = stmt.Exec("DELETE From "+a.DBTableName()+" WHERE uid=? and keyword=? and account=?", uid, account.Keyword, account.Account)
 	if err != nil {
 		return err
 	}
@@ -153,11 +155,17 @@ func (a *AccountDataMapper) Bind(uid string, account user.UserAccount) error {
 	}
 	defer stmt.Rollback()
 	var u = ""
-	row := stmt.QueryRow("SELECT uid from " + a.DBTableName() + "where keyword= ? and account = ?")
+	row := stmt.QueryRow("SELECT uid from "+a.DBTableName()+" where keyword= ? and account = ?", account.Keyword, account.Account)
 	err = row.Scan(&u)
 	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+	} else {
 		return user.ErrAccountBindExists
+
 	}
+
 	var CreatedTime = time.Now().Unix()
 	_, err = stmt.Exec("Insert Into "+a.DBTableName()+" (uid,keyword,account,created_time) VALUES(?,?,?,?)", uid, account.Keyword, account.Account, CreatedTime)
 	if err != nil {
@@ -192,7 +200,7 @@ func (a *AccountDataMapper) FindOrInsert(UIDGenerater func() (string, error), ac
 			return "", err
 		}
 	}
-	return uid, nil
+	return uid, stmt.Commit()
 }
 func (a *AccountDataMapper) Insert(uid string, keyword string, account string) error {
 	stmt, err := a.DB().Beginx()
@@ -201,9 +209,13 @@ func (a *AccountDataMapper) Insert(uid string, keyword string, account string) e
 	}
 	defer stmt.Rollback()
 	var u = ""
-	row := stmt.QueryRow("SELECT uid from " + a.DBTableName() + "where keyword= ? and account = ?")
+	row := stmt.QueryRow("SELECT uid from "+a.DBTableName()+" where keyword= ? and account = ?", keyword, account)
 	err = row.Scan(&u)
 	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+	} else {
 		return member.ErrAccountRegisterExists
 	}
 	var CreatedTime = time.Now().Unix()
@@ -233,7 +245,12 @@ func (a *AccountDataMapper) FindAllByUID(uids ...string) ([]AccountModel, error)
 	if len(uids) == 0 {
 		return result, nil
 	}
-	rows, err := a.DB().Queryx("SELECT uid,keyword,account from "+a.DBTableName()+" where uid IN (?) ", uids)
+	query, args, err := sqlx.In("SELECT uid,keyword,account from "+a.DBTableName()+" where uid IN (?) ", uids)
+	if err != nil {
+		return nil, err
+	}
+	query = a.DB().Rebind(query)
+	rows, err := a.DB().Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +343,7 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 	if affected != 0 {
 		return stmt.Commit()
 	}
-	_, err = stmt.Exec("Insert Into "+p.DBTableName()+" (uid,hash_method,salt,password,updated_time) VALUES(?,?,?)", model.UID, model.HashMethod, model.Salt, model.Password, model.UpdatedTime)
+	_, err = stmt.Exec("Insert Into "+p.DBTableName()+" (uid,hash_method,salt,password,updated_time) VALUES(?,?,?,?,?)", model.UID, model.HashMethod, model.Salt, model.Password, model.UpdatedTime)
 	if err != nil {
 		return err
 	}
@@ -412,7 +429,12 @@ func (t *TokenDataMapper) FindAllByUID(uids ...string) ([]TokenModel, error) {
 	if len(uids) == 0 {
 		return result, nil
 	}
-	rows, err := t.DB().Queryx("SELECT uid,token from "+t.DBTableName()+" where uid IN (?) ", uids)
+	query, args, err := sqlx.In("SELECT uid,token from "+t.DBTableName()+" where uid IN (?) ", uids)
+	if err != nil {
+		return nil, err
+	}
+	query = t.DB().Rebind(query)
+	rows, err := t.DB().Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +484,13 @@ func (u *UserDataMapper) FindAllByUID(uids ...string) ([]UserModel, error) {
 	if len(uids) == 0 {
 		return result, nil
 	}
-	rows, err := u.DB().Queryx("SELECT uid,status from "+u.DBTableName()+" where uid IN (?) ", uids)
+	query, args, err := sqlx.In("SELECT uid,status from "+u.DBTableName()+" where uid IN (?) ", uids)
+	if err != nil {
+		return nil, err
+	}
+	query = u.DB().Rebind(query)
+	rows, err := u.DB().Query(query, args...)
+
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +524,7 @@ func (u *UserDataMapper) InsertOrUpdate(uid string, status int) error {
 	if affected != 0 {
 		return stmt.Commit()
 	}
-	_, err = stmt.Exec("Insert Into "+u.DBTableName()+" (uid,token,updated_time,created_time) VALUES(?,?,?,?)", uid, status, CreatedTime, CreatedTime)
+	_, err = stmt.Exec("Insert Into "+u.DBTableName()+" (uid,status,updated_time,created_time) VALUES(?,?,?,?)", uid, status, CreatedTime, CreatedTime)
 	if err != nil {
 		return err
 	}
