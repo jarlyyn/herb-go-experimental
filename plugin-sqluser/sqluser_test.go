@@ -19,6 +19,15 @@ func InitDB() *sqlx.DB {
 	db.MustExec("TRUNCATE user")
 	return db
 }
+func TestInterface(t *testing.T) {
+	var U = New(nil, config.Prefix, FlagWithAccount|FlagWithPassword|FlagWithToken|FlagWithUser)
+	var service = member.New(nil)
+	service.Install(U.Account())
+	service.Install(U.Password())
+	service.Install(U.Token())
+	service.Install(U.User())
+}
+
 func TestSqluser(t *testing.T) {
 	var unusedUID = "-test"
 	var password = "password"

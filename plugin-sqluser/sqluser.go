@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"crypto/rand"
 	"crypto/sha256"
 
 	"github.com/herb-go/herb/user"
@@ -30,6 +31,7 @@ const (
 	UserStatusBanned = 1
 )
 
+var RandomBytesLength = 32
 var ErrHashMethodNotFound = errors.New("password hash method not found")
 
 type HashFunc func(key string, salt string, password string) ([]byte, error)
@@ -62,6 +64,7 @@ func New(db *sqlx.DB, prefix string, flag int) *User {
 		HashMethod:     DefaultHashMethod,
 		UIDGenerater:   UUID,
 		TokenGenerater: Timestamp,
+		SaltGenerater:  RandomBytes,
 		Flag:           flag,
 	}
 }
@@ -78,10 +81,19 @@ type User struct {
 	Flag           int
 	UIDGenerater   func() (string, error)
 	TokenGenerater func() (string, error)
+	SaltGenerater  func() (string, error)
 	HashMethod     string
 	PasswordKey    string
 }
 
+func RandomBytes() (string, error) {
+	var bytes = make([]byte, RandomBytesLength)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
 func UUID() (string, error) {
 	return uuid.NewV1().String(), nil
 }
@@ -131,7 +143,13 @@ func (u *User) User() *UserDataMapper {
 
 type AccountDataMapper struct {
 	datamapper.DataMapper
-	User *User
+	User    *User
+	Service *member.Service
+}
+
+func (a *AccountDataMapper) InstallToService(service *member.Service) {
+	service.AccountsService = a
+	a.Service = service
 }
 
 func (a *AccountDataMapper) Unbind(uid string, account user.UserAccount) error {
@@ -313,9 +331,14 @@ type AccountModel struct {
 }
 type PasswordDataMapper struct {
 	datamapper.DataMapper
-	User *User
+	User    *User
+	Service *member.Service
 }
 
+func (p *PasswordDataMapper) InstallToService(service *member.Service) {
+	service.PasswordService = p
+	p.Service = service
+}
 func (p *PasswordDataMapper) Find(uid string) (PasswordModel, error) {
 	var result = PasswordModel{}
 	if uid == "" {
@@ -368,7 +391,10 @@ func (p *PasswordDataMapper) VerifyPassword(uid string, password string) (bool, 
 	return bytes.Compare(hashed, model.Password) == 0, nil
 }
 func (p *PasswordDataMapper) UpdatePassword(uid string, password string) error {
-	salt := ""
+	salt, err := p.User.SaltGenerater()
+	if err != nil {
+		return err
+	}
 	hash := HashFuncMap[p.User.HashMethod]
 	if hash == nil {
 		return ErrHashMethodNotFound
@@ -397,7 +423,13 @@ type PasswordModel struct {
 
 type TokenDataMapper struct {
 	datamapper.DataMapper
-	User *User
+	User    *User
+	Service *member.Service
+}
+
+func (t *TokenDataMapper) InstallToService(service *member.Service) {
+	service.TokenService = t
+	t.Service = service
 }
 
 func (t *TokenDataMapper) InsertOrUpdate(uid string, token string) error {
@@ -476,7 +508,13 @@ type TokenModel struct {
 }
 type UserDataMapper struct {
 	datamapper.DataMapper
-	User *User
+	User    *User
+	Service *member.Service
+}
+
+func (u *UserDataMapper) InstallToService(service *member.Service) {
+	service.BannedService = u
+	u.Service = service
 }
 
 func (u *UserDataMapper) FindAllByUID(uids ...string) ([]UserModel, error) {
