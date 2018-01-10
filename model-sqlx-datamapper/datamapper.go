@@ -1,4 +1,4 @@
-package sqlxdatamapper
+package datamapper
 
 import (
 	"github.com/jmoiron/sqlx"

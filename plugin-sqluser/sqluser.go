@@ -12,7 +12,7 @@ import (
 
 	"github.com/herb-go/herb/user"
 	"github.com/jarlyyn/herb-go-experimental/app-member"
-	"github.com/jarlyyn/herb-go-experimental/sqlxdatamapper"
+	"github.com/jarlyyn/herb-go-experimental/model-sqlx-datamapper"
 	"github.com/jmoiron/sqlx"
 	"github.com/satori/go.uuid"
 )
@@ -50,7 +50,7 @@ var HashFuncMap = map[string]HashFunc{
 
 func New(db *sqlx.DB, prefix string, flag int) *User {
 	return &User{
-		DB: sqlxdatamapper.NewDB(db, prefix),
+		DB: datamapper.NewDB(db, prefix),
 		Tables: Tables{
 			AccountTableName:  DefaultAccountTableName,
 			PasswordTableName: DefaultPasswordTableName,
@@ -71,7 +71,7 @@ type Tables struct {
 	UserTableName     string
 }
 type User struct {
-	DB             sqlxdatamapper.DB
+	DB             datamapper.DB
 	Tables         Tables
 	Flag           int
 	UIDGenerater   func() (string, error)
@@ -103,32 +103,32 @@ func (u *User) UserTableName() string {
 }
 func (u *User) Account() *AccountDataMapper {
 	return &AccountDataMapper{
-		DataMapper: sqlxdatamapper.New(u.DB, u.Tables.AccountTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.AccountTableName),
 		User:       u,
 	}
 }
 
 func (u *User) Password() *PasswordDataMapper {
 	return &PasswordDataMapper{
-		DataMapper: sqlxdatamapper.New(u.DB, u.Tables.PasswordTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.PasswordTableName),
 		User:       u,
 	}
 }
 func (u *User) Token() *TokenDataMapper {
 	return &TokenDataMapper{
-		DataMapper: sqlxdatamapper.New(u.DB, u.Tables.TokenTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.TokenTableName),
 		User:       u,
 	}
 }
 func (u *User) User() *UserDataMapper {
 	return &UserDataMapper{
-		DataMapper: sqlxdatamapper.New(u.DB, u.Tables.UserTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.UserTableName),
 		User:       u,
 	}
 }
 
 type AccountDataMapper struct {
-	sqlxdatamapper.DataMapper
+	datamapper.DataMapper
 	User *User
 }
 
@@ -295,7 +295,7 @@ type AccountModel struct {
 	CreatedTime int64
 }
 type PasswordDataMapper struct {
-	sqlxdatamapper.DataMapper
+	datamapper.DataMapper
 	User *User
 }
 
@@ -379,7 +379,7 @@ type PasswordModel struct {
 }
 
 type TokenDataMapper struct {
-	sqlxdatamapper.DataMapper
+	datamapper.DataMapper
 	User *User
 }
 
@@ -453,7 +453,7 @@ type TokenModel struct {
 	UpdatedTime string
 }
 type UserDataMapper struct {
-	sqlxdatamapper.DataMapper
+	datamapper.DataMapper
 	User *User
 }
 
