@@ -1,8 +1,22 @@
-package datamapper
+package xdatamapper
 
 import (
 	"github.com/jmoiron/sqlx"
 )
+
+type DBConfig struct {
+	Driver string
+	Conn   string
+	Prefix string
+}
+
+func (d *DBConfig) Open() (*sqlx.DB, error) {
+	return sqlx.Open(d.Driver, d.Conn)
+}
+
+func (d *DBConfig) MustOpen() *sqlx.DB {
+	return sqlx.MustOpen(d.Driver, d.Conn)
+}
 
 type DB interface {
 	SetDB(db *sqlx.DB)
