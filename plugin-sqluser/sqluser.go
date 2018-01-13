@@ -401,8 +401,8 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 		Add("password", model.Password).
 		Add("updated_time", model.UpdatedTime)
 	Update.Where.Condition = query.New("uid = ?", model.UID)
-	q := Update.Query()
-	r, err := stmt.Exec(q.QueryCommand(), q.QueryArgs()...)
+	r, err := Update.Query().Exec(stmt)
+
 	if err != nil {
 		return err
 	}
@@ -420,8 +420,7 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 		Add("salt", model.Salt).
 		Add("password", model.Password).
 		Add("updated_time", model.UpdatedTime)
-	q = Insert.Query()
-	_, err = stmt.Exec(q.QueryCommand(), q.QueryArgs()...)
+	_, err = Insert.Query().Exec(stmt)
 	if err != nil {
 		return err
 	}

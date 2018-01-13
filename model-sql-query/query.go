@@ -1,5 +1,9 @@
 package query
 
+import (
+	"database/sql"
+)
+
 type Query interface {
 	QueryCommand() string
 	QueryArgs() []interface{}
@@ -23,7 +27,9 @@ func (q *PlainQuery) QueryCommand() string {
 func (q *PlainQuery) QueryArgs() []interface{} {
 	return q.Args
 }
-
+func (q *PlainQuery) Exec(db DB) (sql.Result, error) {
+	return db.Exec(q.QueryCommand(), q.QueryArgs()...)
+}
 func NewFromQuery() *FromQuery {
 	return &FromQuery{
 		Tables: [][2]string{},
