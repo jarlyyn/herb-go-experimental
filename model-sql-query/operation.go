@@ -7,7 +7,7 @@ func conncatWith(separator string, q ...Query) *PlainQuery {
 		if command != "" {
 			query.Command += q[k].QueryCommand() + separator
 		}
-		query.Args = append(query.Args, q[k].QueryArgs())
+		query.Args = append(query.Args, q[k].QueryArgs()...)
 	}
 	if query.Command != "" {
 		query.Command = query.Command[:len(query.Command)-len(separator)]

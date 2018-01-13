@@ -13,6 +13,7 @@ import (
 
 	"github.com/herb-go/herb/user"
 	"github.com/jarlyyn/herb-go-experimental/app-member"
+	"github.com/jarlyyn/herb-go-experimental/model-sql-query"
 	"github.com/jarlyyn/herb-go-experimental/model-sqlxdatamapper"
 	"github.com/jmoiron/sqlx"
 	"github.com/satori/go.uuid"
@@ -158,7 +159,15 @@ func (a *AccountDataMapper) Unbind(uid string, account user.UserAccount) error {
 		return err
 	}
 	defer stmt.Rollback()
-	_, err = stmt.Exec("DELETE From "+a.DBTableName()+" WHERE uid=? and keyword=? and account=?", uid, account.Keyword, account.Account)
+	Delete := query.NewDelete(a.DBTableName())
+	Delete.Where.Condition = query.And(
+		query.New("account.uid = ?", uid),
+		query.New("account.keyword = ?", account.Keyword),
+		query.New("account.account = ?", account.Account),
+	)
+	Query := Delete.Query()
+	_, err = stmt.Exec(Query.Command, Query.QueryArgs()...)
+	// _, err = stmt.Exec("DELETE From "+a.DBTableName()+" WHERE uid=? and keyword=? and account=?", uid, account.Keyword, account.Account)
 	if err != nil {
 		return err
 	}

@@ -121,7 +121,8 @@ func (q *InsertQuery) QueryArgs() []interface{} {
 }
 
 type DeleteQuery struct {
-	Prefix *PlainQuery
+	TableName string
+	Prefix    *PlainQuery
 }
 
 func (q *DeleteQuery) QueryCommand() string {
@@ -130,6 +131,7 @@ func (q *DeleteQuery) QueryCommand() string {
 	if p != "" {
 		command += " " + p
 	}
+	command += " FROM " + q.TableName
 	return command
 }
 
@@ -137,9 +139,10 @@ func (q *DeleteQuery) QueryArgs() []interface{} {
 	return q.Prefix.QueryArgs()
 }
 
-func NewDeleteQuery() *DeleteQuery {
+func NewDeleteQuery(tableName string) *DeleteQuery {
 	return &DeleteQuery{
-		Prefix: New(""),
+		Prefix:    New(""),
+		TableName: tableName,
 	}
 }
 
@@ -296,10 +299,9 @@ func (s *Select) Query() *PlainQuery {
 	return Concat(s.Select, s.From, s.Where, s.Other)
 }
 
-func NewDelete(tableName string) *Delete {
+func NewDelete(TableName string) *Delete {
 	return &Delete{
-		Delete: NewDeleteQuery(),
-		From:   NewFromQuery(),
+		Delete: NewDeleteQuery(TableName),
 		Where:  NewWhereQuery(),
 		Other:  New(""),
 	}
@@ -307,13 +309,12 @@ func NewDelete(tableName string) *Delete {
 
 type Delete struct {
 	Delete *DeleteQuery
-	From   *FromQuery
 	Where  *WhereQurey
 	Other  *PlainQuery
 }
 
 func (d *Delete) Query() *PlainQuery {
-	return Concat(d.Delete, d.From, d.Where, d.Other)
+	return Concat(d.Delete, d.Where, d.Other)
 }
 
 type Insert struct {
