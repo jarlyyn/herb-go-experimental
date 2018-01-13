@@ -1,6 +1,7 @@
 package query
 
 import (
+	"reflect"
 	"strings"
 )
 
@@ -12,8 +13,13 @@ func NewValueList(data ...interface{}) *PlainQuery {
 	return New(command[:len(command)-3], data...)
 }
 
-func In(data ...interface{}) *PlainQuery {
+func In(field string, args interface{}) *PlainQuery {
+	var argsvalue = reflect.ValueOf(args)
+	var data = make([]interface{}, argsvalue.Len())
+	for k := range data {
+		data[k] = argsvalue.Index(k).Interface()
+	}
 	var query = NewValueList(data...)
-	query.Command = "IN ( " + query.Command + " )"
+	query.Command = field + " IN ( " + query.Command + " )"
 	return query
 }

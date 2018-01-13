@@ -35,7 +35,7 @@ type FromQuery struct {
 	Tables [][2]string
 }
 
-func (q *FromQuery) Add(tableName string, alias string) *FromQuery {
+func (q *FromQuery) Add(alias string, tableName string) *FromQuery {
 	q.Tables = append(q.Tables, [2]string{tableName, alias})
 	return q
 }
@@ -44,7 +44,7 @@ func (q *FromQuery) QueryCommand() string {
 	if len(q.Tables) == 0 {
 		return command
 	}
-	command = "From "
+	command = "FROM "
 	for k := range q.Tables {
 		command += q.Tables[k][0] + " as " + q.Tables[k][1] + " , "
 	}
@@ -62,6 +62,7 @@ type QueryData struct {
 
 func NewInsertQuery(tableName string) *InsertQuery {
 	return &InsertQuery{
+		Prefix:    New(""),
 		TableName: tableName,
 		Data:      []QueryData{},
 	}
@@ -148,6 +149,7 @@ func NewDeleteQuery(tableName string) *DeleteQuery {
 
 func NewUpdateQuery(tableName string) *UpdateQuery {
 	return &UpdateQuery{
+		Prefix:    New(""),
 		TableName: tableName,
 		Data:      []QueryData{},
 	}
@@ -174,7 +176,7 @@ func (q *UpdateQuery) QueryCommand() string {
 		command += " " + p
 	}
 	command += " " + q.TableName
-	command += " SET"
+	command += " SET "
 	var values = ""
 	for k := range q.Data {
 		values += q.Data[k].Field + " = "
@@ -239,26 +241,28 @@ func (q *SelectQuery) Result() *SelectResult {
 func NewSelectResult(fields []string) *SelectResult {
 	return &SelectResult{
 		Fields: fields,
-		Args:   make([]interface{}, len(fields)),
+		args:   make([]interface{}, len(fields)),
 	}
 
 }
 
 type SelectResult struct {
 	Fields []string
-	Args   []interface{}
+	args   []interface{}
 }
 
 func (r *SelectResult) Bind(field string, arg interface{}) *SelectResult {
 	for k := range r.Fields {
 		if r.Fields[k] == field {
-			r.Args[k] = arg
+			r.args[k] = arg
 			return r
 		}
 	}
 	return r
 }
-
+func (r *SelectResult) Args() []interface{} {
+	return r.args
+}
 func NewWhereQuery() *WhereQurey {
 	return &WhereQurey{
 		Condition: New(""),
@@ -279,7 +283,7 @@ func (q *WhereQurey) QueryCommand() string {
 func (q *WhereQurey) QueryArgs() []interface{} {
 	return q.Condition.QueryArgs()
 }
-func NewSelect(tableName string) *Select {
+func NewSelect() *Select {
 	return &Select{
 		Select: NewSelectQuery(),
 		From:   NewFromQuery(),
@@ -293,6 +297,10 @@ type Select struct {
 	From   *FromQuery
 	Where  *WhereQurey
 	Other  *PlainQuery
+}
+
+func (s *Select) Result() *SelectResult {
+	return s.Select.Result()
 }
 
 func (s *Select) Query() *PlainQuery {
@@ -317,6 +325,13 @@ func (d *Delete) Query() *PlainQuery {
 	return Concat(d.Delete, d.Where, d.Other)
 }
 
+func NewInsert(tableName string) *Insert {
+	return &Insert{
+		Insert: NewInsertQuery(tableName),
+		Other:  New(""),
+	}
+}
+
 type Insert struct {
 	Insert *InsertQuery
 	Other  *PlainQuery
@@ -324,6 +339,13 @@ type Insert struct {
 
 func (i *Insert) Query() *PlainQuery {
 	return Concat(i.Insert, i.Other)
+}
+func NewUpdate(tableName string) *Update {
+	return &Update{
+		Update: NewUpdateQuery(tableName),
+		Where:  NewWhereQuery(),
+		Other:  New(""),
+	}
 }
 
 type Update struct {

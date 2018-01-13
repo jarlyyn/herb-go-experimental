@@ -207,8 +207,22 @@ func (a *AccountDataMapper) FindOrInsert(UIDGenerater func() (string, error), ac
 		return "", err
 	}
 	defer stmt.Rollback()
-	row := a.DB().QueryRow("SELECT uid,keyword,account,created_time from "+a.DBTableName()+" where keyword= ? and account = ?", account.Keyword, account.Account)
-	err = row.Scan(&result.UID, &result.Keyword, &result.Account, &result.CreatedTime)
+	Select := query.NewSelect()
+	Select.From.Add("account", a.DBTableName())
+	Select.Select.Add("account.uid", "account.keyword", "account.account", "account.created_time")
+	Select.Where.Condition = query.And(
+		query.New("account.keyword = ?", account.Keyword),
+		query.New("account.account = ?", account.Account),
+	)
+	query := Select.Query()
+	row := a.DB().QueryRow(query.QueryCommand(), query.QueryArgs()...)
+	args := Select.Result().
+		Bind("account.uid", &result.UID).
+		Bind("account.keyword", &result.Keyword).
+		Bind("account.account", &result.Account).
+		Bind("account.created_time", &result.CreatedTime).
+		Args()
+	err = row.Scan(args...)
 	if err == nil {
 		return result.UID, nil
 	}
@@ -272,19 +286,24 @@ func (a *AccountDataMapper) FindAllByUID(uids ...string) ([]AccountModel, error)
 	if len(uids) == 0 {
 		return result, nil
 	}
-	query, args, err := sqlx.In("SELECT uid,keyword,account from "+a.DBTableName()+" where uid IN (?) ", uids)
-	if err != nil {
-		return nil, err
-	}
-	query = a.DB().Rebind(query)
-	rows, err := a.DB().Query(query, args...)
+	Select := query.NewSelect()
+	Select.Select.Add("account.uid", "account.keyword", "account.account")
+	Select.From.Add("account", a.DBTableName())
+	Select.Where.Condition = query.In("account.uid", uids)
+	q := Select.Query()
+	rows, err := a.DB().Query(q.QueryCommand(), q.QueryArgs()...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		v := AccountModel{}
-		err = rows.Scan(&v.UID, &v.Keyword, &v.Account)
+		args := Select.Result().
+			Bind("account.uid", &v.UID).
+			Bind("account.keyword", &v.Keyword).
+			Bind("account.account", &v.Account).
+			Args()
+		err = rows.Scan(args...)
 		if err != nil {
 			return nil, err
 		}
@@ -353,9 +372,20 @@ func (p *PasswordDataMapper) Find(uid string) (PasswordModel, error) {
 	if uid == "" {
 		return result, sql.ErrNoRows
 	}
-	row := p.DB().QueryRow("SELECT hash_method,salt,password,updated_time from "+p.DBTableName()+" where uid= ? ", uid)
+	Select := query.NewSelect()
+	Select.Select.Add("password.hash_method", "password.salt", "password.password", "password.updated_time")
+	Select.From.Add("password", p.DBTableName())
+	Select.Where.Condition = query.New("uid = ?", uid)
+	q := Select.Query()
+	row := p.DB().QueryRow(q.QueryCommand(), q.QueryArgs()...)
 	result.UID = uid
-	err := row.Scan(&result.HashMethod, &result.Salt, &result.Password, &result.UpdatedTime)
+	args := Select.Result().
+		Bind("password.hash_method", &result.HashMethod).
+		Bind("password.salt", &result.Salt).
+		Bind("password.password", &result.Password).
+		Bind("password.updated_time", &result.UpdatedTime).
+		Args()
+	err := row.Scan(args...)
 	return result, err
 }
 func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
@@ -364,7 +394,15 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 		return err
 	}
 	defer stmt.Rollback()
-	r, err := stmt.Exec("UPDATE "+p.DBTableName()+" SET hash_method = ? ,salt = ? ,password=? ,updated_time=? where uid = ?", model.HashMethod, model.Salt, model.Password, model.UpdatedTime, model.UID)
+	Update := query.NewUpdate(p.DBTableName())
+	Update.Update.
+		Add("hash_method", model.HashMethod).
+		Add("salt", model.Salt).
+		Add("password", model.Password).
+		Add("updated_time", model.UpdatedTime)
+	Update.Where.Condition = query.New("uid = ?", model.UID)
+	q := Update.Query()
+	r, err := stmt.Exec(q.QueryCommand(), q.QueryArgs()...)
 	if err != nil {
 		return err
 	}
@@ -375,7 +413,15 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 	if affected != 0 {
 		return stmt.Commit()
 	}
-	_, err = stmt.Exec("Insert Into "+p.DBTableName()+" (uid,hash_method,salt,password,updated_time) VALUES(?,?,?,?,?)", model.UID, model.HashMethod, model.Salt, model.Password, model.UpdatedTime)
+	Insert := query.NewInsert(p.DBTableName())
+	Insert.Insert.
+		Add("uid", model.UID).
+		Add("hash_method", model.HashMethod).
+		Add("salt", model.Salt).
+		Add("password", model.Password).
+		Add("updated_time", model.UpdatedTime)
+	q = Insert.Query()
+	_, err = stmt.Exec(q.QueryCommand(), q.QueryArgs()...)
 	if err != nil {
 		return err
 	}
