@@ -1,7 +1,7 @@
-package xdatamapper
+package datamapper
 
 import (
-	"github.com/jmoiron/sqlx"
+	"database/sql"
 )
 
 type DBConfig struct {
@@ -10,26 +10,30 @@ type DBConfig struct {
 	Prefix string
 }
 
-func (d *DBConfig) Open() (*sqlx.DB, error) {
-	return sqlx.Open(d.Driver, d.Conn)
+func (d *DBConfig) Open() (*sql.DB, error) {
+	return sql.Open(d.Driver, d.Conn)
 }
 
-func (d *DBConfig) MustOpen() *sqlx.DB {
-	return sqlx.MustOpen(d.Driver, d.Conn)
+func (d *DBConfig) MustOpen() *sql.DB {
+	db, err := d.Open()
+	if err != nil {
+		panic(err)
+	}
+	return db
 }
 
 type DB interface {
-	SetDB(db *sqlx.DB)
-	DB() *sqlx.DB
+	SetDB(db *sql.DB)
+	DB() *sql.DB
 	TableName(string) string
 }
 
 type DataMapper interface {
-	DB() *sqlx.DB
+	DB() *sql.DB
 	DBTableName() string
 }
 
-func NewDB(db *sqlx.DB, prefix string) *PrefixDB {
+func NewDB(db *sql.DB, prefix string) *PrefixDB {
 	return &PrefixDB{
 		db:     db,
 		prefix: prefix,
@@ -37,15 +41,15 @@ func NewDB(db *sqlx.DB, prefix string) *PrefixDB {
 }
 
 type PrefixDB struct {
-	db     *sqlx.DB
+	db     *sql.DB
 	prefix string
 }
 
-func (d *PrefixDB) SetDB(db *sqlx.DB) {
+func (d *PrefixDB) SetDB(db *sql.DB) {
 	d.db = db
 }
 
-func (d *PrefixDB) DB() *sqlx.DB {
+func (d *PrefixDB) DB() *sql.DB {
 	return d.db
 }
 
@@ -72,7 +76,7 @@ type TableDataMapper struct {
 	table string
 }
 
-func (t *TableDataMapper) DB() *sqlx.DB {
+func (t *TableDataMapper) DB() *sql.DB {
 	return t.db.DB()
 }
 

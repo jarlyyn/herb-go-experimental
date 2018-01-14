@@ -13,9 +13,8 @@ import (
 
 	"github.com/herb-go/herb/user"
 	"github.com/jarlyyn/herb-go-experimental/app-member"
+	"github.com/jarlyyn/herb-go-experimental/model-sql-datamapper"
 	"github.com/jarlyyn/herb-go-experimental/model-sql-query"
-	"github.com/jarlyyn/herb-go-experimental/model-sqlxdatamapper"
-	"github.com/jmoiron/sqlx"
 	"github.com/satori/go.uuid"
 )
 
@@ -53,9 +52,9 @@ var HashFuncMap = map[string]HashFunc{
 	},
 }
 
-func New(db *sqlx.DB, prefix string, flag int) *User {
+func New(db *sql.DB, prefix string, flag int) *User {
 	return &User{
-		DB: xdatamapper.NewDB(db, prefix),
+		DB: datamapper.NewDB(db, prefix),
 		Tables: Tables{
 			AccountTableName:  DefaultAccountTableName,
 			PasswordTableName: DefaultPasswordTableName,
@@ -77,7 +76,7 @@ type Tables struct {
 	UserTableName     string
 }
 type User struct {
-	DB             xdatamapper.DB
+	DB             datamapper.DB
 	Tables         Tables
 	Flag           int
 	UIDGenerater   func() (string, error)
@@ -118,32 +117,32 @@ func (u *User) UserTableName() string {
 }
 func (u *User) Account() *AccountDataMapper {
 	return &AccountDataMapper{
-		DataMapper: xdatamapper.New(u.DB, u.Tables.AccountTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.AccountTableName),
 		User:       u,
 	}
 }
 
 func (u *User) Password() *PasswordDataMapper {
 	return &PasswordDataMapper{
-		DataMapper: xdatamapper.New(u.DB, u.Tables.PasswordTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.PasswordTableName),
 		User:       u,
 	}
 }
 func (u *User) Token() *TokenDataMapper {
 	return &TokenDataMapper{
-		DataMapper: xdatamapper.New(u.DB, u.Tables.TokenTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.TokenTableName),
 		User:       u,
 	}
 }
 func (u *User) User() *UserDataMapper {
 	return &UserDataMapper{
-		DataMapper: xdatamapper.New(u.DB, u.Tables.UserTableName),
+		DataMapper: datamapper.New(u.DB, u.Tables.UserTableName),
 		User:       u,
 	}
 }
 
 type AccountDataMapper struct {
-	xdatamapper.DataMapper
+	datamapper.DataMapper
 	User    *User
 	Service *member.Service
 }
@@ -154,35 +153,40 @@ func (a *AccountDataMapper) InstallToService(service *member.Service) {
 }
 
 func (a *AccountDataMapper) Unbind(uid string, account user.UserAccount) error {
-	stmt, err := a.DB().Beginx()
+	tx, err := a.DB().Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	Delete := query.NewDelete(a.DBTableName())
 	Delete.Where.Condition = query.And(
-		query.New("account.uid = ?", uid),
-		query.New("account.keyword = ?", account.Keyword),
-		query.New("account.account = ?", account.Account),
+		query.Equal("account.uid", uid),
+		query.Equal("account.keyword", account.Keyword),
+		query.Equal("account.account", account.Account),
 	)
-	Query := Delete.Query()
-	_, err = stmt.Exec(Query.Command, Query.QueryArgs()...)
-	// _, err = stmt.Exec("DELETE From "+a.DBTableName()+" WHERE uid=? and keyword=? and account=?", uid, account.Keyword, account.Account)
+	_, err = Delete.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
-	return stmt.Commit()
+	return tx.Commit()
 
 }
 
 func (a *AccountDataMapper) Bind(uid string, account user.UserAccount) error {
-	stmt, err := a.DB().Beginx()
+	tx, err := a.DB().Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	var u = ""
-	row := stmt.QueryRow("SELECT uid from "+a.DBTableName()+" where keyword= ? and account = ?", account.Keyword, account.Account)
+	Select := query.NewSelect()
+	Select.Select.Add("account.uid")
+	Select.From.AddAlias("account", a.DBTableName())
+	Select.Where.Condition = query.And(
+		query.Equal("keyword", account.Keyword),
+		query.Equal("account", account.Account),
+	)
+	row := Select.QueryRow(a.DB())
 	err = row.Scan(&u)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -194,35 +198,39 @@ func (a *AccountDataMapper) Bind(uid string, account user.UserAccount) error {
 	}
 
 	var CreatedTime = time.Now().Unix()
-	_, err = stmt.Exec("Insert Into "+a.DBTableName()+" (uid,keyword,account,created_time) VALUES(?,?,?,?)", uid, account.Keyword, account.Account, CreatedTime)
+	Insert := query.NewInsert(a.DBTableName())
+	Insert.Insert.
+		Add("uid", uid).
+		Add("keyword", account.Keyword).
+		Add("account", account.Account).
+		Add("created_time", CreatedTime)
+	_, err = Insert.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
-	return stmt.Commit()
+	return tx.Commit()
 }
 func (a *AccountDataMapper) FindOrInsert(UIDGenerater func() (string, error), account user.UserAccount) (string, error) {
 	var result = AccountModel{}
-	stmt, err := a.DB().Beginx()
+	tx, err := a.DB().Begin()
 	if err != nil {
 		return "", err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	Select := query.NewSelect()
-	Select.From.Add("account", a.DBTableName())
+	Select.From.AddAlias("account", a.DBTableName())
 	Select.Select.Add("account.uid", "account.keyword", "account.account", "account.created_time")
 	Select.Where.Condition = query.And(
-		query.New("account.keyword = ?", account.Keyword),
-		query.New("account.account = ?", account.Account),
+		query.Equal("account.keyword", account.Keyword),
+		query.Equal("account.account", account.Account),
 	)
-	query := Select.Query()
-	row := a.DB().QueryRow(query.QueryCommand(), query.QueryArgs()...)
-	args := Select.Result().
+	row := Select.QueryRow(a.DB())
+	err = Select.Result().
 		Bind("account.uid", &result.UID).
 		Bind("account.keyword", &result.Keyword).
 		Bind("account.account", &result.Account).
 		Bind("account.created_time", &result.CreatedTime).
-		Args()
-	err = row.Scan(args...)
+		ScanFrom(row)
 	if err == nil {
 		return result.UID, nil
 	}
@@ -231,26 +239,45 @@ func (a *AccountDataMapper) FindOrInsert(UIDGenerater func() (string, error), ac
 	}
 	uid, err := UIDGenerater()
 	var CreatedTime = time.Now().Unix()
-	_, err = stmt.Exec("Insert Into "+a.DBTableName()+" (uid,keyword,account,created_time) VALUES(?,?,?,?)", uid, account.Keyword, account.Account, CreatedTime)
+	Insert := query.NewInsert(a.DBTableName())
+	Insert.Insert.
+		Add("uid", uid).
+		Add("keyword", account.Keyword).
+		Add("account", account.Account).
+		Add("created_time", CreatedTime)
+	_, err = Insert.Query().Exec(tx)
 	if err != nil {
 		return "", err
 	}
 	if a.User.HasFlag(FlagWithUser) {
-		_, err = stmt.Exec("Insert Into "+a.User.UserTableName()+" (uid,status,created_time,updated_time) VALUES(?,?,?,?)", uid, UserStatusNormal, CreatedTime, CreatedTime)
+		Insert := query.NewInsert(a.User.UserTableName())
+		Insert.Insert.
+			Add("uid", uid).
+			Add("status", UserStatusNormal).
+			Add("created_time", CreatedTime).
+			Add("updated_time", CreatedTime)
+		_, err = Insert.Query().Exec(tx)
 		if err != nil {
 			return "", err
 		}
 	}
-	return uid, stmt.Commit()
+	return uid, tx.Commit()
 }
 func (a *AccountDataMapper) Insert(uid string, keyword string, account string) error {
-	stmt, err := a.DB().Beginx()
+	tx, err := a.DB().Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	var u = ""
-	row := stmt.QueryRow("SELECT uid from "+a.DBTableName()+" where keyword= ? and account = ?", keyword, account)
+	Select := query.NewSelect()
+	Select.Select.Add("uid")
+	Select.From.Add(a.DBTableName())
+	Select.Where.Condition = query.And(
+		query.Equal("keyword", keyword),
+		query.Equal("account", account),
+	)
+	row := Select.QueryRow(a.DB())
 	err = row.Scan(&u)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -260,25 +287,49 @@ func (a *AccountDataMapper) Insert(uid string, keyword string, account string) e
 		return member.ErrAccountRegisterExists
 	}
 	var CreatedTime = time.Now().Unix()
-	_, err = stmt.Exec("Insert Into "+a.DBTableName()+" (uid,keyword,account,created_time) VALUES(?,?,?,?)", uid, keyword, account, CreatedTime)
+	Insert := query.NewInsert(a.DBTableName())
+	Insert.Insert.
+		Add("uid", uid).
+		Add("keyword", keyword).
+		Add("account", account).
+		Add("created_time", CreatedTime)
+	_, err = Insert.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
 	if a.User.HasFlag(FlagWithUser) {
-		_, err = stmt.Exec("Insert Into "+a.User.UserTableName()+" (uid,status,created_time,updated_time) VALUES(?,?,?,?)", uid, UserStatusNormal, CreatedTime, CreatedTime)
+		Insert := query.NewInsert(a.User.UserTableName())
+		Insert.Insert.
+			Add("uid", uid).
+			Add("status", UserStatusNormal).
+			Add("created_time", CreatedTime).
+			Add("updated_time", CreatedTime)
+		_, err = Insert.Query().Exec(tx)
 		if err != nil {
 			return err
 		}
 	}
-	return stmt.Commit()
+	return tx.Commit()
 }
 func (a *AccountDataMapper) Find(keyword string, account string) (AccountModel, error) {
 	var result = AccountModel{}
 	if keyword == "" || account == "" {
 		return result, sql.ErrNoRows
 	}
-	row := a.DB().QueryRow("SELECT uid,keyword,account,created_time from "+a.DBTableName()+" where keyword= ? and account = ?", keyword, account)
-	err := row.Scan(&result.UID, &result.Keyword, &result.Account, &result.CreatedTime)
+	Select := query.NewSelect()
+	Select.Select.Add("uid", "keyword", "account", "created_time")
+	Select.From.Add(a.DBTableName())
+	Select.Where.Condition = query.And(
+		query.Equal("keyword", keyword),
+		query.Equal("account", account),
+	)
+	row := Select.QueryRow(a.DB())
+	err := Select.Result().
+		Bind("uid", &result.UID).
+		Bind("keyword", &result.Keyword).
+		Bind("account", &result.Account).
+		Bind("created_time", &result.CreatedTime).
+		ScanFrom(row)
 	return result, err
 }
 func (a *AccountDataMapper) FindAllByUID(uids ...string) ([]AccountModel, error) {
@@ -288,22 +339,20 @@ func (a *AccountDataMapper) FindAllByUID(uids ...string) ([]AccountModel, error)
 	}
 	Select := query.NewSelect()
 	Select.Select.Add("account.uid", "account.keyword", "account.account")
-	Select.From.Add("account", a.DBTableName())
+	Select.From.AddAlias("account", a.DBTableName())
 	Select.Where.Condition = query.In("account.uid", uids)
-	q := Select.Query()
-	rows, err := a.DB().Query(q.QueryCommand(), q.QueryArgs()...)
+	rows, err := Select.QueryRows(a.DB())
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		v := AccountModel{}
-		args := Select.Result().
+		err := Select.Result().
 			Bind("account.uid", &v.UID).
 			Bind("account.keyword", &v.Keyword).
 			Bind("account.account", &v.Account).
-			Args()
-		err = rows.Scan(args...)
+			ScanFrom(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +407,7 @@ type AccountModel struct {
 	CreatedTime int64
 }
 type PasswordDataMapper struct {
-	xdatamapper.DataMapper
+	datamapper.DataMapper
 	User    *User
 	Service *member.Service
 }
@@ -374,8 +423,8 @@ func (p *PasswordDataMapper) Find(uid string) (PasswordModel, error) {
 	}
 	Select := query.NewSelect()
 	Select.Select.Add("password.hash_method", "password.salt", "password.password", "password.updated_time")
-	Select.From.Add("password", p.DBTableName())
-	Select.Where.Condition = query.New("uid = ?", uid)
+	Select.From.AddAlias("password", p.DBTableName())
+	Select.Where.Condition = query.Equal("uid", uid)
 	q := Select.Query()
 	row := p.DB().QueryRow(q.QueryCommand(), q.QueryArgs()...)
 	result.UID = uid
@@ -389,19 +438,19 @@ func (p *PasswordDataMapper) Find(uid string) (PasswordModel, error) {
 	return result, err
 }
 func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
-	stmt, err := p.DB().Beginx()
+	tx, err := p.DB().Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	Update := query.NewUpdate(p.DBTableName())
 	Update.Update.
 		Add("hash_method", model.HashMethod).
 		Add("salt", model.Salt).
 		Add("password", model.Password).
 		Add("updated_time", model.UpdatedTime)
-	Update.Where.Condition = query.New("uid = ?", model.UID)
-	r, err := Update.Query().Exec(stmt)
+	Update.Where.Condition = query.Equal("uid", model.UID)
+	r, err := Update.Query().Exec(tx)
 
 	if err != nil {
 		return err
@@ -411,7 +460,7 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 		return err
 	}
 	if affected != 0 {
-		return stmt.Commit()
+		return tx.Commit()
 	}
 	Insert := query.NewInsert(p.DBTableName())
 	Insert.Insert.
@@ -420,11 +469,11 @@ func (p *PasswordDataMapper) InsertOrUpdate(model *PasswordModel) error {
 		Add("salt", model.Salt).
 		Add("password", model.Password).
 		Add("updated_time", model.UpdatedTime)
-	_, err = Insert.Query().Exec(stmt)
+	_, err = Insert.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
-	return stmt.Commit()
+	return tx.Commit()
 }
 func (p *PasswordDataMapper) VerifyPassword(uid string, password string) (bool, error) {
 	model, err := p.Find(uid)
@@ -476,7 +525,7 @@ type PasswordModel struct {
 }
 
 type TokenDataMapper struct {
-	xdatamapper.DataMapper
+	datamapper.DataMapper
 	User    *User
 	Service *member.Service
 }
@@ -487,13 +536,18 @@ func (t *TokenDataMapper) InstallToService(service *member.Service) {
 }
 
 func (t *TokenDataMapper) InsertOrUpdate(uid string, token string) error {
-	stmt, err := t.DB().Beginx()
+	tx, err := t.DB().Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	var CreatedTime = time.Now().Unix()
-	r, err := stmt.Exec("UPDATE "+t.DBTableName()+" SET token = ? ,updated_time = ? where uid = ?", token, CreatedTime, uid)
+	Update := query.NewUpdate(t.DBTableName())
+	Update.Update.
+		Add("token", token).
+		Add("updated_time", CreatedTime)
+	Update.Where.Condition = query.Equal("uid", uid)
+	r, err := Update.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
@@ -502,25 +556,29 @@ func (t *TokenDataMapper) InsertOrUpdate(uid string, token string) error {
 		return err
 	}
 	if affected != 0 {
-		return stmt.Commit()
+		return tx.Commit()
 	}
-	_, err = stmt.Exec("Insert Into "+t.DBTableName()+" (uid,token,updated_time) VALUES(?,?,?)", uid, token, CreatedTime)
+	Insert := query.NewInsert(t.DBTableName())
+	Insert.Insert.
+		Add("uid", uid).
+		Add("token", token).
+		Add("updated_time", CreatedTime)
+	_, err = Insert.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
-	return stmt.Commit()
+	return tx.Commit()
 }
 func (t *TokenDataMapper) FindAllByUID(uids ...string) ([]TokenModel, error) {
 	var result = []TokenModel{}
 	if len(uids) == 0 {
 		return result, nil
 	}
-	query, args, err := sqlx.In("SELECT uid,token from "+t.DBTableName()+" where uid IN (?) ", uids)
-	if err != nil {
-		return nil, err
-	}
-	query = t.DB().Rebind(query)
-	rows, err := t.DB().Query(query, args...)
+	Select := query.NewSelect()
+	Select.Select.Add("token.uid", "token.token")
+	Select.From.AddAlias("token", t.DBTableName())
+	Select.Where.Condition = query.In("token.uid", uids)
+	rows, err := Select.QueryRows(t.DB())
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +619,7 @@ type TokenModel struct {
 	UpdatedTime string
 }
 type UserDataMapper struct {
-	xdatamapper.DataMapper
+	datamapper.DataMapper
 	User    *User
 	Service *member.Service
 }
@@ -576,13 +634,11 @@ func (u *UserDataMapper) FindAllByUID(uids ...string) ([]UserModel, error) {
 	if len(uids) == 0 {
 		return result, nil
 	}
-	query, args, err := sqlx.In("SELECT uid,status from "+u.DBTableName()+" where uid IN (?) ", uids)
-	if err != nil {
-		return nil, err
-	}
-	query = u.DB().Rebind(query)
-	rows, err := u.DB().Query(query, args...)
-
+	Select := query.NewSelect()
+	Select.Select.Add("user.uid", "user.status")
+	Select.From.AddAlias("user", u.DBTableName())
+	Select.Where.Condition = query.In("user.uid", uids)
+	rows, err := Select.QueryRows(u.DB())
 	if err != nil {
 		return nil, err
 	}
@@ -599,13 +655,18 @@ func (u *UserDataMapper) FindAllByUID(uids ...string) ([]UserModel, error) {
 }
 
 func (u *UserDataMapper) InsertOrUpdate(uid string, status int) error {
-	stmt, err := u.DB().Beginx()
+	tx, err := u.DB().Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Rollback()
+	defer tx.Rollback()
 	var CreatedTime = time.Now().Unix()
-	r, err := stmt.Exec("UPDATE "+u.DBTableName()+" SET status = ? ,updated_time = ? where uid = ?", status, CreatedTime, uid)
+	Update := query.NewUpdate(u.DBTableName())
+	Update.Update.
+		Add("status", status).
+		Add("updated_time", CreatedTime)
+	Update.Where.Condition = query.Equal("uid", uid)
+	r, err := Update.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
@@ -614,13 +675,19 @@ func (u *UserDataMapper) InsertOrUpdate(uid string, status int) error {
 		return err
 	}
 	if affected != 0 {
-		return stmt.Commit()
+		return tx.Commit()
 	}
-	_, err = stmt.Exec("Insert Into "+u.DBTableName()+" (uid,status,updated_time,created_time) VALUES(?,?,?,?)", uid, status, CreatedTime, CreatedTime)
+	Insert := query.NewInsert(u.DBTableName())
+	Insert.Insert.
+		Add("uid", uid).
+		Add("status", status).
+		Add("updated_time", CreatedTime).
+		Add("created_time", CreatedTime)
+	_, err = Insert.Query().Exec(tx)
 	if err != nil {
 		return err
 	}
-	return stmt.Commit()
+	return tx.Commit()
 }
 
 func (u *UserDataMapper) Banned(uid ...string) (member.BannedMap, error) {

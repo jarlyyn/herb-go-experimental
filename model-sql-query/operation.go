@@ -21,6 +21,9 @@ func Concat(q ...Query) *PlainQuery {
 func Comma(q ...Query) *PlainQuery {
 	return conncatWith(" , ", q...)
 }
+func Lines(q ...Query) *PlainQuery {
+	return conncatWith("\n", q...)
+}
 func And(q ...Query) *PlainQuery {
 	var query = conncatWith(" AND ", q...)
 	if query.Command != "" {

@@ -51,9 +51,10 @@ func Load(cm interface{}, c cache.Cacheable, loader func(keys ...string) error, 
 	if err != nil {
 		return err
 	}
-	var uncachedKeys = make([]string, len(results))
+	var uncachedKeys = make([]string, len(filteredKeys))
 	var uncachedKeysLength = 0
-	for k := range results {
+	for i := range filteredKeys {
+		k := filteredKeys[i]
 		if results[k] == nil {
 			err = creator(k)
 			if err != nil {

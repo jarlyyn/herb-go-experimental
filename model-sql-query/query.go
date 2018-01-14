@@ -2,7 +2,11 @@ package query
 
 import (
 	"database/sql"
+	"strings"
 )
+
+const indexTableName = 0
+const indexAlias = 1
 
 type Query interface {
 	QueryCommand() string
@@ -30,6 +34,13 @@ func (q *PlainQuery) QueryArgs() []interface{} {
 func (q *PlainQuery) Exec(db DB) (sql.Result, error) {
 	return db.Exec(q.QueryCommand(), q.QueryArgs()...)
 }
+func (q *PlainQuery) MustExec(db DB) sql.Result {
+	r, err := db.Exec(q.QueryCommand(), q.QueryArgs()...)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
 func NewFromQuery() *FromQuery {
 	return &FromQuery{
 		Tables: [][2]string{},
@@ -41,10 +52,16 @@ type FromQuery struct {
 	Tables [][2]string
 }
 
-func (q *FromQuery) Add(alias string, tableName string) *FromQuery {
+func (q *FromQuery) AddAlias(alias string, tableName string) *FromQuery {
 	q.Tables = append(q.Tables, [2]string{tableName, alias})
 	return q
 }
+
+func (q *FromQuery) Add(tableName string) *FromQuery {
+	q.Tables = append(q.Tables, [2]string{tableName, ""})
+	return q
+}
+
 func (q *FromQuery) QueryCommand() string {
 	var command = ""
 	if len(q.Tables) == 0 {
@@ -52,12 +69,112 @@ func (q *FromQuery) QueryCommand() string {
 	}
 	command = "FROM "
 	for k := range q.Tables {
-		command += q.Tables[k][0] + " as " + q.Tables[k][1] + " , "
+		if q.Tables[k][1] == "" {
+			command += q.Tables[k][0] + " , "
+		} else {
+			command += q.Tables[k][0] + " as " + q.Tables[k][1] + " , "
+		}
 	}
 	return command[:len(command)-3]
 }
 func (q *FromQuery) QueryArgs() []interface{} {
 	return []interface{}{}
+}
+
+type JoinData struct {
+	Type         string
+	Table        [2]string
+	Condition    *PlainQuery
+	UsingColnums []string
+}
+
+func (d *JoinData) Alias(alias string, tableName string) *JoinData {
+	d.Table[0] = tableName
+	d.Table[1] = alias
+	return d
+}
+func (d *JoinData) On(condition *PlainQuery) *JoinData {
+	d.Condition = condition
+	return d
+}
+func (d *JoinData) Using(colnums ...string) *JoinData {
+	d.UsingColnums = colnums
+	return d
+}
+
+func (d *JoinData) QueryCommand() string {
+	var command = d.Type + " Join "
+	command += d.Table[indexTableName]
+	if d.Table[indexAlias] != "" {
+		command += " AS " + d.Table[indexAlias]
+	}
+	if len(d.UsingColnums) == 0 {
+		command += " ON " + d.Condition.QueryCommand()
+	} else {
+		command += " USING (" + strings.Join(d.UsingColnums, " , ") + ")"
+	}
+	return command
+}
+func (q *JoinData) QueryArgs() []interface{} {
+	if q.Condition != nil && len(q.UsingColnums) == 0 {
+		return q.Condition.QueryArgs()
+	}
+	return []interface{}{}
+}
+
+func NewJoinQuery() *JoinQuery {
+	return &JoinQuery{
+		Data: []*JoinData{},
+	}
+}
+
+type JoinQuery struct {
+	Data []*JoinData
+}
+
+func (q *JoinQuery) join(jointype string) *JoinData {
+	data := &JoinData{
+		Type:         jointype,
+		Table:        [2]string{},
+		Condition:    nil,
+		UsingColnums: []string{},
+	}
+	q.Data = append(q.Data, data)
+	return data
+}
+
+func (q *JoinQuery) InnerJoin() *JoinData {
+	return q.join("INNER")
+}
+func (q *JoinQuery) LeftJoin() *JoinData {
+	return q.join("LEFT")
+}
+func (q *JoinQuery) RightJoin() *JoinData {
+	return q.join("RIGHT")
+}
+
+func (q *JoinQuery) QueryCommand() string {
+	var command = ""
+	for k := range q.Data {
+		c := q.Data[k].QueryCommand()
+		if c != "" {
+			command += c + "\n"
+		}
+	}
+	if command != "" {
+		command = command[:len(command)-1]
+	}
+	return command
+}
+func (q *JoinQuery) QueryArgs() []interface{} {
+	var args = []interface{}{}
+	for k := range q.Data {
+		a := q.Data[k].QueryArgs()
+		if a != nil {
+			args = append(args, a...)
+		}
+	}
+	return args
 }
 
 type QueryData struct {
@@ -252,6 +369,9 @@ func NewSelectResult(fields []string) *SelectResult {
 
 }
 
+type ResultScaner interface {
+	Scan(dest ...interface{}) error
+}
 type SelectResult struct {
 	Fields []string
 	args   []interface{}
@@ -268,6 +388,10 @@ func (r *SelectResult) Bind(field string, arg interface{}) *SelectResult {
 }
 func (r *SelectResult) Args() []interface{} {
 	return r.args
+}
+
+func (r *SelectResult) ScanFrom(s ResultScaner) error {
+	return s.Scan(r.Args()...)
 }
 func NewWhereQuery() *WhereQurey {
 	return &WhereQurey{
@@ -293,6 +417,7 @@ func NewSelect() *Select {
 	return &Select{
 		Select: NewSelectQuery(),
 		From:   NewFromQuery(),
+		Join:   NewJoinQuery(),
 		Where:  NewWhereQuery(),
 		Other:  New(""),
 	}
@@ -301,6 +426,7 @@ func NewSelect() *Select {
 type Select struct {
 	Select *SelectQuery
 	From   *FromQuery
+	Join   *JoinQuery
 	Where  *WhereQurey
 	Other  *PlainQuery
 }
@@ -310,9 +436,16 @@ func (s *Select) Result() *SelectResult {
 }
 
 func (s *Select) Query() *PlainQuery {
-	return Concat(s.Select, s.From, s.Where, s.Other)
+	return Lines(s.Select, s.From, s.Join, s.Where, s.Other)
 }
-
+func (s *Select) QueryRow(db DB) *sql.Row {
+	q := s.Query()
+	return db.QueryRow(q.QueryCommand(), q.QueryArgs()...)
+}
+func (s *Select) QueryRows(db DB) (*sql.Rows, error) {
+	q := s.Query()
+	return db.Query(q.QueryCommand(), q.QueryArgs()...)
+}
 func NewDelete(TableName string) *Delete {
 	return &Delete{
 		Delete: NewDeleteQuery(TableName),
@@ -328,7 +461,7 @@ type Delete struct {
 }
 
 func (d *Delete) Query() *PlainQuery {
-	return Concat(d.Delete, d.Where, d.Other)
+	return Lines(d.Delete, d.Where, d.Other)
 }
 
 func NewInsert(tableName string) *Insert {
@@ -344,7 +477,7 @@ type Insert struct {
 }
 
 func (i *Insert) Query() *PlainQuery {
-	return Concat(i.Insert, i.Other)
+	return Lines(i.Insert, i.Other)
 }
 func NewUpdate(tableName string) *Update {
 	return &Update{
@@ -361,5 +494,5 @@ type Update struct {
 }
 
 func (u *Update) Query() *PlainQuery {
-	return Concat(u.Update, u.Where, u.Other)
+	return Lines(u.Update, u.Where, u.Other)
 }

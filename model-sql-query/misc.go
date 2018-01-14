@@ -23,3 +23,7 @@ func In(field string, args interface{}) *PlainQuery {
 	query.Command = field + " IN ( " + query.Command + " )"
 	return query
 }
+
+func Equal(field string, arg interface{}) *PlainQuery {
+	return New(field+" = ?", arg)
+}

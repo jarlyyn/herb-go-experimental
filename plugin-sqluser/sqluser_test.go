@@ -4,19 +4,24 @@ import (
 	"testing"
 
 	"github.com/jarlyyn/herb-go-experimental/app-member"
+	"github.com/jarlyyn/herb-go-experimental/model-sql-query"
+
+	"database/sql"
 
 	"github.com/herb-go/herb/user"
-	"github.com/jmoiron/sqlx"
 )
 
 const accountype = "test"
 
-func InitDB() *sqlx.DB {
-	var db = sqlx.MustOpen(config.Driver, config.Conn)
-	db.MustExec("TRUNCATE account")
-	db.MustExec("TRUNCATE password")
-	db.MustExec("TRUNCATE token")
-	db.MustExec("TRUNCATE user")
+func InitDB() *sql.DB {
+	var db, err = sql.Open(config.Driver, config.Conn)
+	if err != nil {
+		panic(err)
+	}
+	query.New("TRUNCATE account").MustExec(db)
+	query.New("TRUNCATE password").MustExec(db)
+	query.New("TRUNCATE token").MustExec(db)
+	query.New("TRUNCATE user").MustExec(db)
 	return db
 }
 func TestInterface(t *testing.T) {
