@@ -179,7 +179,7 @@ func (q *JoinQuery) QueryArgs() []interface{} {
 
 type QueryData struct {
 	Field string
-	Data  interface{}
+	Data  []interface{}
 	Raw   string
 }
 
@@ -194,22 +194,45 @@ func NewInsertQuery(tableName string) *InsertQuery {
 type InsertQuery struct {
 	Prefix    *PlainQuery
 	TableName string
+	Alias     string
 	Data      []QueryData
 }
 
+func (q *InsertQuery) SetAlias(alias string) *InsertQuery {
+	q.Alias = alias
+	return q
+}
 func (q *InsertQuery) Add(field string, data interface{}) *InsertQuery {
-	q.Data = append(q.Data, QueryData{Field: field, Data: data})
+	q.Data = append(q.Data,
+		QueryData{
+			Field: field,
+			Data:  []interface{}{data},
+		})
 	return q
 }
 func (q *InsertQuery) AddRaw(field string, raw string) *InsertQuery {
 	q.Data = append(q.Data, QueryData{Field: field, Raw: raw})
 	return q
 }
+
+func (q *InsertQuery) AddSelect(field string, Select *Select) *InsertQuery {
+	query := *Select.Query()
+	q.Data = append(q.Data, QueryData{
+		Field: field,
+		Raw:   "( " + query.QueryCommand() + " )",
+		Data:  query.QueryArgs(),
+	})
+	return q
+}
+
 func (q *InsertQuery) QueryCommand() string {
 	var command = "INSERT"
 	p := q.Prefix.QueryCommand()
 	if p != "" {
 		command += " " + p
+	}
+	if q.Alias != "" {
+		command += " AS " + q.Alias
 	}
 	command += " INTO " + q.TableName
 	var values = ""
@@ -235,7 +258,7 @@ func (q *InsertQuery) QueryArgs() []interface{} {
 	var args = []interface{}{}
 	for k := range q.Data {
 		if q.Data[k].Data != nil {
-			args = append(args, q.Data[k].Data)
+			args = append(args, q.Data[k].Data...)
 		}
 	}
 	var result = []interface{}{}
@@ -281,11 +304,30 @@ func NewUpdateQuery(tableName string) *UpdateQuery {
 type UpdateQuery struct {
 	Prefix    *PlainQuery
 	TableName string
+	Alias     string
 	Data      []QueryData
 }
 
+func (q *UpdateQuery) SetAlias(alias string) *UpdateQuery {
+	q.Alias = alias
+	return q
+}
+func (q *UpdateQuery) AddSelect(field string, Select *Select) *UpdateQuery {
+	query := *Select.Query()
+	q.Data = append(q.Data, QueryData{
+		Field: field,
+		Raw:   "( " + query.QueryCommand() + " )",
+		Data:  query.QueryArgs(),
+	})
+	return q
+}
 func (q *UpdateQuery) Add(field string, data interface{}) *UpdateQuery {
-	q.Data = append(q.Data, QueryData{Field: field, Data: data})
+	q.Data = append(q.Data,
+		QueryData{
+			Field: field,
+			Data:  []interface{}{data},
+		},
+	)
 	return q
 }
 func (q *UpdateQuery) AddRaw(field string, raw string) *UpdateQuery {
@@ -299,6 +341,9 @@ func (q *UpdateQuery) QueryCommand() string {
 		command += " " + p
 	}
 	command += " " + q.TableName
+	if q.Alias != "" {
+		command += " AS " + q.Alias
+	}
 	command += " SET "
 	var values = ""
 	for k := range q.Data {
@@ -316,7 +361,7 @@ func (q *UpdateQuery) QueryArgs() []interface{} {
 	var args = []interface{}{}
 	for k := range q.Data {
 		if q.Data[k].Data != nil {
-			args = append(args, q.Data[k].Data)
+			args = append(args, q.Data[k].Data...)
 		}
 	}
 	var result = []interface{}{}

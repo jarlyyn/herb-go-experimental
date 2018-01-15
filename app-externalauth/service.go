@@ -16,10 +16,10 @@ func (s *Service) AuthRequest(r *http.Request) (*Result, error) {
 	return s.Driver.AuthRequest(s, r)
 }
 
-func (s *Service) GetLoginUrl() string {
+func (s *Service) LoginUrl() string {
 	return s.Auth.Host + s.Auth.Path + s.Auth.LoginPrefix + s.Keyword
 }
 
-func (s *Service) GetAuthUrl() string {
+func (s *Service) AuthUrl() string {
 	return s.Auth.Host + s.Auth.Path + s.Auth.AuthPrefix + s.Keyword
 }

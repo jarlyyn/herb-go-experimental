@@ -57,6 +57,13 @@ func (a *Auth) MustRegisterService(keyword string, driver Driver) *Service {
 func (a *Auth) GetService(keyword string) (*Service, error) {
 	return a.GetServiceManager().GetService(a, keyword)
 }
+func (a *Auth) MustGetService(keyword string) *Service {
+	s, err := a.GetServiceManager().GetService(a, keyword)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
 func New(path string, store *session.Store) (*Auth, error) {
 	u, err := url.Parse(path)
 	if err != nil {

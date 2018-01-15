@@ -56,7 +56,7 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	q.Set("client_id", d.client.ClientID)
 	q.Set("scope", d.scope)
 	q.Set("state", state)
-	q.Set("redirect_uri", service.GetAuthUrl())
+	q.Set("redirect_uri", service.AuthUrl())
 	u.RawQuery = q.Encode()
 	http.Redirect(w, r, u.String(), 302)
 }

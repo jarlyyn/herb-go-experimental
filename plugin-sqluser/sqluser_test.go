@@ -37,7 +37,7 @@ func TestSqluser(t *testing.T) {
 	var unusedUID = "-test"
 	var password = "password"
 	var newpassword = "newpassword"
-	var wrongpassword = "rongpassword"
+	var wrongpassword = "wrongpassword"
 	account1, err := user.CaseSensitiveAcountType.NewAccount(accountype, "account1")
 	if err != nil {
 		panic(err)
