@@ -3,6 +3,7 @@ package query
 import (
 	"database/sql"
 	"strings"
+	"time"
 )
 
 const indexTableName = 0
@@ -26,13 +27,29 @@ type PlainQuery struct {
 }
 
 func (q *PlainQuery) QueryCommand() string {
+	if q == nil {
+		return ""
+	}
 	return q.Command
 }
 func (q *PlainQuery) QueryArgs() []interface{} {
+	if q == nil {
+		return []interface{}{}
+	}
 	return q.Args
 }
 func (q *PlainQuery) Exec(db DB) (sql.Result, error) {
-	return db.Exec(q.QueryCommand(), q.QueryArgs()...)
+	cmd := q.QueryCommand()
+	args := q.QueryArgs()
+	var timestamp int64
+	if Debug {
+		timestamp = time.Now().UnixNano()
+	}
+	r, err := db.Exec(cmd, args...)
+	if Debug {
+		Logger(timestamp, cmd, args)
+	}
+	return r, err
 }
 func (q *PlainQuery) MustExec(db DB) sql.Result {
 	r, err := db.Exec(q.QueryCommand(), q.QueryArgs()...)
@@ -40,6 +57,29 @@ func (q *PlainQuery) MustExec(db DB) sql.Result {
 		panic(err)
 	}
 	return r
+}
+func (q *PlainQuery) And(qs ...Query) *PlainQuery {
+	if q != nil && q.Command != "" {
+		qslice := make([]Query, len(qs)+1)
+		qslice[0] = q
+		copy(qslice[1:], qs)
+		*q = *(And(qslice...))
+	} else {
+		*q = *(And(qs...))
+	}
+	return q
+}
+
+func (q *PlainQuery) Or(qs ...Query) *PlainQuery {
+	if q != nil && q.Command != "" {
+		qslice := make([]Query, len(qs)+1)
+		qslice[0] = q
+		copy(qslice[1:], qs)
+		*q = *(Or(qslice...))
+	} else {
+		*q = *(Or(qs...))
+	}
+	return q
 }
 func NewFromQuery() *FromQuery {
 	return &FromQuery{
@@ -485,11 +525,31 @@ func (s *Select) Query() *PlainQuery {
 }
 func (s *Select) QueryRow(db DB) *sql.Row {
 	q := s.Query()
-	return db.QueryRow(q.QueryCommand(), q.QueryArgs()...)
+	cmd := q.QueryCommand()
+	args := q.QueryArgs()
+	var timestamp int64
+	if Debug {
+		timestamp = time.Now().UnixNano()
+	}
+	err := db.QueryRow(cmd, args...)
+	if Debug {
+		Logger(timestamp, cmd, args)
+	}
+	return err
 }
 func (s *Select) QueryRows(db DB) (*sql.Rows, error) {
 	q := s.Query()
-	return db.Query(q.QueryCommand(), q.QueryArgs()...)
+	cmd := q.QueryCommand()
+	args := q.QueryArgs()
+	var timestamp int64
+	if Debug {
+		timestamp = time.Now().UnixNano()
+	}
+	rows, err := db.Query(cmd, args...)
+	if Debug {
+		Logger(timestamp, cmd, args)
+	}
+	return rows, err
 }
 func NewDelete(TableName string) *Delete {
 	return &Delete{

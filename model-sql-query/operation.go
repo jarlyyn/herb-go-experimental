@@ -1,9 +1,9 @@
 package query
 
-func conncatWith(separator string, q ...Query) *PlainQuery {
+func concatWith(separator string, q ...Query) *PlainQuery {
 	var query = New("")
 	for k := range q {
-		if q == nil {
+		if q[k] == nil {
 			continue
 		}
 		command := q[k].QueryCommand()
@@ -18,17 +18,20 @@ func conncatWith(separator string, q ...Query) *PlainQuery {
 	return query
 }
 func Concat(q ...Query) *PlainQuery {
-	return conncatWith(" ", q...)
+	return concatWith(" ", q...)
 }
 
 func Comma(q ...Query) *PlainQuery {
-	return conncatWith(" , ", q...)
+	return concatWith(" , ", q...)
 }
 func Lines(q ...Query) *PlainQuery {
-	return conncatWith("\n", q...)
+	return concatWith("\n", q...)
 }
 func And(q ...Query) *PlainQuery {
-	var query = conncatWith(" AND ", q...)
+	if (len(q)) == 1 {
+		return New(q[0].QueryCommand(), q[0].QueryArgs()...)
+	}
+	var query = concatWith(" AND ", q...)
 	if query.Command != "" {
 		query.Command = "( " + query.Command + " )"
 	}
@@ -36,7 +39,10 @@ func And(q ...Query) *PlainQuery {
 }
 
 func Or(q ...Query) *PlainQuery {
-	var query = conncatWith(" OR ", q...)
+	if (len(q)) == 1 {
+		return New(q[0].QueryCommand(), q[0].QueryArgs()...)
+	}
+	var query = concatWith(" OR ", q...)
 	if query.Command != "" {
 		query.Command = "( " + query.Command + " )"
 	}

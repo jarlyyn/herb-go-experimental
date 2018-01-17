@@ -27,3 +27,16 @@ func In(field string, args interface{}) *PlainQuery {
 func Equal(field string, arg interface{}) *PlainQuery {
 	return New(field+" = ?", arg)
 }
+func Search(field string, arg string) *PlainQuery {
+	if arg == "" || field == "" {
+		return New("")
+	}
+	return New(field+" LIKE ?", "%"+EscapeSearch(arg)+"%")
+}
+
+func EscapeSearch(command string) string {
+	command = strings.Replace(command, "\\", "\\\\", -1)
+	command = strings.Replace(command, "_", "\\_", -1)
+	command = strings.Replace(command, "%", "\\%", -1)
+	return command
+}

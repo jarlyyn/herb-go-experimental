@@ -68,6 +68,9 @@ func Load(cm interface{}, c cache.Cacheable, loader func(keys ...string) error, 
 		}
 	}
 	uncachedKeys = uncachedKeys[:uncachedKeysLength]
+	if uncachedKeysLength == 0 {
+		return nil
+	}
 	err = loader(uncachedKeys...)
 	if err != nil {
 		return err
