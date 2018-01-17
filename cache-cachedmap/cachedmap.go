@@ -17,8 +17,6 @@ func unmarshalMapElement(cm interface{}, creator func(string) error, key string,
 		return err
 	}
 	var mapvalue = reflect.Indirect(reflect.ValueOf(cm))
-	// var v = reflect.New(mapvalue.Type().Elem())
-	// var vi = v.Interface()
 	var v = mapvalue.MapIndex(reflect.ValueOf(key))
 	var vp = reflect.New(v.Type())
 	vp.Elem().Set(v)

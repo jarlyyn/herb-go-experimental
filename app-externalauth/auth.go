@@ -2,18 +2,18 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/herb-go/herb/cache-session"
 )
 
 const DefaultLoginPrefix = "/login/"
 const DefaultAuthPrefix = "/auth/"
 
 var ErrAuthParamsError = errors.New("external auth params error")
+var TokenMask = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
 
 type ContextName string
 
@@ -35,7 +35,7 @@ type Auth struct {
 	LoginPrefix    string
 	AuthPrefix     string
 	NotFoundAction func(w http.ResponseWriter, r *http.Request)
-	SessionStore   *session.Store
+	Session        Session
 }
 
 func (a *Auth) GetServiceManager() ServiceManager {
@@ -64,24 +64,27 @@ func (a *Auth) MustGetService(keyword string) *Service {
 	}
 	return s
 }
-func New(path string, store *session.Store) (*Auth, error) {
+func New() *Auth {
+	return &Auth{}
+}
+func (a *Auth) Init(path string, Session Session) error {
 	u, err := url.Parse(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	a := Auth{
+	*a = Auth{
 		LoginPrefix:    DefaultLoginPrefix,
 		AuthPrefix:     DefaultAuthPrefix,
-		SessionStore:   store,
+		Session:        Session,
 		Host:           u.Scheme + "://" + u.Host,
 		Path:           u.Path,
 		NotFoundAction: DefaultNotFoundAction,
 	}
-	return &a, nil
-}
+	return nil
 
-func MustNew(path string, store *session.Store) *Auth {
-	a, err := New(path, store)
+}
+func (a *Auth) MustInit(path string, Session Session) *Auth {
+	err := a.Init(path, Session)
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +101,19 @@ func (a *Auth) MustGetResult(req *http.Request) *Result {
 	}
 	return &Result{}
 }
-
+func (a *Auth) RandToken(length int) ([]byte, error) {
+	token := make([]byte, length)
+	_, err := rand.Read(token)
+	if err != nil {
+		return nil, err
+	}
+	l := len(TokenMask)
+	for k, v := range token {
+		index := int(v) % l
+		token[k] = TokenMask[index]
+	}
+	return token, nil
+}
 func (a *Auth) SetResult(r *http.Request, result *Result) {
 	ctx := context.WithValue(r.Context(), ResultContextName, result)
 	*r = *r.WithContext(ctx)

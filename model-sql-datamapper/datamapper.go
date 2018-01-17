@@ -4,24 +4,6 @@ import (
 	"database/sql"
 )
 
-type DBConfig struct {
-	Driver string
-	Conn   string
-	Prefix string
-}
-
-func (d *DBConfig) Open() (*sql.DB, error) {
-	return sql.Open(d.Driver, d.Conn)
-}
-
-func (d *DBConfig) MustOpen() *sql.DB {
-	db, err := d.Open()
-	if err != nil {
-		panic(err)
-	}
-	return db
-}
-
 type DB interface {
 	SetDB(db *sql.DB)
 	DB() *sql.DB

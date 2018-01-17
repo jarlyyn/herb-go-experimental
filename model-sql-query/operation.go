@@ -3,6 +3,9 @@ package query
 func conncatWith(separator string, q ...Query) *PlainQuery {
 	var query = New("")
 	for k := range q {
+		if q == nil {
+			continue
+		}
 		command := q[k].QueryCommand()
 		if command != "" {
 			query.Command += q[k].QueryCommand() + separator

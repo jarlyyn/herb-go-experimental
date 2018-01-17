@@ -1,7 +1,6 @@
 package member
 
 import (
-	"encoding/json"
 	"net/http"
 	"reflect"
 
@@ -215,34 +214,20 @@ func (s *Service) Login(r *http.Request, id string) error {
 	return nil
 }
 
-var dummyCache = cache.New()
-
-func New(store *session.Store) *Service {
-	return &Service{
-		SessionStore:  store,
-		BannedCache:   dummyCache,
-		AccountsCache: dummyCache,
-		TokenCache:    dummyCache,
-		RoleCache:     dummyCache,
-		DataCache:     dummyCache,
-		DataServices:  map[string]reflect.Type{},
-		AccountTypes:  map[string]user.AccountType{},
-	}
-}
-
-func NewWithSubCache(store *session.Store, c cache.Cacheable) *Service {
-	var s = New(store)
+func (s *Service) InitWithSubCache(c cache.Cacheable) {
 	s.BannedCache = cache.NewNode(c, prefixCacheBanned)
 	s.AccountsCache = cache.NewNode(c, prefixCacheAccount)
 	s.TokenCache = cache.NewNode(c, prefixCacheToken)
 	s.RoleCache = cache.NewNode(c, prefixCacheRole)
 	s.DataCache = cache.NewNode(c, prefixCacheData)
-	return s
 }
 
-func init() {
-	var err = dummyCache.Open("dummycache", json.RawMessage(""), 1)
-	if err != nil {
-		panic(err)
+var dummyCache = cache.New()
+
+func New(store *session.Store) *Service {
+	return &Service{
+		SessionStore: store,
+		DataServices: map[string]reflect.Type{},
+		AccountTypes: map[string]user.AccountType{},
 	}
 }

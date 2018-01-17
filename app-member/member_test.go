@@ -127,7 +127,8 @@ func testService() *Service {
 	if err != nil {
 		panic(err)
 	}
-	service = NewWithSubCache(store, c)
+	service = New(store)
+	service.InitWithSubCache(c)
 	service.Install(newTestAccountService())
 	service.Install(newTestBannedService())
 	service.Install(newTestTokenService())

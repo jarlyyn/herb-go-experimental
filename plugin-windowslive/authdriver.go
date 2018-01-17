@@ -1,23 +1,20 @@
-package github
+package windowslive
 
 import (
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/herb-go/herb/fetch"
 
-	"github.com/herb-go/herb/user"
+	user "github.com/herb-go/herb/user"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
 )
 
 const StateLength = 128
 
-var TokenMask = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
+const oauthURL = "https://login.live.com/oauth20_authorize.srf"
 
-const oauthURL = "https://github.com/login/oauth/authorize"
-
-const FieldName = "externalauthdriver-github"
+const FieldName = "externalauthdriver-windowslive"
 
 type StateSession struct {
 	State string
@@ -54,6 +51,7 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	q.Set("client_id", d.client.ClientID)
 	q.Set("scope", d.scope)
 	q.Set("state", state)
+	q.Set("response_type", "code")
 	q.Set("redirect_uri", service.AuthUrl())
 	u.RawQuery = q.Encode()
 	http.Redirect(w, r, u.String(), 302)
@@ -81,7 +79,7 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	if err != nil {
 		return nil, err
 	}
-	result, err := d.client.GetAccessToken(code)
+	result, err := d.client.GetAccessToken(code, service.AuthUrl())
 	if err != nil {
 		statuscode := fetch.GetErrorStatusCode(err)
 		if statuscode > 400 && statuscode < 500 {
@@ -100,17 +98,12 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 		return nil, nil
 	}
 	authresult := auth.NewResult()
-	authresult.Account = u.Login
+	authresult.Account = u.ID
 	authresult.Keyword = service.Keyword
+	authresult.Data.SetValue(user.ProfileIndexFirstName, u.FirstName)
+	authresult.Data.SetValue(user.ProfileIndexLastName, u.LastName)
+	authresult.Data.SetValue(user.ProfileIndexLocale, u.Locale)
 	authresult.Data.SetValue(user.ProfileIndexAccessToken, result.AccessToken)
-	authresult.Data.SetValue(user.ProfileIndexAvatar, u.AvatarURL)
-	authresult.Data.SetValue(user.ProfileIndexEmail, u.Email)
 	authresult.Data.SetValue(user.ProfileIndexName, u.Name)
-	authresult.Data.SetValue(user.ProfileIndexNickname, u.Login)
-	authresult.Data.SetValue(user.ProfileIndexProfileURL, u.HTMLURL)
-	authresult.Data.SetValue(user.ProfileIndexID, strconv.Itoa(u.ID))
-	authresult.Data.SetValue(user.ProfileIndexCompany, u.Company)
-	authresult.Data.SetValue(user.ProfileIndexLocation, u.Location)
-	authresult.Data.SetValue(user.ProfileIndexWebsite, u.Blog)
 	return authresult, nil
 }

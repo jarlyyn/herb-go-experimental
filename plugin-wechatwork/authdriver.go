@@ -9,8 +9,6 @@ import (
 	"github.com/herb-go/herb/fetch"
 	"github.com/herb-go/herb/user"
 
-	cache "github.com/herb-go/herb/cache"
-	"github.com/herb-go/herb/cache-session"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
 )
 
@@ -20,7 +18,6 @@ const oauthURL = "https://open.weixin.qq.com/connect/oauth2/authorize"
 const qrauthURL = "https://open.work.weixin.qq.com/wwopen/sso/qrConnect"
 
 var DataIndexDepartment = user.ProfileIndex("WechatWorkDartment")
-var TokenMask = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
 
 type Session struct {
 	State string
@@ -45,14 +42,14 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 	if state == "" {
 		return nil, auth.ErrAuthParamsError
 	}
-	err := service.Auth.SessionStore.MustGetRequestSession(r).Get(FieldName, authsession)
-	if err == session.ErrDataNotFound {
+	err := service.Auth.Session.Get(r, FieldName, authsession)
+	if service.Auth.Session.IsNotFound(err) {
 		return nil, nil
 	}
 	if authsession.State == "" || authsession.State != state {
 		return nil, auth.ErrAuthParamsError
 	}
-	err = service.Auth.SessionStore.MustGetRequestSession(r).Del(FieldName)
+	err = service.Auth.Session.Del(r, FieldName)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +95,7 @@ func NewOauthDriver(agent *Agent, scope string) *OauthAuthDriver {
 }
 
 func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := cache.RandMaskedBytes(TokenMask, StateLength)
+	bytes, err := service.Auth.RandToken(StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +103,7 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	authsession := Session{
 		State: state,
 	}
-	err = service.Auth.SessionStore.MustGetRequestSession(r).Set(FieldName, authsession)
+	err = service.Auth.Session.Set(r, FieldName, authsession)
 	if err != nil {
 		panic(err)
 	}
@@ -139,7 +136,7 @@ func NewQRAuthDriver(agent *Agent) *QRAuthDriver {
 }
 
 func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := cache.RandMaskedBytes(TokenMask, StateLength)
+	bytes, err := service.Auth.RandToken(StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -147,7 +144,7 @@ func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWrite
 	authsession := Session{
 		State: state,
 	}
-	err = service.Auth.SessionStore.MustGetRequestSession(r).Set(FieldName, authsession)
+	err = service.Auth.Session.Set(r, FieldName, authsession)
 	if err != nil {
 		panic(err)
 	}

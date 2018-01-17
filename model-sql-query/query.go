@@ -414,7 +414,7 @@ func NewSelectResult(fields []string) *SelectResult {
 
 }
 
-type ResultScaner interface {
+type ResultScanner interface {
 	Scan(dest ...interface{}) error
 }
 type SelectResult struct {
@@ -435,7 +435,7 @@ func (r *SelectResult) Args() []interface{} {
 	return r.args
 }
 
-func (r *SelectResult) ScanFrom(s ResultScaner) error {
+func (r *SelectResult) ScanFrom(s ResultScanner) error {
 	return s.Scan(r.Args()...)
 }
 func NewWhereQuery() *WhereQurey {
