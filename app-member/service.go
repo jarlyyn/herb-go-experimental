@@ -108,7 +108,9 @@ func (s *Service) RegisterData(key string, data cachedmap.CachedMap) error {
 	s.DataServices[key] = value.Type()
 	return nil
 }
-
+func (s *Service) NewMembers() *Members {
+	return NewMembers(s)
+}
 func (s *Service) GetMembersFromRequest(r *http.Request) (members *Members) {
 	var contextName = s.ContextName
 	if contextName == "" {
