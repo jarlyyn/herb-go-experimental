@@ -18,6 +18,13 @@ type Members struct {
 func (m *Members) LoadBanned(keys ...string) (BannedMap, error) {
 	return m.BannedMap, m.Service.Banned().Load(&m.BannedMap, keys...)
 }
+func (m *Members) IsBanned(key string) (bool, error) {
+	bmap, err := m.LoadBanned(key)
+	if err != nil {
+		return false, err
+	}
+	return bmap[key], nil
+}
 func (m *Members) LoadTokens(keys ...string) (Tokens, error) {
 	return m.Tokens, m.Service.Token().Load(&m.Tokens, keys...)
 }
