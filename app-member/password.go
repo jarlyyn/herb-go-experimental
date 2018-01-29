@@ -1,6 +1,6 @@
 package member
 
-type PasswordService interface {
+type PasswordProvider interface {
 	VerifyPassword(uid string, password string) (bool, error)
 	UpdatePassword(uid string, password string) error
 }
@@ -10,11 +10,11 @@ type ServicePassword struct {
 }
 
 func (s *ServicePassword) UpdatePassword(uid string, password string) error {
-	return s.service.PasswordService.UpdatePassword(uid, password)
+	return s.service.PasswordProvider.UpdatePassword(uid, password)
 }
 
 func (s *ServicePassword) VerifyPassword(uid string, password string) (bool, error) {
-	if s.service.BannedService != nil {
+	if s.service.BannedProvider != nil {
 		bannedMap := BannedMap{}
 		err := s.service.Banned().Load(&bannedMap, uid)
 		if err != nil {
@@ -24,5 +24,5 @@ func (s *ServicePassword) VerifyPassword(uid string, password string) (bool, err
 			return false, ErrUserBanned
 		}
 	}
-	return s.service.PasswordService.VerifyPassword(uid, password)
+	return s.service.PasswordProvider.VerifyPassword(uid, password)
 }

@@ -11,10 +11,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 
+	"github.com/herb-go/herb/model-sql-datamapper"
+	"github.com/herb-go/herb/model-sql-query"
 	"github.com/herb-go/herb/user"
 	"github.com/jarlyyn/herb-go-experimental/app-member"
-	"github.com/jarlyyn/herb-go-experimental/model-sql-datamapper"
-	"github.com/jarlyyn/herb-go-experimental/model-sql-query"
 	"github.com/satori/go.uuid"
 )
 
@@ -147,8 +147,8 @@ type AccountDataMapper struct {
 	Service *member.Service
 }
 
-func (a *AccountDataMapper) InstallToService(service *member.Service) {
-	service.AccountsService = a
+func (a *AccountDataMapper) InstallToMember(service *member.Service) {
+	service.AccountsProvider = a
 	a.Service = service
 }
 
@@ -412,8 +412,8 @@ type PasswordDataMapper struct {
 	Service *member.Service
 }
 
-func (p *PasswordDataMapper) InstallToService(service *member.Service) {
-	service.PasswordService = p
+func (p *PasswordDataMapper) InstallToMember(service *member.Service) {
+	service.PasswordProvider = p
 	p.Service = service
 }
 func (p *PasswordDataMapper) Find(uid string) (PasswordModel, error) {
@@ -530,8 +530,8 @@ type TokenDataMapper struct {
 	Service *member.Service
 }
 
-func (t *TokenDataMapper) InstallToService(service *member.Service) {
-	service.TokenService = t
+func (t *TokenDataMapper) InstallToMember(service *member.Service) {
+	service.TokenProvider = t
 	t.Service = service
 }
 
@@ -624,8 +624,8 @@ type UserDataMapper struct {
 	Service *member.Service
 }
 
-func (u *UserDataMapper) InstallToService(service *member.Service) {
-	service.BannedService = u
+func (u *UserDataMapper) InstallToMember(service *member.Service) {
+	service.BannedProvider = u
 	u.Service = service
 }
 

@@ -3,8 +3,8 @@ package sqluser
 import (
 	"testing"
 
+	"github.com/herb-go/herb/model-sql-query"
 	"github.com/jarlyyn/herb-go-experimental/app-member"
-	"github.com/jarlyyn/herb-go-experimental/model-sql-query"
 
 	"database/sql"
 

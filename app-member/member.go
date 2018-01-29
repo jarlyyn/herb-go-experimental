@@ -3,7 +3,7 @@ package member
 import (
 	"reflect"
 
-	"github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
+	"github.com/herb-go/herb/cache-cachedmap"
 )
 
 type Members struct {
@@ -49,10 +49,10 @@ func NewMembers(s *Service) *Members {
 		Roles:     Roles{},
 		Tokens:    Tokens{},
 	}
-	member.Dataset = make(map[string]cachedmap.CachedMap, len(s.DataServices))
+	member.Dataset = make(map[string]cachedmap.CachedMap, len(s.DataProviders))
 	var mapvalue = reflect.ValueOf(member.Dataset)
-	for k := range s.DataServices {
-		d := reflect.MakeMap(s.DataServices[k])
+	for k := range s.DataProviders {
+		d := reflect.MakeMap(s.DataProviders[k])
 		mapvalue.SetMapIndex(reflect.ValueOf(k), d)
 	}
 	return member

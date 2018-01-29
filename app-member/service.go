@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/jarlyyn/herb-go-experimental/user-role"
+	"github.com/herb-go/herb/user-role"
 
-	"github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
+	"github.com/herb-go/herb/cache-cachedmap"
 
 	"context"
 
@@ -33,29 +33,29 @@ type Service struct {
 	SessionUIDFieldName    string
 	SessionMemberFieldName string
 	ContextName            ContextType
-	BannedService          BannedService
+	BannedProvider         BannedProvider
 	BannedCache            cache.Cacheable
-	AccountsService        AccountsService
+	AccountsProvider       AccountsProvider
 	AccountsCache          cache.Cacheable
-	TokenService           TokenService
+	TokenProvider          TokenProvider
 	TokenCache             cache.Cacheable
-	PasswordService        PasswordService
-	RoleService            RolesService
+	PasswordProvider       PasswordProvider
+	RoleProvider           RolesProvider
 	RoleCache              cache.Cacheable
-	DataServices           map[string]reflect.Type
+	DataProviders          map[string]reflect.Type
 	DataCache              cache.Cacheable
 	AccountTypes           map[string]user.AccountType
 }
 
 type Installable interface {
-	InstallToService(service *Service)
+	InstallToMember(service *Service)
 }
 
 func (s *Service) RegisterAccountType(keyword string, t user.AccountType) {
 	s.AccountTypes[keyword] = t
 }
 func (s *Service) Install(i Installable) {
-	i.InstallToService(s)
+	i.InstallToMember(s)
 }
 func (s *Service) NewAccount(keyword string, account string) (*user.UserAccount, error) {
 	accountType, ok := s.AccountTypes[keyword]
@@ -98,14 +98,14 @@ func (s *Service) Roles() *ServiceRole {
 	}
 }
 func (s *Service) RegisterData(key string, data cachedmap.CachedMap) error {
-	if s.DataServices == nil {
-		s.DataServices = map[string]reflect.Type{}
+	if s.DataProviders == nil {
+		s.DataProviders = map[string]reflect.Type{}
 	}
 	var value = reflect.ValueOf(data)
 	if value.Kind() != reflect.Map {
 		return ErrRegisteredDataNotMap
 	}
-	s.DataServices[key] = value.Type()
+	s.DataProviders[key] = value.Type()
 	return nil
 }
 func (s *Service) NewMembers() *Members {
@@ -150,7 +150,7 @@ func (s *Service) IdentifyRequest(r *http.Request) (uid string, err error) {
 		return "", nil
 	}
 	var members = s.GetMembersFromRequest(r)
-	if s.TokenService != nil {
+	if s.TokenProvider != nil {
 		_, err = members.LoadTokens(uid)
 		if err != nil {
 			return "", err
@@ -202,7 +202,7 @@ func (s *Service) Login(r *http.Request, id string) error {
 	if err != nil {
 		return err
 	}
-	if s.TokenService != nil {
+	if s.TokenProvider != nil {
 		member := s.GetMembersFromRequest(r)
 		tokens, err := member.LoadTokens(id)
 		if err != nil {
@@ -228,8 +228,8 @@ var dummyCache = cache.New()
 
 func New(store *session.Store) *Service {
 	return &Service{
-		SessionStore: store,
-		DataServices: map[string]reflect.Type{},
-		AccountTypes: map[string]user.AccountType{},
+		SessionStore:  store,
+		DataProviders: map[string]reflect.Type{},
+		AccountTypes:  map[string]user.AccountType{},
 	}
 }

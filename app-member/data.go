@@ -2,7 +2,7 @@ package member
 
 import (
 	"github.com/herb-go/herb/cache"
-	cachedmap "github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
+	cachedmap "github.com/herb-go/herb/cache-cachedmap"
 )
 
 type ServiceData struct {

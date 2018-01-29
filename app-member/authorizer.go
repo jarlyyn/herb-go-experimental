@@ -3,7 +3,7 @@ package member
 import (
 	"net/http"
 
-	role "github.com/jarlyyn/herb-go-experimental/user-role"
+	role "github.com/herb-go/herb/user-role"
 )
 
 type Authorizer struct {
@@ -20,7 +20,7 @@ func (a *Authorizer) Authorize(r *http.Request) (bool, error) {
 		return false, nil
 	}
 	var members = a.Service.GetMembersFromRequest(r)
-	if a.Service.BannedService != nil {
+	if a.Service.BannedProvider != nil {
 		_, err = members.LoadBanned(uid)
 		if err != nil {
 			return false, err
@@ -30,7 +30,7 @@ func (a *Authorizer) Authorize(r *http.Request) (bool, error) {
 		}
 	}
 
-	if a.Service.RoleService == nil {
+	if a.Service.RoleProvider == nil {
 		return true, nil
 	}
 	if a.RuleService == nil {

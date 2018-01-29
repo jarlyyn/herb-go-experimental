@@ -6,7 +6,6 @@ import (
 
 	"github.com/herb-go/herb/fetch"
 
-	user "github.com/herb-go/herb/user"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
 )
 
@@ -100,10 +99,10 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	authresult := auth.NewResult()
 	authresult.Account = u.ID
 	authresult.Keyword = service.Keyword
-	authresult.Data.SetValue(user.ProfileIndexFirstName, u.FirstName)
-	authresult.Data.SetValue(user.ProfileIndexLastName, u.LastName)
-	authresult.Data.SetValue(user.ProfileIndexLocale, u.Locale)
-	authresult.Data.SetValue(user.ProfileIndexAccessToken, result.AccessToken)
-	authresult.Data.SetValue(user.ProfileIndexName, u.Name)
+	authresult.Data.SetValue(auth.ProfileIndexFirstName, u.FirstName)
+	authresult.Data.SetValue(auth.ProfileIndexLastName, u.LastName)
+	authresult.Data.SetValue(auth.ProfileIndexLocale, u.Locale)
+	authresult.Data.SetValue(auth.ProfileIndexAccessToken, result.AccessToken)
+	authresult.Data.SetValue(auth.ProfileIndexName, u.Name)
 	return authresult, nil
 }

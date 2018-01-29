@@ -2,8 +2,8 @@ package member
 
 import (
 	"github.com/herb-go/herb/cache"
-	cachedmap "github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
-	role "github.com/jarlyyn/herb-go-experimental/user-role"
+	cachedmap "github.com/herb-go/herb/cache-cachedmap"
+	role "github.com/herb-go/herb/user-role"
 )
 
 type Roles map[string]role.Roles
@@ -11,7 +11,7 @@ type Roles map[string]role.Roles
 type ServiceRole struct {
 	service *Service
 }
-type RolesService interface {
+type RolesProvider interface {
 	Roles(uid ...string) (Roles, error)
 }
 
@@ -37,7 +37,7 @@ func (s *ServiceRole) Clean(uid string) error {
 }
 func (s *ServiceRole) loader(roles *Roles) func(keys ...string) error {
 	return func(keys ...string) error {
-		data, err := s.service.RoleService.Roles(keys...)
+		data, err := s.service.RoleProvider.Roles(keys...)
 		if err != nil {
 			return err
 		}

@@ -1,14 +1,16 @@
 package auth
 
-import "github.com/herb-go/herb/user"
+import (
+	"github.com/herb-go/herb/user"
+)
 
 type Result struct {
 	user.UserAccount
-	Data user.Profile
+	Data Profile
 }
 
 func NewResult() *Result {
 	return &Result{
-		Data: map[user.ProfileIndex][]string{},
+		Data: map[ProfileIndex][]string{},
 	}
 }

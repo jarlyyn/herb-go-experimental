@@ -2,12 +2,12 @@ package member
 
 import (
 	"github.com/herb-go/herb/cache"
-	cachedmap "github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
+	cachedmap "github.com/herb-go/herb/cache-cachedmap"
 )
 
 type BannedMap map[string]bool
 
-type BannedService interface {
+type BannedProvider interface {
 	Banned(uid ...string) (BannedMap, error)
 	Ban(uid string, banned bool) error
 }
@@ -41,12 +41,12 @@ func (s *ServiceBanned) Ban(uid string, banned bool) error {
 	if err != nil {
 		return err
 	}
-	return s.service.BannedService.Ban(uid, banned)
+	return s.service.BannedProvider.Ban(uid, banned)
 }
 
 func (s *ServiceBanned) loader(bannedMap *BannedMap) func(keys ...string) error {
 	return func(keys ...string) error {
-		data, err := s.service.BannedService.Banned(keys...)
+		data, err := s.service.BannedProvider.Banned(keys...)
 		if err != nil {
 			return err
 		}

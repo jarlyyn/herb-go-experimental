@@ -4,7 +4,7 @@ import "github.com/herb-go/herb/user"
 import "strconv"
 import "time"
 
-type testAccountService struct {
+type testAccountProvider struct {
 	AccountsMap map[string]user.UserAccounts
 }
 
@@ -15,17 +15,17 @@ func newTestAccount(uid string) *user.UserAccount {
 	}
 	return account
 }
-func (s *testAccountService) InstallToService(service *Service) {
-	service.AccountsService = s
+func (s *testAccountProvider) InstallToMember(service *Service) {
+	service.AccountsProvider = s
 }
-func (s *testAccountService) Accounts(uid ...string) (Accounts, error) {
+func (s *testAccountProvider) Accounts(uid ...string) (Accounts, error) {
 	var a = map[string]user.UserAccounts{}
 	for _, v := range uid {
 		a[v] = s.AccountsMap[v]
 	}
 	return a, nil
 }
-func (s *testAccountService) AccountToUID(account user.UserAccount) (uid string, err error) {
+func (s *testAccountProvider) AccountToUID(account user.UserAccount) (uid string, err error) {
 	for uid, v := range s.AccountsMap {
 		if v.Exists(&account) {
 			return uid, nil
@@ -33,7 +33,7 @@ func (s *testAccountService) AccountToUID(account user.UserAccount) (uid string,
 	}
 	return "", nil
 }
-func (s *testAccountService) Register(account user.UserAccount) (uid string, err error) {
+func (s *testAccountProvider) Register(account user.UserAccount) (uid string, err error) {
 	for _, v := range s.AccountsMap {
 		if v.Exists(&account) {
 			return "", ErrAccountRegisterExists
@@ -43,7 +43,7 @@ func (s *testAccountService) Register(account user.UserAccount) (uid string, err
 	s.AccountsMap[uid] = []user.UserAccount{account}
 	return uid, nil
 }
-func (s *testAccountService) AccountToUIDOrRegister(account user.UserAccount) (uid string, err error) {
+func (s *testAccountProvider) AccountToUIDOrRegister(account user.UserAccount) (uid string, err error) {
 	for uid, v := range s.AccountsMap {
 		if v.Exists(&account) {
 			return uid, nil
@@ -52,7 +52,7 @@ func (s *testAccountService) AccountToUIDOrRegister(account user.UserAccount) (u
 	s.AccountsMap[account.Account] = []user.UserAccount{account}
 	return account.Account, nil
 }
-func (s *testAccountService) BindAccounts(uid string, account user.UserAccount) error {
+func (s *testAccountProvider) BindAccounts(uid string, account user.UserAccount) error {
 	for _, v := range s.AccountsMap {
 		if v.Exists(&account) {
 			return user.ErrAccountBindExists
@@ -69,7 +69,7 @@ func (s *testAccountService) BindAccounts(uid string, account user.UserAccount) 
 	s.AccountsMap[uid] = accounts
 	return nil
 }
-func (s *testAccountService) UnbindAccounts(uid string, account user.UserAccount) error {
+func (s *testAccountProvider) UnbindAccounts(uid string, account user.UserAccount) error {
 	if s.AccountsMap[uid] == nil {
 		return user.ErrAccountUnbindNotExists
 	}
@@ -82,20 +82,20 @@ func (s *testAccountService) UnbindAccounts(uid string, account user.UserAccount
 	return nil
 }
 
-func newTestAccountService() *testAccountService {
-	return &testAccountService{
+func newTestAccountProvider() *testAccountProvider {
+	return &testAccountProvider{
 		AccountsMap: map[string]user.UserAccounts{},
 	}
 }
 
-type testTokenService struct {
+type testTokenProvider struct {
 	MemberTokens map[string]string
 }
 
-func (s *testTokenService) InstallToService(service *Service) {
-	service.TokenService = s
+func (s *testTokenProvider) InstallToMember(service *Service) {
+	service.TokenProvider = s
 }
-func (s *testTokenService) Tokens(uid ...string) (Tokens, error) {
+func (s *testTokenProvider) Tokens(uid ...string) (Tokens, error) {
 	var r = Tokens{}
 	for _, v := range uid {
 		r[v] = s.MemberTokens[v]
@@ -103,13 +103,13 @@ func (s *testTokenService) Tokens(uid ...string) (Tokens, error) {
 	return r, nil
 
 }
-func (s *testTokenService) Revoke(uid string) (string, error) {
+func (s *testTokenProvider) Revoke(uid string) (string, error) {
 	var ts = strconv.FormatInt(time.Now().UnixNano(), 10)
 	s.MemberTokens[uid] = ts
 	return ts, nil
 }
-func newTestTokenService() *testTokenService {
-	return &testTokenService{
+func newTestTokenProvider() *testTokenProvider {
+	return &testTokenProvider{
 		MemberTokens: map[string]string{},
 	}
 }
@@ -118,8 +118,8 @@ type testBannedService struct {
 	BannedMap BannedMap
 }
 
-func (s *testBannedService) InstallToService(service *Service) {
-	service.BannedService = s
+func (s *testBannedService) InstallToMember(service *Service) {
+	service.BannedProvider = s
 }
 
 func (s *testBannedService) Banned(uid ...string) (BannedMap, error) {
@@ -135,20 +135,20 @@ func (s *testBannedService) Ban(uid string, banned bool) error {
 	return nil
 }
 
-func newTestBannedService() *testBannedService {
+func newTestBannedProvider() *testBannedService {
 	return &testBannedService{
 		BannedMap: BannedMap{},
 	}
 }
 
-type testPasswordService struct {
+type testPasswordProvider struct {
 	Passwords map[string]string
 }
 
-func (s *testPasswordService) InstallToService(service *Service) {
-	service.PasswordService = s
+func (s *testPasswordProvider) InstallToMember(service *Service) {
+	service.PasswordProvider = s
 }
-func (s *testPasswordService) VerifyPassword(uid string, password string) (bool, error) {
+func (s *testPasswordProvider) VerifyPassword(uid string, password string) (bool, error) {
 
 	pass := s.Passwords[uid]
 	if pass == "" {
@@ -157,23 +157,23 @@ func (s *testPasswordService) VerifyPassword(uid string, password string) (bool,
 	return pass == password, nil
 
 }
-func (s *testPasswordService) UpdatePassword(uid string, password string) error {
+func (s *testPasswordProvider) UpdatePassword(uid string, password string) error {
 	s.Passwords[uid] = password
 	return nil
 }
 
-func newTestPasswordService() *testPasswordService {
-	return &testPasswordService{
+func newTestPasswordProvider() *testPasswordProvider {
+	return &testPasswordProvider{
 		Passwords: map[string]string{},
 	}
 }
 
-type userProfiles map[string]user.Profile
+type userProfiles map[string]map[string][]string
 
-var rawUserProfiles = map[string]user.Profile{}
+var rawUserProfiles = map[string]map[string][]string{}
 
 func (p userProfiles) NewMapElement(key string) error {
-	p[key] = user.Profile{}
+	p[key] = map[string][]string{}
 	return nil
 }
 func (p userProfiles) LoadMapElements(keys ...string) error {
@@ -187,12 +187,12 @@ func newTestUesrProfiles() *userProfiles {
 	return &userProfiles{}
 }
 
-type testRoleService Roles
+type testRoleProvider Roles
 
-func (s *testRoleService) InstallToService(service *Service) {
-	service.RoleService = s
+func (s *testRoleProvider) InstallToMember(service *Service) {
+	service.RoleProvider = s
 }
-func (s *testRoleService) Roles(uid ...string) (Roles, error) {
+func (s *testRoleProvider) Roles(uid ...string) (Roles, error) {
 	r := Roles{}
 	for _, v := range uid {
 		r[v] = (*s)[v]
@@ -201,6 +201,6 @@ func (s *testRoleService) Roles(uid ...string) (Roles, error) {
 
 }
 
-func newTestRoleService() *testRoleService {
-	return &testRoleService{}
+func newTestRoleProvider() *testRoleProvider {
+	return &testRoleProvider{}
 }

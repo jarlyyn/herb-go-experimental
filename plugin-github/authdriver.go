@@ -7,7 +7,6 @@ import (
 
 	"github.com/herb-go/herb/fetch"
 
-	"github.com/herb-go/herb/user"
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
 )
 
@@ -102,15 +101,15 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	authresult := auth.NewResult()
 	authresult.Account = u.Login
 	authresult.Keyword = service.Keyword
-	authresult.Data.SetValue(user.ProfileIndexAccessToken, result.AccessToken)
-	authresult.Data.SetValue(user.ProfileIndexAvatar, u.AvatarURL)
-	authresult.Data.SetValue(user.ProfileIndexEmail, u.Email)
-	authresult.Data.SetValue(user.ProfileIndexName, u.Name)
-	authresult.Data.SetValue(user.ProfileIndexNickname, u.Login)
-	authresult.Data.SetValue(user.ProfileIndexProfileURL, u.HTMLURL)
-	authresult.Data.SetValue(user.ProfileIndexID, strconv.Itoa(u.ID))
-	authresult.Data.SetValue(user.ProfileIndexCompany, u.Company)
-	authresult.Data.SetValue(user.ProfileIndexLocation, u.Location)
-	authresult.Data.SetValue(user.ProfileIndexWebsite, u.Blog)
+	authresult.Data.SetValue(auth.ProfileIndexAccessToken, result.AccessToken)
+	authresult.Data.SetValue(auth.ProfileIndexAvatar, u.AvatarURL)
+	authresult.Data.SetValue(auth.ProfileIndexEmail, u.Email)
+	authresult.Data.SetValue(auth.ProfileIndexName, u.Name)
+	authresult.Data.SetValue(auth.ProfileIndexNickname, u.Login)
+	authresult.Data.SetValue(auth.ProfileIndexProfileURL, u.HTMLURL)
+	authresult.Data.SetValue(auth.ProfileIndexID, strconv.Itoa(u.ID))
+	authresult.Data.SetValue(auth.ProfileIndexCompany, u.Company)
+	authresult.Data.SetValue(auth.ProfileIndexLocation, u.Location)
+	authresult.Data.SetValue(auth.ProfileIndexWebsite, u.Blog)
 	return authresult, nil
 }

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/jarlyyn/herb-go-experimental/user-role"
+	"github.com/herb-go/herb/user-role"
 
 	"github.com/herb-go/herb/cache"
 	"github.com/herb-go/herb/cache-session"
@@ -20,7 +20,9 @@ import (
 )
 
 var dataProfileKey = "profile"
-var profileData = "herb"
+var profileData = []string{"herb"}
+
+const ProfileIndexNickname = "nickname"
 
 func actionLogin(w http.ResponseWriter, r *http.Request) {
 	uid, err := service.Accounts().AccountToUID(*newTestAccount(r.Header.Get("account")))
@@ -49,7 +51,7 @@ type memberResult struct {
 	Banned   bool
 	Token    string
 	Role     role.Roles
-	Profile  user.Profile
+	Profile  map[string][]string
 }
 
 func actionMember(w http.ResponseWriter, r *http.Request) {
@@ -129,11 +131,11 @@ func testService() *Service {
 	}
 	service = New(store)
 	service.InitWithSubCache(c)
-	service.Install(newTestAccountService())
-	service.Install(newTestBannedService())
-	service.Install(newTestTokenService())
-	service.Install(newTestPasswordService())
-	service.Install(newTestRoleService())
+	service.Install(newTestAccountProvider())
+	service.Install(newTestBannedProvider())
+	service.Install(newTestTokenProvider())
+	service.Install(newTestPasswordProvider())
+	service.Install(newTestRoleProvider())
 	service.RegisterData(dataProfileKey, *newTestUesrProfiles())
 	service.RegisterAccountType("test", user.CaseSensitiveAcountType)
 	return service
@@ -148,14 +150,14 @@ func TestService(t *testing.T) {
 	var router = httprouter.New()
 	initRouter(service, router)
 	app.Handle(router)
-	rawUserProfiles = map[string]user.Profile{}
+	rawUserProfiles = map[string]map[string][]string{}
 	uid, err := service.Accounts().Register(*newTestAccount(accountNormalUser))
 	if err != nil {
 		t.Fatal(err)
 	}
-	rawUserProfiles[uid] = user.Profile{}
+	rawUserProfiles[uid] = map[string][]string{}
 	var userprofile = rawUserProfiles[uid]
-	userprofile.SetValue(user.ProfileIndexNickname, profileData)
+	userprofile[ProfileIndexNickname] = profileData
 	err = service.Password().UpdatePassword(uid, password)
 	if err != nil {
 		t.Fatal(err)
@@ -214,7 +216,7 @@ func TestService(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Error(resp.StatusCode)
 	}
-	_, err = service.TokenService.Revoke(uid)
+	_, err = service.TokenProvider.Revoke(uid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +270,7 @@ func TestService(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Error(resp.StatusCode)
 	}
-	err = service.BannedService.Ban(uid, true)
+	err = service.BannedProvider.Ban(uid, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -335,8 +337,8 @@ func TestService(t *testing.T) {
 	if resp.StatusCode != 403 {
 		t.Error(resp.StatusCode)
 	}
-	var roleservice = service.RoleService.(*testRoleService)
-	(*roleservice)[uid] = *role.NewRoles("role", "role2")
+	var roleprovider = service.RoleProvider.(*testRoleProvider)
+	(*roleprovider)[uid] = *role.NewRoles("role", "role2")
 
 	req, err = http.NewRequest("POST", s.URL+"/role", nil)
 	if err != nil {

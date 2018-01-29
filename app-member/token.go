@@ -2,7 +2,7 @@ package member
 
 import (
 	"github.com/herb-go/herb/cache"
-	cachedmap "github.com/jarlyyn/herb-go-experimental/cache-cachedmap"
+	cachedmap "github.com/herb-go/herb/cache-cachedmap"
 )
 
 type Tokens map[string]string
@@ -10,7 +10,7 @@ type Tokens map[string]string
 type ServiceToken struct {
 	service *Service
 }
-type TokenService interface {
+type TokenProvider interface {
 	Tokens(uid ...string) (Tokens, error)
 	Revoke(uid string) (string, error)
 }
@@ -28,12 +28,12 @@ func (s *ServiceToken) Revoke(uid string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return s.service.TokenService.Revoke(uid)
+	return s.service.TokenProvider.Revoke(uid)
 }
 
 func (s *ServiceToken) loader(Tokens *Tokens) func(keys ...string) error {
 	return func(keys ...string) error {
-		data, err := s.service.TokenService.Tokens(keys...)
+		data, err := s.service.TokenProvider.Tokens(keys...)
 		if err != nil {
 			return err
 		}

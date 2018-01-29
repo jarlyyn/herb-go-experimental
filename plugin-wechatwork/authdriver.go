@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/herb-go/herb/fetch"
-	"github.com/herb-go/herb/user"
 
 	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
 )
@@ -17,7 +16,7 @@ const StateLength = 128
 const oauthURL = "https://open.weixin.qq.com/connect/oauth2/authorize"
 const qrauthURL = "https://open.work.weixin.qq.com/wwopen/sso/qrConnect"
 
-var DataIndexDepartment = user.ProfileIndex("WechatWorkDartment")
+var DataIndexDepartment = auth.ProfileIndex("WechatWorkDartment")
 
 type Session struct {
 	State string
@@ -66,16 +65,16 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 	result := auth.NewResult()
 	result.Keyword = service.Keyword
 	result.Account = info.UserID
-	result.Data.SetValue(user.ProfileIndexAvatar, info.Avatar)
-	result.Data.SetValue(user.ProfileIndexEmail, info.Email)
+	result.Data.SetValue(auth.ProfileIndexAvatar, info.Avatar)
+	result.Data.SetValue(auth.ProfileIndexEmail, info.Email)
 	switch info.Gender {
 	case ApiResultGenderMale:
-		result.Data.SetValue(user.ProfileIndexGender, user.ProfileGenderMale)
+		result.Data.SetValue(auth.ProfileIndexGender, auth.ProfileGenderMale)
 	case ApiResultGenderFemale:
-		result.Data.SetValue(user.ProfileIndexGender, user.ProfileGenderFemale)
+		result.Data.SetValue(auth.ProfileIndexGender, auth.ProfileGenderFemale)
 	}
-	result.Data.SetValue(user.ProfileIndexName, info.Name)
-	result.Data.SetValue(user.ProfileIndexNickname, info.Name)
+	result.Data.SetValue(auth.ProfileIndexName, info.Name)
+	result.Data.SetValue(auth.ProfileIndexNickname, info.Name)
 	for _, v := range info.Department {
 		result.Data.AddValue(DataIndexDepartment, strconv.Itoa(v))
 	}
