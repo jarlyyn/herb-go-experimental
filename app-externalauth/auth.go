@@ -24,41 +24,41 @@ func DefaultNotFoundAction(w http.ResponseWriter, r *http.Request) {
 }
 
 type Driver interface {
-	ExternalLogin(service *Service, w http.ResponseWriter, r *http.Request)
-	AuthRequest(service *Service, r *http.Request) (*Result, error)
+	ExternalLogin(provider *Provider, w http.ResponseWriter, r *http.Request)
+	AuthRequest(provider *Provider, r *http.Request) (*Result, error)
 }
 
 type Auth struct {
-	ServiceManager ServiceManager
-	Host           string
-	Path           string
-	LoginPrefix    string
-	AuthPrefix     string
-	NotFoundAction func(w http.ResponseWriter, r *http.Request)
-	Session        Session
+	ProviderManager ProviderManager
+	Host            string
+	Path            string
+	LoginPrefix     string
+	AuthPrefix      string
+	NotFoundAction  func(w http.ResponseWriter, r *http.Request)
+	Session         Session
 }
 
-func (a *Auth) GetServiceManager() ServiceManager {
-	if a.ServiceManager != nil {
-		return a.ServiceManager
+func (a *Auth) GetProviderManager() ProviderManager {
+	if a.ProviderManager != nil {
+		return a.ProviderManager
 	}
-	return DefaultServiceManager
+	return DefaultProviderManager
 }
-func (a *Auth) RegisterService(keyword string, driver Driver) (*Service, error) {
-	return a.GetServiceManager().RegisterService(a, keyword, driver)
+func (a *Auth) RegisterProvider(keyword string, driver Driver) (*Provider, error) {
+	return a.GetProviderManager().RegisterProvider(a, keyword, driver)
 }
-func (a *Auth) MustRegisterService(keyword string, driver Driver) *Service {
-	s, err := a.GetServiceManager().RegisterService(a, keyword, driver)
+func (a *Auth) MustRegisterProvider(keyword string, driver Driver) *Provider {
+	s, err := a.GetProviderManager().RegisterProvider(a, keyword, driver)
 	if err != nil {
 		panic(err)
 	}
 	return s
 }
-func (a *Auth) GetService(keyword string) (*Service, error) {
-	return a.GetServiceManager().GetService(a, keyword)
+func (a *Auth) GetProvider(keyword string) (*Provider, error) {
+	return a.GetProviderManager().GetProvider(a, keyword)
 }
-func (a *Auth) MustGetService(keyword string) *Service {
-	s, err := a.GetServiceManager().GetService(a, keyword)
+func (a *Auth) MustGetProvider(keyword string) *Provider {
+	s, err := a.GetProviderManager().GetProvider(a, keyword)
 	if err != nil {
 		panic(err)
 	}
@@ -121,25 +121,25 @@ func (a *Auth) SetResult(r *http.Request, result *Result) {
 func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		var service *Service
+		var provider *Provider
 		var keyword string
 		path := r.URL.Path
 		if keyword = strings.TrimPrefix(path, a.LoginPrefix); len(keyword) < len(path) {
-			service, err = a.GetService(keyword)
+			provider, err = a.GetProvider(keyword)
 			if err != nil {
 				panic(err)
 			}
-			if service != nil {
-				service.Login(w, r)
+			if provider != nil {
+				provider.Login(w, r)
 				return
 			}
 		} else if keyword = strings.TrimPrefix(path, a.AuthPrefix); len(keyword) < len(path) {
-			service, err = a.GetService(keyword)
+			provider, err = a.GetProvider(keyword)
 			if err != nil {
 				panic(err)
 			}
-			if service != nil {
-				result, err := service.AuthRequest(r)
+			if provider != nil {
+				result, err := provider.AuthRequest(r)
 				if err == ErrAuthParamsError {
 					a.NotFoundAction(w, r)
 					return

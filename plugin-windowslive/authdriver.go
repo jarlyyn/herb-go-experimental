@@ -29,8 +29,8 @@ func NewOauthDriver(client *Client, scope string) *OauthAuthDriver {
 		scope:  scope,
 	}
 }
-func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := service.Auth.RandToken(StateLength)
+func (d *OauthAuthDriver) ExternalLogin(provider *auth.Provider, w http.ResponseWriter, r *http.Request) {
+	bytes, err := provider.Auth.RandToken(StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +38,7 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	authsession := StateSession{
 		State: state,
 	}
-	err = service.Auth.Session.Set(r, FieldName, authsession)
+	err = provider.Auth.Session.Set(r, FieldName, authsession)
 	if err != nil {
 		panic(err)
 	}
@@ -51,12 +51,12 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	q.Set("scope", d.scope)
 	q.Set("state", state)
 	q.Set("response_type", "code")
-	q.Set("redirect_uri", service.AuthUrl())
+	q.Set("redirect_uri", provider.AuthUrl())
 	u.RawQuery = q.Encode()
 	http.Redirect(w, r, u.String(), 302)
 }
 
-func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*auth.Result, error) {
+func (d *OauthAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) (*auth.Result, error) {
 	var authsession = &StateSession{}
 	q := r.URL.Query()
 	var code = q.Get("code")
@@ -67,18 +67,18 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	if state == "" {
 		return nil, auth.ErrAuthParamsError
 	}
-	err := service.Auth.Session.Get(r, FieldName, authsession)
-	if service.Auth.Session.IsNotFound(err) {
+	err := provider.Auth.Session.Get(r, FieldName, authsession)
+	if provider.Auth.Session.IsNotFound(err) {
 		return nil, nil
 	}
 	if authsession.State == "" || authsession.State != state {
 		return nil, auth.ErrAuthParamsError
 	}
-	err = service.Auth.Session.Del(r, FieldName)
+	err = provider.Auth.Session.Del(r, FieldName)
 	if err != nil {
 		return nil, err
 	}
-	result, err := d.client.GetAccessToken(code, service.AuthUrl())
+	result, err := d.client.GetAccessToken(code, provider.AuthUrl())
 	if err != nil {
 		statuscode := fetch.GetErrorStatusCode(err)
 		if statuscode > 400 && statuscode < 500 {
@@ -98,7 +98,7 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	}
 	authresult := auth.NewResult()
 	authresult.Account = u.ID
-	authresult.Keyword = service.Keyword
+	authresult.Keyword = provider.Keyword
 	authresult.Data.SetValue(auth.ProfileIndexFirstName, u.FirstName)
 	authresult.Data.SetValue(auth.ProfileIndexLastName, u.LastName)
 	authresult.Data.SetValue(auth.ProfileIndexLocale, u.Locale)

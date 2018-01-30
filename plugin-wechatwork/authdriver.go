@@ -30,7 +30,7 @@ func mustHTMLRedirect(w http.ResponseWriter, url string) {
 		panic(err)
 	}
 }
-func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) (*auth.Result, error) {
+func authRequestWithAgent(agent *Agent, provider *auth.Provider, r *http.Request) (*auth.Result, error) {
 	var authsession = &Session{}
 	q := r.URL.Query()
 	var code = q.Get("code")
@@ -41,14 +41,14 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 	if state == "" {
 		return nil, auth.ErrAuthParamsError
 	}
-	err := service.Auth.Session.Get(r, FieldName, authsession)
-	if service.Auth.Session.IsNotFound(err) {
+	err := provider.Auth.Session.Get(r, FieldName, authsession)
+	if provider.Auth.Session.IsNotFound(err) {
 		return nil, nil
 	}
 	if authsession.State == "" || authsession.State != state {
 		return nil, auth.ErrAuthParamsError
 	}
-	err = service.Auth.Session.Del(r, FieldName)
+	err = provider.Auth.Session.Del(r, FieldName)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func authRequestWithAgent(agent *Agent, service *auth.Service, r *http.Request) 
 		return nil, nil
 	}
 	result := auth.NewResult()
-	result.Keyword = service.Keyword
+	result.Keyword = provider.Keyword
 	result.Account = info.UserID
 	result.Data.SetValue(auth.ProfileIndexAvatar, info.Avatar)
 	result.Data.SetValue(auth.ProfileIndexEmail, info.Email)
@@ -93,8 +93,8 @@ func NewOauthDriver(agent *Agent, scope string) *OauthAuthDriver {
 	}
 }
 
-func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := service.Auth.RandToken(StateLength)
+func (d *OauthAuthDriver) ExternalLogin(provider *auth.Provider, w http.ResponseWriter, r *http.Request) {
+	bytes, err := provider.Auth.RandToken(StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +102,7 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	authsession := Session{
 		State: state,
 	}
-	err = service.Auth.Session.Set(r, FieldName, authsession)
+	err = provider.Auth.Session.Set(r, FieldName, authsession)
 	if err != nil {
 		panic(err)
 	}
@@ -115,13 +115,13 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	q.Set("agentid", d.agent.AgentID)
 	q.Set("scope", d.scope)
 	q.Set("state", state)
-	q.Set("redirect_uri", service.AuthUrl())
+	q.Set("redirect_uri", provider.AuthUrl())
 	u.RawQuery = q.Encode()
 	u.Fragment = "wechat_redirect"
 	mustHTMLRedirect(w, u.String())
 }
-func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*auth.Result, error) {
-	return authRequestWithAgent(d.agent, service, r)
+func (d *OauthAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) (*auth.Result, error) {
+	return authRequestWithAgent(d.agent, provider, r)
 }
 
 type QRAuthDriver struct {
@@ -134,8 +134,8 @@ func NewQRAuthDriver(agent *Agent) *QRAuthDriver {
 	}
 }
 
-func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
-	bytes, err := service.Auth.RandToken(StateLength)
+func (d *QRAuthDriver) ExternalLogin(provider *auth.Provider, w http.ResponseWriter, r *http.Request) {
+	bytes, err := provider.Auth.RandToken(StateLength)
 	if err != nil {
 		panic(err)
 	}
@@ -143,7 +143,7 @@ func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWrite
 	authsession := Session{
 		State: state,
 	}
-	err = service.Auth.Session.Set(r, FieldName, authsession)
+	err = provider.Auth.Session.Set(r, FieldName, authsession)
 	if err != nil {
 		panic(err)
 	}
@@ -155,10 +155,10 @@ func (d *QRAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWrite
 	q.Set("appid", d.agent.CorpID)
 	q.Set("agentid", d.agent.AgentID)
 	q.Set("state", state)
-	q.Set("redirect_uri", service.AuthUrl())
+	q.Set("redirect_uri", provider.AuthUrl())
 	u.RawQuery = q.Encode()
 	mustHTMLRedirect(w, u.String())
 }
-func (d *QRAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*auth.Result, error) {
-	return authRequestWithAgent(d.agent, service, r)
+func (d *QRAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) (*auth.Result, error) {
+	return authRequestWithAgent(d.agent, provider, r)
 }

@@ -32,7 +32,7 @@ func NewOauthDriver(client *Client, scope string) *OauthAuthDriver {
 		scope:  scope,
 	}
 }
-func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWriter, r *http.Request) {
+func (d *OauthAuthDriver) ExternalLogin(service *auth.Provider, w http.ResponseWriter, r *http.Request) {
 	bytes, err := service.Auth.RandToken(StateLength)
 	if err != nil {
 		panic(err)
@@ -58,7 +58,7 @@ func (d *OauthAuthDriver) ExternalLogin(service *auth.Service, w http.ResponseWr
 	http.Redirect(w, r, u.String(), 302)
 }
 
-func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*auth.Result, error) {
+func (d *OauthAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) (*auth.Result, error) {
 	var authsession = &StateSession{}
 	q := r.URL.Query()
 	var code = q.Get("code")
@@ -69,14 +69,14 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	if state == "" {
 		return nil, auth.ErrAuthParamsError
 	}
-	err := service.Auth.Session.Get(r, FieldName, authsession)
-	if service.Auth.Session.IsNotFound(err) {
+	err := provider.Auth.Session.Get(r, FieldName, authsession)
+	if provider.Auth.Session.IsNotFound(err) {
 		return nil, nil
 	}
 	if authsession.State == "" || authsession.State != state {
 		return nil, auth.ErrAuthParamsError
 	}
-	err = service.Auth.Session.Del(r, FieldName)
+	err = provider.Auth.Session.Del(r, FieldName)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (d *OauthAuthDriver) AuthRequest(service *auth.Service, r *http.Request) (*
 	}
 	authresult := auth.NewResult()
 	authresult.Account = u.Login
-	authresult.Keyword = service.Keyword
+	authresult.Keyword = provider.Keyword
 	authresult.Data.SetValue(auth.ProfileIndexAccessToken, result.AccessToken)
 	authresult.Data.SetValue(auth.ProfileIndexAvatar, u.AvatarURL)
 	authresult.Data.SetValue(auth.ProfileIndexEmail, u.Email)

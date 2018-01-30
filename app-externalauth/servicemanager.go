@@ -1,21 +1,21 @@
 package auth
 
-type ServiceManager interface {
-	GetService(auth *Auth, keyword string) (*Service, error)
-	RegisterService(auth *Auth, keyword string, driver Driver) (*Service, error)
+type ProviderManager interface {
+	GetProvider(auth *Auth, keyword string) (*Provider, error)
+	RegisterProvider(auth *Auth, keyword string, driver Driver) (*Provider, error)
 }
 
-type MapServiceManager struct {
-	Services map[string]*Service
+type MapProviderManager struct {
+	Providers map[string]*Provider
 }
 
-func NewMapServiceManager() *MapServiceManager {
-	return &MapServiceManager{
-		Services: map[string]*Service{},
+func NewMapProviderManager() *MapProviderManager {
+	return &MapProviderManager{
+		Providers: map[string]*Provider{},
 	}
 }
-func (m *MapServiceManager) GetService(a *Auth, keyword string) (*Service, error) {
-	s, ok := m.Services[keyword]
+func (m *MapProviderManager) GetProvider(a *Auth, keyword string) (*Provider, error) {
+	s, ok := m.Providers[keyword]
 	if ok {
 		return s, nil
 	}
@@ -23,15 +23,15 @@ func (m *MapServiceManager) GetService(a *Auth, keyword string) (*Service, error
 
 }
 
-func (m *MapServiceManager) RegisterService(a *Auth, keyword string, driver Driver) (*Service, error) {
-	s := &Service{
+func (m *MapProviderManager) RegisterProvider(a *Auth, keyword string, driver Driver) (*Provider, error) {
+	s := &Provider{
 		Driver:  driver,
 		Auth:    a,
 		Keyword: keyword,
 	}
-	m.Services[keyword] = s
+	m.Providers[keyword] = s
 	return s, nil
 
 }
 
-var DefaultServiceManager = NewMapServiceManager()
+var DefaultProviderManager = NewMapProviderManager()

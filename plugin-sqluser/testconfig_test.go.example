@@ -1,9 +1,0 @@
-package sqluser
-
-import _ "github.com/go-sql-driver/mysql"
-
-var config = dbConfig{
-	Driver: "mysql",
-	Conn:   "dbuser:password@host/dbname",
-	Prefix: "",
-}
