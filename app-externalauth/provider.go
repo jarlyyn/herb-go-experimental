@@ -2,6 +2,10 @@ package auth
 
 import "net/http"
 
+type Driver interface {
+	ExternalLogin(provider *Provider, w http.ResponseWriter, r *http.Request)
+	AuthRequest(provider *Provider, r *http.Request) (*Result, error)
+}
 type Provider struct {
 	Driver  Driver
 	Auth    *Auth

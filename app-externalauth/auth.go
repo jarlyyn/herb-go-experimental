@@ -23,11 +23,6 @@ func DefaultNotFoundAction(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-type Driver interface {
-	ExternalLogin(provider *Provider, w http.ResponseWriter, r *http.Request)
-	AuthRequest(provider *Provider, r *http.Request) (*Result, error)
-}
-
 type Auth struct {
 	ProviderManager ProviderManager
 	Host            string
@@ -99,7 +94,7 @@ func (a *Auth) MustGetResult(req *http.Request) *Result {
 			return result
 		}
 	}
-	return &Result{}
+	return NewResult()
 }
 func (a *Auth) RandToken(length int) ([]byte, error) {
 	token := make([]byte, length)
@@ -148,7 +143,6 @@ func (a *Auth) Serve(SuccessAction func(w http.ResponseWriter, r *http.Request))
 					panic(err)
 				}
 				if result != nil && result.Account != "" {
-					result.Keyword = keyword
 					a.SetResult(r, result)
 					SuccessAction(w, r)
 					return
