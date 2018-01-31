@@ -98,7 +98,6 @@ func (d *OauthAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) 
 	}
 	authresult := auth.NewResult()
 	authresult.Account = u.ID
-	authresult.Keyword = provider.Keyword
 	authresult.Data.SetValue(auth.ProfileIndexFirstName, u.FirstName)
 	authresult.Data.SetValue(auth.ProfileIndexLastName, u.LastName)
 	authresult.Data.SetValue(auth.ProfileIndexLocale, u.Locale)

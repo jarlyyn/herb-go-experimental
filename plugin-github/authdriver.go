@@ -7,7 +7,7 @@ import (
 
 	"github.com/herb-go/herb/fetch"
 
-	auth "github.com/jarlyyn/herb-go-experimental/app-externalauth"
+	auth "github.com/herb-go/modules/externalauth"
 )
 
 const StateLength = 128
@@ -100,7 +100,6 @@ func (d *OauthAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) 
 	}
 	authresult := auth.NewResult()
 	authresult.Account = u.Login
-	authresult.Keyword = provider.Keyword
 	authresult.Data.SetValue(auth.ProfileIndexAccessToken, result.AccessToken)
 	authresult.Data.SetValue(auth.ProfileIndexAvatar, u.AvatarURL)
 	authresult.Data.SetValue(auth.ProfileIndexEmail, u.Email)

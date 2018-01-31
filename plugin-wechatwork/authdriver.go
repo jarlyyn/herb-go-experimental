@@ -63,7 +63,6 @@ func authRequestWithAgent(agent *Agent, provider *auth.Provider, r *http.Request
 		return nil, nil
 	}
 	result := auth.NewResult()
-	result.Keyword = provider.Keyword
 	result.Account = info.UserID
 	result.Data.SetValue(auth.ProfileIndexAvatar, info.Avatar)
 	result.Data.SetValue(auth.ProfileIndexEmail, info.Email)
