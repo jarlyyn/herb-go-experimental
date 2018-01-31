@@ -27,5 +27,17 @@ func TestProfile(t *testing.T) {
 	if len(res) != 2 || res[0] != "test3" || res[1] != "test4" {
 		t.Error(res)
 	}
-
+	p.AddValue(ProfileIndexEmail, "testadd")
+	re = p.Value(ProfileIndexEmail)
+	if re != "testadd" {
+		t.Error(re)
+	}
+	re = p.Value(ProfileIndexFirstName)
+	if re != "" {
+		t.Error(re)
+	}
+	res = p.Values(ProfileIndexFirstName)
+	if res != nil {
+		t.Error(res)
+	}
 }

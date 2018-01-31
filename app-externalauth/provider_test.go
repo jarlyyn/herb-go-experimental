@@ -21,3 +21,21 @@ func (d *testDriver) AuthRequest(provider *Provider, r *http.Request) (*Result, 
 	result.Data = d.data
 	return result, nil
 }
+
+func newTestFailDriver(data Profile) *testFailDriver {
+	return &testFailDriver{
+		data: data,
+	}
+}
+
+type testFailDriver struct {
+	data Profile
+}
+
+func (d *testFailDriver) ExternalLogin(provider *Provider, w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, provider.AuthUrl(), 301)
+}
+func (d *testFailDriver) AuthRequest(provider *Provider, r *http.Request) (*Result, error) {
+	result := provider.Auth.MustGetResult(r)
+	return result, ErrAuthParamsError
+}
