@@ -51,7 +51,7 @@ func (d *OauthAuthDriver) ExternalLogin(provider *auth.Provider, w http.Response
 	q.Set("scope", d.scope)
 	q.Set("state", state)
 	q.Set("response_type", "code")
-	q.Set("redirect_uri", provider.AuthUrl())
+	q.Set("redirect_uri", provider.AuthURL())
 	u.RawQuery = q.Encode()
 	http.Redirect(w, r, u.String(), 302)
 }
@@ -78,7 +78,7 @@ func (d *OauthAuthDriver) AuthRequest(provider *auth.Provider, r *http.Request) 
 	if err != nil {
 		return nil, err
 	}
-	result, err := d.client.GetAccessToken(code, provider.AuthUrl())
+	result, err := d.client.GetAccessToken(code, provider.AuthURL())
 	if err != nil {
 		statuscode := fetch.GetErrorStatusCode(err)
 		if statuscode > 400 && statuscode < 500 {

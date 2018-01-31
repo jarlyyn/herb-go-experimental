@@ -114,7 +114,7 @@ func (d *OauthAuthDriver) ExternalLogin(provider *auth.Provider, w http.Response
 	q.Set("agentid", d.agent.AgentID)
 	q.Set("scope", d.scope)
 	q.Set("state", state)
-	q.Set("redirect_uri", provider.AuthUrl())
+	q.Set("redirect_uri", provider.AuthURL())
 	u.RawQuery = q.Encode()
 	u.Fragment = "wechat_redirect"
 	mustHTMLRedirect(w, u.String())
@@ -154,7 +154,7 @@ func (d *QRAuthDriver) ExternalLogin(provider *auth.Provider, w http.ResponseWri
 	q.Set("appid", d.agent.CorpID)
 	q.Set("agentid", d.agent.AgentID)
 	q.Set("state", state)
-	q.Set("redirect_uri", provider.AuthUrl())
+	q.Set("redirect_uri", provider.AuthURL())
 	u.RawQuery = q.Encode()
 	mustHTMLRedirect(w, u.String())
 }
