@@ -11,12 +11,12 @@ import (
 )
 
 type Agent struct {
-	CorpID        string
-	AgentID       string
-	Secret        string
-	ClientService fetch.Service
-	accessToken   string
-	lock          sync.Mutex
+	CorpID      string
+	AgentID     string
+	Secret      string
+	Fetcher     fetch.Fetcher
+	accessToken string
+	lock        sync.Mutex
 }
 
 func (a *Agent) AccessToken() string {
@@ -52,7 +52,7 @@ func (a *Agent) GrantAccessToken() error {
 	if err != nil {
 		return err
 	}
-	rep, err := a.ClientService.Fetch(req)
+	rep, err := a.Fetcher.Fetch(req)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 	if err != nil {
 		return err
 	}
-	resp, err := a.ClientService.Fetch(req)
+	resp, err := a.Fetcher.Fetch(req)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 		if err != nil {
 			return err
 		}
-		resp, err := a.ClientService.Fetch(req)
+		resp, err := a.Fetcher.Fetch(req)
 		if err != nil {
 			return err
 		}

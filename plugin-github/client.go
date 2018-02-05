@@ -8,9 +8,9 @@ import (
 )
 
 type Client struct {
-	ClientID      string
-	ClientSecret  string
-	ClientService fetch.Service
+	ClientID     string
+	ClientSecret string
+	Fetcher      fetch.Fetcher
 }
 
 func (c *Client) GetAccessToken(code string) (*ResultAPIAccessToken, error) {
@@ -24,7 +24,7 @@ func (c *Client) GetAccessToken(code string) (*ResultAPIAccessToken, error) {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	rep, err := c.ClientService.Fetch(req)
+	rep, err := c.Fetcher.Fetch(req)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *Client) GetUser(accessToken string) (*ResultAPIUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	rep, err := c.ClientService.Fetch(req)
+	rep, err := c.Fetcher.Fetch(req)
 	if err != nil {
 		return nil, err
 	}
