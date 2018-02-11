@@ -53,7 +53,7 @@ func authRequestWithAgent(agent *Agent, provider *auth.Provider, r *http.Request
 		return nil, err
 	}
 	info, err := agent.GetUserInfo(code)
-	if fetch.CompareApiErrCode(err, ApiErrOauthCodeWrong) {
+	if fetch.CompareAPIErrCode(err, ApiErrOauthCodeWrong) {
 		return nil, auth.ErrAuthParamsError
 	}
 	if err != nil {

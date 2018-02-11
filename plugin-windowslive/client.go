@@ -10,7 +10,7 @@ import (
 type Client struct {
 	ClientID     string
 	ClientSecret string
-	Fetcher      fetch.Fetcher
+	Clients      fetch.Clients
 }
 
 func (c *Client) GetAccessToken(code string, redirect_url string) (*ResultAPIAccessToken, error) {
@@ -25,7 +25,7 @@ func (c *Client) GetAccessToken(code string, redirect_url string) (*ResultAPIAcc
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	rep, err := c.Fetcher.Fetch(req)
+	rep, err := c.Clients.Fetch(req)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (c *Client) GetAccessToken(code string, redirect_url string) (*ResultAPIAcc
 		return nil, rep
 	}
 	result := &ResultAPIAccessToken{}
-	err = rep.UnmarshalJSON(result)
+	err = rep.UnmarshalAsJSON(result)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *Client) GetUser(accessToken string) (*ResultAPIUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	rep, err := c.Fetcher.Fetch(req)
+	rep, err := c.Clients.Fetch(req)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *Client) GetUser(accessToken string) (*ResultAPIUser, error) {
 		return nil, rep
 	}
 	result := &ResultAPIUser{}
-	err = rep.UnmarshalJSON(result)
+	err = rep.UnmarshalAsJSON(result)
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ type Agent struct {
 	CorpID      string
 	AgentID     string
 	Secret      string
-	Fetcher     fetch.Fetcher
+	Clients     fetch.Clients
 	accessToken string
 	lock        sync.Mutex
 }
@@ -52,7 +52,7 @@ func (a *Agent) GrantAccessToken() error {
 	if err != nil {
 		return err
 	}
-	rep, err := a.Fetcher.Fetch(req)
+	rep, err := a.Clients.Fetch(req)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (a *Agent) GrantAccessToken() error {
 		return rep
 	}
 	result := &resultAccessToken{}
-	err = rep.UnmarshalJSON(result)
+	err = rep.UnmarshalAsJSON(result)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 	if err != nil {
 		return err
 	}
-	resp, err := a.Fetcher.Fetch(req)
+	resp, err := a.Clients.Fetch(req)
 	if err != nil {
 		return err
 	}
@@ -101,11 +101,11 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 		return resp
 	}
 	apierr = resultAPIError{}
-	err = resp.UnmarshalJSON(&apierr)
+	err = resp.UnmarshalAsJSON(&apierr)
 	if err != nil {
 		return err
 	}
-	if fetch.CompareApiErrCode(err, ApiErrAccessTokenOutOfDate) || fetch.CompareApiErrCode(err, ApiErrAccessTokenWrong) {
+	if fetch.CompareAPIErrCode(err, ApiErrAccessTokenOutOfDate) || fetch.CompareAPIErrCode(err, ApiErrAccessTokenWrong) {
 		err := a.GrantAccessToken()
 		if err != nil {
 			return err
@@ -115,7 +115,7 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 		if err != nil {
 			return err
 		}
-		resp, err := a.Fetcher.Fetch(req)
+		resp, err := a.Clients.Fetch(req)
 		if err != nil {
 			return err
 		}
@@ -123,7 +123,7 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 			return resp
 		}
 		apierr = resultAPIError{}
-		err = resp.UnmarshalJSON(&apierr)
+		err = resp.UnmarshalAsJSON(&apierr)
 		if err != nil {
 			return err
 		}
@@ -131,7 +131,7 @@ func (a *Agent) CallApiWithAccessToken(api *fetch.EndPoint, params url.Values, b
 	if apierr.Errcode != 0 {
 		return resp.NewAPICodeErr(apierr.Errcode)
 	}
-	return resp.UnmarshalJSON(&v)
+	return resp.UnmarshalAsJSON(&v)
 }
 
 type Userinfo struct {
@@ -164,7 +164,7 @@ func (a *Agent) GetUserInfo(code string) (*Userinfo, error) {
 	userGetParam.Add("userid", result.UserID)
 	err = a.CallApiWithAccessToken(apiUserGet, userGetParam, nil, getuser)
 	if err != nil {
-		if fetch.CompareApiErrCode(err, ApiErrUserUnaccessible) || fetch.CompareApiErrCode(err, ApiErrNoPrivilege) {
+		if fetch.CompareAPIErrCode(err, ApiErrUserUnaccessible) || fetch.CompareAPIErrCode(err, ApiErrNoPrivilege) {
 			return nil, nil
 		}
 		return nil, err
