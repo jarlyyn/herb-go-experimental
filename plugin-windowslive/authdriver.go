@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/herb-go/herb/fetch"
+	"github.com/herb-go/fetch"
 
-	auth "github.com/herb-go/modules/externalauth"
+	auth "github.com/herb-go/externalauth"
 )
 
 const StateLength = 128

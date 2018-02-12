@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/herb-go/herb/fetch"
+	"github.com/herb-go/fetch"
 )
 
 type Agent struct {

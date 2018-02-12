@@ -1,7 +1,7 @@
 package wechatwork
 
 import (
-	"github.com/herb-go/herb/fetch"
+	"github.com/herb-go/fetch"
 )
 
 var Server = fetch.Server{

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/herb-go/herb/fetch"
+	"github.com/herb-go/fetch"
 )
 
 type Client struct {
