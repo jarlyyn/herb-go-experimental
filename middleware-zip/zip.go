@@ -5,9 +5,11 @@ import (
 	"net/http"
 )
 
-func Middleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	w.Header().Set("Content-Encoding", "gzip")
-	next(&zipWriter{w, http.Header{}, 0}, r)
+func Middleware() func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		w.Header().Set("Content-Encoding", "gzip")
+		next(&zipWriter{w, http.Header{}, 0}, r)
+	}
 }
 
 type zipWriter struct {
