@@ -24,24 +24,24 @@ func (a *Agent) AccessToken() string {
 	defer a.lock.Unlock()
 	return a.accessToken
 }
-func (a *Agent) sendMessage(b *bodyMessagePost) (*resultMessagePost, error) {
-	result := &resultMessagePost{}
-	err := a.CallApiWithAccessToken(apiMessagePost, nil, b, result)
+func (a *Agent) sendNotification(b *bodyNotificationPost) (*resultNotificationPost, error) {
+	result := &resultNotificationPost{}
+	err := a.CallApiWithAccessToken(apiNotificationPost, nil, b, result)
 	return result, err
 }
-func (a *Agent) SendTextMessageToUsers(users []string, content string) (*resultMessagePost, error) {
+func (a *Agent) SendTextNotificationToUsers(users []string, content string) (*resultNotificationPost, error) {
 	var err error
-	message := &bodyMessagePost{}
-	message.ToUser = strings.Join(users, "|")
-	message.AgentID, err = strconv.Atoi(a.AgentID)
-	message.MsgType = "text"
-	message.Text = &bodyMessagePostText{
+	Notification := &bodyNotificationPost{}
+	Notification.ToUser = strings.Join(users, "|")
+	Notification.AgentID, err = strconv.Atoi(a.AgentID)
+	Notification.MsgType = "text"
+	Notification.Text = &bodyNotificationPostText{
 		Content: content,
 	}
 	if err != nil {
 		return nil, err
 	}
-	return a.sendMessage(message)
+	return a.sendNotification(Notification)
 }
 
 func (a *Agent) GrantAccessToken() error {

@@ -1,9 +1,9 @@
 package notification
 
-type Filter func(instance *MessageInstance, next func())
+type Filter func(instance *NotificationInstance, next func())
 
 var FilterRecover = func(recovery func()) Filter {
-	return func(instance *MessageInstance, next func()) {
+	return func(instance *NotificationInstance, next func()) {
 		defer recovery()
 		next()
 	}
@@ -12,8 +12,8 @@ var FilterRecover = func(recovery func()) Filter {
 type RecipientConvertor func(recipient string) (string, error)
 
 var FilterRecipient = func(convertor RecipientConvertor) Filter {
-	return func(instance *MessageInstance, next func()) {
-		recipient, err := instance.Message.MessageRecipient()
+	return func(instance *NotificationInstance, next func()) {
+		recipient, err := instance.Notification.NotificationRecipient()
 		if err != nil {
 			panic(err)
 		}
@@ -21,7 +21,7 @@ var FilterRecipient = func(convertor RecipientConvertor) Filter {
 		if err != nil {
 			panic(err)
 		}
-		err = instance.Message.SetMessageRecipient(id)
+		err = instance.Notification.SetNotificationRecipient(id)
 		if err != nil {
 			panic(err)
 		}

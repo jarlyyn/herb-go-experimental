@@ -1,12 +1,12 @@
 package notification
 
-type PartedMessage struct {
-	CommonMessage
+type PartedNotification struct {
+	CommonNotification
 	Parts map[string][]byte
 }
 
-func NewPartedMessage() *PartedMessage {
-	return &PartedMessage{
+func NewPartedNotification() *PartedNotification {
+	return &PartedNotification{
 		Parts: map[string][]byte{},
 	}
 }

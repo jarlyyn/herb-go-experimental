@@ -12,7 +12,7 @@ var apiGetUserInfo = Server.EndPoint("GET", "/cgi-bin/user/getuserinfo")
 var apiGetToken = Server.EndPoint("GET", "/cgi-bin/gettoken")
 var apiGetUserDetail = Server.EndPoint("POST", "/cgi-bin/user/getuserdetail")
 var apiUserGet = Server.EndPoint("GET", "/cgi-bin/user/get")
-var apiMessagePost = Server.EndPoint("POST", "/cgi-bin/message/send")
+var apiNotificationPost = Server.EndPoint("POST", "/cgi-bin/Notification/send")
 var apiDepartmentList = Server.EndPoint("GET", "/cgi-bin/department/list")
 
 const ApiErrAccessTokenWrong = 40014
@@ -24,20 +24,20 @@ const ApiErrNoPrivilege = 60011
 const ApiResultGenderMale = "1"
 const ApiResultGenderFemale = "2"
 
-type bodyMessagePost struct {
-	ToUser  string               `json:"touser"`
-	ToParty string               `json:"toparty"`
-	ToTag   string               `json:"totag"`
-	MsgType string               `json:"msgtype"`
-	AgentID int                  `json:"agentid"`
-	Safe    int                  `json:"safe"`
-	Text    *bodyMessagePostText `json:"text"`
+type bodyNotificationPost struct {
+	ToUser  string                    `json:"touser"`
+	ToParty string                    `json:"toparty"`
+	ToTag   string                    `json:"totag"`
+	MsgType string                    `json:"msgtype"`
+	AgentID int                       `json:"agentid"`
+	Safe    int                       `json:"safe"`
+	Text    *bodyNotificationPostText `json:"text"`
 }
-type bodyMessagePostText struct {
+type bodyNotificationPostText struct {
 	Content string `json:"content"`
 }
 
-type resultMessagePost struct {
+type resultNotificationPost struct {
 	Errcode      int    `json:"errcode"`
 	Errmsg       string `json:"errmsg"`
 	InvalidUser  string `json:"invaliduser"`

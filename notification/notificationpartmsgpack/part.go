@@ -1,4 +1,4 @@
-package messagepartmsgpack
+package notificationpartmsgpack
 
 import "github.com/jarlyyn/herb-go-experimental/notification"
 import "github.com/vmihailenco/msgpack"
@@ -20,12 +20,12 @@ func NewStringPart(name string) *StringPart {
 	}
 }
 
-func (p *StringPart) Set(message *notification.PartedMessage, data string) error {
-	message.Parts[p.Name] = []byte(data)
+func (p *StringPart) Set(Notification *notification.PartedNotification, data string) error {
+	Notification.Parts[p.Name] = []byte(data)
 	return nil
 }
-func (p *StringPart) Get(message *notification.PartedMessage) (string, error) {
-	bytes := message.Parts[p.Name]
+func (p *StringPart) Get(Notification *notification.PartedNotification) (string, error) {
+	bytes := Notification.Parts[p.Name]
 	return string(bytes), nil
 }
 
@@ -39,12 +39,12 @@ func NewBinaryPart(name string) *StringPart {
 	}
 }
 
-func (p *BinaryPart) Set(message *notification.PartedMessage, data []byte) error {
-	message.Parts[p.Name] = data
+func (p *BinaryPart) Set(Notification *notification.PartedNotification, data []byte) error {
+	Notification.Parts[p.Name] = data
 	return nil
 }
-func (p *BinaryPart) Get(message *notification.PartedMessage) ([]byte, error) {
-	data := message.Parts[p.Name]
+func (p *BinaryPart) Get(Notification *notification.PartedNotification) ([]byte, error) {
+	data := Notification.Parts[p.Name]
 	return data, nil
 }
 
@@ -58,16 +58,16 @@ func NewStringListPart(name string) *StringListPart {
 	}
 }
 
-func (p *StringListPart) Set(message *notification.PartedMessage, data []string) error {
+func (p *StringListPart) Set(Notification *notification.PartedNotification, data []string) error {
 	bs, err := Marshal(data)
 	if err != nil {
 		return err
 	}
-	message.Parts[p.Name] = bs
+	Notification.Parts[p.Name] = bs
 	return nil
 }
-func (p *StringListPart) Get(message *notification.PartedMessage) ([]string, error) {
-	bytes := message.Parts[p.Name]
+func (p *StringListPart) Get(Notification *notification.PartedNotification) ([]string, error) {
+	bytes := Notification.Parts[p.Name]
 	data := []string{}
 	err := Unmarshal(bytes, &data)
 	if err != nil {
@@ -86,16 +86,16 @@ func NewStringMapPart(name string) *StringMapPart {
 	}
 }
 
-func (p *StringMapPart) Set(message *notification.PartedMessage, data map[string]string) error {
+func (p *StringMapPart) Set(Notification *notification.PartedNotification, data map[string]string) error {
 	bs, err := Marshal(data)
 	if err != nil {
 		return err
 	}
-	message.Parts[p.Name] = bs
+	Notification.Parts[p.Name] = bs
 	return nil
 }
-func (p *StringMapPart) Get(message *notification.PartedMessage) (map[string]string, error) {
-	bytes := message.Parts[p.Name]
+func (p *StringMapPart) Get(Notification *notification.PartedNotification) (map[string]string, error) {
+	bytes := Notification.Parts[p.Name]
 	data := map[string]string{}
 	err := Unmarshal(bytes, &data)
 	if err != nil {
@@ -114,16 +114,16 @@ func NewBinaryListPart(name string) *StringListPart {
 	}
 }
 
-func (p *BinaryListPart) Set(message *notification.PartedMessage, data [][]byte) error {
+func (p *BinaryListPart) Set(Notification *notification.PartedNotification, data [][]byte) error {
 	bs, err := Marshal(data)
 	if err != nil {
 		return err
 	}
-	message.Parts[p.Name] = bs
+	Notification.Parts[p.Name] = bs
 	return nil
 }
-func (p *BinaryListPart) Get(message *notification.PartedMessage) ([][]byte, error) {
-	bytes := message.Parts[p.Name]
+func (p *BinaryListPart) Get(Notification *notification.PartedNotification) ([][]byte, error) {
+	bytes := Notification.Parts[p.Name]
 	data := [][]byte{}
 	err := Unmarshal(bytes, &data)
 	if err != nil {
@@ -142,16 +142,16 @@ func NewBinaryMapPart(name string) *BinaryMapPart {
 	}
 }
 
-func (p *BinaryMapPart) Set(message *notification.PartedMessage, data map[string][]byte) error {
+func (p *BinaryMapPart) Set(Notification *notification.PartedNotification, data map[string][]byte) error {
 	bs, err := Marshal(data)
 	if err != nil {
 		return err
 	}
-	message.Parts[p.Name] = bs
+	Notification.Parts[p.Name] = bs
 	return nil
 }
-func (p *BinaryMapPart) Get(message *notification.PartedMessage) (map[string][]byte, error) {
-	bytes := message.Parts[p.Name]
+func (p *BinaryMapPart) Get(Notification *notification.PartedNotification) (map[string][]byte, error) {
+	bytes := Notification.Parts[p.Name]
 	data := map[string][]byte{}
 	err := Unmarshal(bytes, &data)
 	if err != nil {
@@ -170,15 +170,15 @@ func NewInterfacePart(name string) *InterfacePart {
 	}
 }
 
-func (p *InterfacePart) Marshal(message *notification.PartedMessage, data interface{}) error {
+func (p *InterfacePart) Marshal(Notification *notification.PartedNotification, data interface{}) error {
 	bs, err := Marshal(data)
 	if err != nil {
 		return err
 	}
-	message.Parts[p.Name] = bs
+	Notification.Parts[p.Name] = bs
 	return nil
 }
-func (p *InterfacePart) Unmarshal(message *notification.PartedMessage, data interface{}) error {
-	bytes := message.Parts[p.Name]
+func (p *InterfacePart) Unmarshal(Notification *notification.PartedNotification, data interface{}) error {
+	bytes := Notification.Parts[p.Name]
 	return Unmarshal(bytes, &data)
 }
