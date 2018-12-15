@@ -28,8 +28,8 @@ func (m *CommonNotification) NotificationType() (string, error) {
 	return m.Type, nil
 }
 
-func (m *CommonNotification) SetNotificationType(mesasgetype string) error {
-	m.Type = mesasgetype
+func (m *CommonNotification) SetNotificationType(notificationtype string) error {
+	m.Type = notificationtype
 	return nil
 }
 
