@@ -1,15 +1,19 @@
 package notification
 
 type NotificationFactory func() (Notification, error)
-
 type Notifier interface {
 	RegiterNotificationType(name string, f NotificationFactory) error
 	NewNotificationInstance(n Notification) (*NotificationInstance, error)
 	RegisterSender(notificationtype string, s Sender)
 	SendersByType(notificationtype string) ([]Sender, error)
+	Recover() func()
+	SetRecover(func())
 	Start() error
 	Stop() error
 	NotificationChan() chan Notification
+}
+
+var DefaultRecover = func() {
 }
 
 type CommonNotifier struct {
@@ -17,6 +21,8 @@ type CommonNotifier struct {
 	registeredSender    map[string][]Sender
 	idGenerator         IDGenerator
 	c                   chan Notification
+	closeChan           chan bool
+	recover             func()
 }
 
 func NewCommonNotifier() *CommonNotifier {
@@ -24,9 +30,32 @@ func NewCommonNotifier() *CommonNotifier {
 		registeredFactories: map[string]NotificationFactory{},
 		registeredSender:    map[string][]Sender{},
 		idGenerator:         DefaultIDGenerator,
+		closeChan:           make(chan bool),
+		recover:             DefaultRecover,
 	}
 }
+func (m *CommonNotifier) Recover() func() {
+	return m.recover
+}
+func (m *CommonNotifier) SetRecover(r func()) {
+	m.recover = r
+}
 func (m *CommonNotifier) Start() error {
+	c := m.NotificationChan()
+	go func() {
+		for {
+			select {
+			case n := <-c:
+				go func() {
+					defer m.Recover()()
+					err := SendNotificationByNotifier(m, n)
+					if err != nil {
+						panic(err)
+					}
+				}()
+			}
+		}
+	}()
 	return nil
 }
 
@@ -64,7 +93,7 @@ func (m *CommonNotifier) SendersByType(notificationtype string) ([]Sender, error
 
 var DefaultNotifier = NewCommonNotifier()
 
-var SendByNotifier = func(n Notification, m Notifier) error {
+var SendNotificationByNotifier = func(m Notifier, n Notification) error {
 	nt, err := n.NotificationType()
 	if err != nil {
 		return err
@@ -85,6 +114,6 @@ var SendByNotifier = func(n Notification, m Notifier) error {
 	return nil
 }
 
-var Send = func(n Notification) error {
-	return SendByNotifier(n, DefaultNotifier)
+var SendNotification = func(n Notification) error {
+	return SendNotificationByNotifier(DefaultNotifier, n)
 }
