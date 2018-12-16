@@ -7,12 +7,24 @@ type Notification interface {
 	SetNotificationType(string) error
 	NotificationRecipient() (string, error)
 	SetNotificationRecipient(string) error
+	NotificationAuthor() (string, error)
+	SetNotificationAuthor(string) error
 }
 
 type CommonNotification struct {
 	ID        string
 	Type      string
 	Recipient string
+	Author    string
+}
+
+func (m *CommonNotification) NotificationAuthor() (string, error) {
+	return m.Author, nil
+}
+
+func (m *CommonNotification) SetNotificationAuthor(author string) error {
+	m.Author = author
+	return nil
 }
 
 func (m *CommonNotification) NotificationID() (string, error) {
