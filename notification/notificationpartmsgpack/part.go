@@ -33,8 +33,8 @@ type BinaryPart struct {
 	Name string
 }
 
-func NewBinaryPart(name string) *StringPart {
-	return &StringPart{
+func NewBinaryPart(name string) *BinaryPart {
+	return &BinaryPart{
 		Name: name,
 	}
 }
@@ -108,8 +108,8 @@ type BinaryListPart struct {
 	Name string
 }
 
-func NewBinaryListPart(name string) *StringListPart {
-	return &StringListPart{
+func NewBinaryListPart(name string) *BinaryListPart {
+	return &BinaryListPart{
 		Name: name,
 	}
 }
