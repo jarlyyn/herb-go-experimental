@@ -295,4 +295,25 @@ func TestPart(t *testing.T) {
 			t.Error(k)
 		}
 	}
+	type TestStruct struct {
+		DataString string
+		DataBytes  []byte
+	}
+	var TestNotificationInterface = NewInterfacePart("testinterface")
+	var testinterface = &TestStruct{
+		DataString: "teststring",
+		DataBytes:  []byte("testbytes"),
+	}
+	var msginterface = &TestStruct{}
+	err = TestNotificationInterface.Marshal(n, testinterface)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = TestNotificationInterface.Unmarshal(n, msginterface)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if testinterface.DataString != msginterface.DataString || bytes.Compare(testinterface.DataBytes, msginterface.DataBytes) != 0 {
+		t.Error(testinterface)
+	}
 }
