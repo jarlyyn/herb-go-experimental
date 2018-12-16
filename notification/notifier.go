@@ -1,7 +1,8 @@
 package notification
 
 type NotificationFactory func() (Notification, error)
-type Notifier interface {
+
+type Service interface {
 	RegiterNotificationType(name string, f NotificationFactory) error
 	NewNotificationInstance(n Notification) (*NotificationInstance, error)
 	RegisterSender(notificationtype string, s Sender)
@@ -10,13 +11,13 @@ type Notifier interface {
 	SetRecover(func())
 	Start() error
 	Stop() error
-	NotificationChan() chan Notification
+	Notifier
 }
 
 var DefaultRecover = func() {
 }
 
-type CommonNotifier struct {
+type CommonService struct {
 	registeredFactories map[string]NotificationFactory
 	registeredSender    map[string][]Sender
 	idGenerator         IDGenerator
@@ -25,8 +26,8 @@ type CommonNotifier struct {
 	recover             func()
 }
 
-func NewCommonNotifier() *CommonNotifier {
-	return &CommonNotifier{
+func NewCommonService() *CommonService {
+	return &CommonService{
 		registeredFactories: map[string]NotificationFactory{},
 		registeredSender:    map[string][]Sender{},
 		idGenerator:         DefaultIDGenerator,
@@ -34,13 +35,13 @@ func NewCommonNotifier() *CommonNotifier {
 		recover:             DefaultRecover,
 	}
 }
-func (m *CommonNotifier) Recover() func() {
+func (m *CommonService) Recover() func() {
 	return m.recover
 }
-func (m *CommonNotifier) SetRecover(r func()) {
+func (m *CommonService) SetRecover(r func()) {
 	m.recover = r
 }
-func (m *CommonNotifier) Start() error {
+func (m *CommonService) Start() error {
 	c := m.NotificationChan()
 	go func() {
 		for {
@@ -48,7 +49,7 @@ func (m *CommonNotifier) Start() error {
 			case n := <-c:
 				go func() {
 					defer m.Recover()()
-					err := SendNotificationByNotifier(m, n)
+					err := SendNotificationByService(m, n)
 					if err != nil {
 						panic(err)
 					}
@@ -59,17 +60,17 @@ func (m *CommonNotifier) Start() error {
 	return nil
 }
 
-func (m *CommonNotifier) Stop() error {
+func (m *CommonService) Stop() error {
 	return nil
 }
-func (m *CommonNotifier) NotificationChan() chan Notification {
+func (m *CommonService) NotificationChan() chan Notification {
 	return m.c
 }
-func (m *CommonNotifier) RegiterNotificationType(name string, f NotificationFactory) error {
+func (m *CommonService) RegiterNotificationType(name string, f NotificationFactory) error {
 	m.registeredFactories[name] = f
 	return nil
 }
-func (m *CommonNotifier) NewNotificationInstance(n Notification) (*NotificationInstance, error) {
+func (m *CommonService) NewNotificationInstance(n Notification) (*NotificationInstance, error) {
 	id, err := m.idGenerator()
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func (m *CommonNotifier) NewNotificationInstance(n Notification) (*NotificationI
 	i.InstanceID = id
 	return i, nil
 }
-func (m *CommonNotifier) RegisterSender(notificationtype string, s Sender) {
+func (m *CommonService) RegisterSender(notificationtype string, s Sender) {
 	_, ok := m.registeredSender[notificationtype]
 	if ok == false {
 		m.registeredSender[notificationtype] = []Sender{s}
@@ -87,13 +88,11 @@ func (m *CommonNotifier) RegisterSender(notificationtype string, s Sender) {
 	}
 }
 
-func (m *CommonNotifier) SendersByType(notificationtype string) ([]Sender, error) {
+func (m *CommonService) SendersByType(notificationtype string) ([]Sender, error) {
 	return m.registeredSender[notificationtype], nil
 }
 
-var DefaultNotifier = NewCommonNotifier()
-
-var SendNotificationByNotifier = func(m Notifier, n Notification) error {
+var SendNotificationByService = func(m Service, n Notification) error {
 	nt, err := n.NotificationType()
 	if err != nil {
 		return err
@@ -115,5 +114,23 @@ var SendNotificationByNotifier = func(m Notifier, n Notification) error {
 }
 
 var SendNotification = func(n Notification) error {
-	return SendNotificationByNotifier(DefaultNotifier, n)
+	return SendNotificationByService(DefaultService, n)
+}
+
+var DefaultService = NewCommonService()
+
+type Notifier interface {
+	NotificationChan() chan Notification
+}
+
+var DefaultNotifier = DefaultService
+
+var NotifyTo = func(notifier Notifier, n Notification) {
+	go func() {
+		notifier.NotificationChan() <- n
+	}()
+}
+
+var Notify = func(n Notification) {
+	NotifyTo(DefaultNotifier, n)
 }

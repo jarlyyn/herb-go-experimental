@@ -1,9 +1,11 @@
-package notification
+package notificationfilter
 
-type Filter func(instance *NotificationInstance, next func())
+import "github.com/jarlyyn/herb-go-experimental/notification"
+
+type Filter func(instance *notification.NotificationInstance, next func())
 
 var FilterRecover = func(recovery func()) Filter {
-	return func(instance *NotificationInstance, next func()) {
+	return func(instance *notification.NotificationInstance, next func()) {
 		defer recovery()
 		next()
 	}
@@ -12,7 +14,7 @@ var FilterRecover = func(recovery func()) Filter {
 type RecipientConvertor func(recipient string) (string, error)
 
 var FilterRecipient = func(convertor RecipientConvertor) Filter {
-	return func(instance *NotificationInstance, next func()) {
+	return func(instance *notification.NotificationInstance, next func()) {
 		recipient, err := instance.Notification.NotificationRecipient()
 		if err != nil {
 			panic(err)

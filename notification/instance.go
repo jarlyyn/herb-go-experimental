@@ -14,6 +14,7 @@ type NotificationInstance struct {
 	Sender       string
 	InstanceID   string
 	Status       int
+	Output       string
 	Logs         []string
 }
 
