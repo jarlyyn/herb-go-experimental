@@ -31,6 +31,7 @@ func NewCommonService() *CommonService {
 		registeredFactories: map[string]NotificationFactory{},
 		registeredSender:    map[string][]Sender{},
 		idGenerator:         DefaultIDGenerator,
+		c:                   make(chan Notification),
 		closeChan:           make(chan bool),
 		recover:             DefaultRecover,
 	}
@@ -117,13 +118,13 @@ var SendNotification = func(n Notification) error {
 	return SendNotificationByService(DefaultService, n)
 }
 
-var DefaultService = NewCommonService()
+var DefaultService Service
 
 type Notifier interface {
 	NotificationChan() chan Notification
 }
 
-var DefaultNotifier = DefaultService
+var DefaultNotifier Notifier
 
 var NotifyTo = func(notifier Notifier, n Notification) {
 	go func() {
@@ -133,4 +134,10 @@ var NotifyTo = func(notifier Notifier, n Notification) {
 
 var Notify = func(n Notification) {
 	NotifyTo(DefaultNotifier, n)
+}
+
+func init() {
+	s := NewCommonService()
+	DefaultService = s
+	DefaultNotifier = DefaultService
 }
