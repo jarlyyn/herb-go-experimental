@@ -36,6 +36,7 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	unusedSender := newChanSender()
 	sender := newChanSender()
 	DefaultService.RegisterSender("testtype", sender)
 	err = DefaultService.Start()
@@ -46,9 +47,15 @@ func TestSend(t *testing.T) {
 	if len(sender.C) != 0 {
 		t.Error(sender.C)
 	}
+	if len(unusedSender.C) != 0 {
+		t.Error(sender.C)
+	}
 	Notify(n)
 	time.Sleep(time.Microsecond)
 	if len(sender.C) != 1 {
+		t.Error(sender.C)
+	}
+	if len(unusedSender.C) != 0 {
 		t.Error(sender.C)
 	}
 	ni := <-sender.C
