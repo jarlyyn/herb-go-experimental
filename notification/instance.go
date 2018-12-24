@@ -31,6 +31,18 @@ func (i *NotificationInstance) NewError(err error) error {
 func (i *NotificationInstance) IsStatusError() bool {
 	return i.Status == NotificationInstanceStatusError
 }
+func (i *NotificationInstance) SetStatusSuccess() {
+	i.Status = NotificationInstanceStatusSuccess
+}
+func (i *NotificationInstance) IsStatusSuccess() bool {
+	return i.Status == NotificationInstanceStatusSuccess
+}
+func (i *NotificationInstance) SetStatusUnsupported() {
+	i.Status = NotificationInstanceStatusUnsupported
+}
+func (i *NotificationInstance) IsStatusUnsupported() bool {
+	return i.Status == NotificationInstanceStatusUnsupported
+}
 func NewNotificationInstance(Notification Notification) *NotificationInstance {
 	return &NotificationInstance{
 		Notification: Notification,
