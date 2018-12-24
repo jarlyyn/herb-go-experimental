@@ -3,7 +3,7 @@ package notification
 type NotificationFactory func() (Notification, error)
 
 type Service interface {
-	RegiterNotificationType(name string, f NotificationFactory) error
+	RegisterNotificationType(name string, f NotificationFactory) error
 	RegisterSender(notificationtype string, s Sender) error
 	SendersByType(notificationtype string) ([]Sender, error)
 	Recover() func()

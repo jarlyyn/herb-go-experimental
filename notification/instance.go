@@ -27,6 +27,10 @@ func (i *NotificationInstance) NewError(err error) error {
 		Err:      err,
 	}
 }
+
+func (i *NotificationInstance) IsStatusError() bool {
+	return i.Status == NotificationInstanceStatusError
+}
 func NewNotificationInstance(Notification Notification) *NotificationInstance {
 	return &NotificationInstance{
 		Notification: Notification,

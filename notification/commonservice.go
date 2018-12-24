@@ -78,7 +78,7 @@ func (m *CommonService) InstancesBuildersByType(notificationtype string) (Instan
 func (m *CommonService) NotificationChan() chan Notification {
 	return m.c
 }
-func (m *CommonService) RegiterNotificationType(name string, f NotificationFactory) error {
+func (m *CommonService) RegisterNotificationType(name string, f NotificationFactory) error {
 	m.registeredFactories[name] = f
 	return nil
 }
