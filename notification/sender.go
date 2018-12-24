@@ -1,5 +1,6 @@
 package notification
 
 type Sender interface {
-	MustSendNotification(*NotificationInstance)
+	SendNotification(*NotificationInstance) error
+	Name() string
 }
