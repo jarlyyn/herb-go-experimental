@@ -133,6 +133,7 @@ func TestMutliSender(t *testing.T) {
 	sender := newChanSender()
 	sender2 := newChanSender()
 	service := NewCommonService()
+	service.RegisterInstancesBuilder(NotificationTypeDefault, NewCommonInstancesBuilder())
 	err = service.RegisterSender("testtype", sender)
 	if err != nil {
 		t.Fatal(err)

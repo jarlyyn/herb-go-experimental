@@ -2,13 +2,14 @@ package notification
 
 type NotificationFactory func() (Notification, error)
 
+const NotificationTypeDefault = ""
+
 type Service interface {
 	RegisterNotificationType(name string, f NotificationFactory) error
 	RegisterSender(notificationtype string, s Sender) error
 	SendersByType(notificationtype string) ([]Sender, error)
 	Recover() func()
 	SetRecover(func())
-	SetDefaultInstancesBuilder(b InstancesBuilder)
 	RegisterInstancesBuilder(notificationtype string, builder InstancesBuilder) error
 	InstancesBuildersByType(notificationtype string) (InstancesBuilder, error)
 	Start() error

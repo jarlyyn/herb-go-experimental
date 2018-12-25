@@ -83,7 +83,22 @@ func TestPart(t *testing.T) {
 	if msgstring != teststring {
 		t.Error(msgstring)
 	}
-
+	NotificationPartAttachmentFilename.Set(n, teststring)
+	msgstring, err = NotificationPartAttachmentFilename.Get(n)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msgstring != teststring {
+		t.Error(msgstring)
+	}
+	NotificationPartPictureFilename.Set(n, teststring)
+	msgstring, err = NotificationPartPictureFilename.Get(n)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msgstring != teststring {
+		t.Error(msgstring)
+	}
 	NotificationPartPictureURL.Set(n, teststring)
 	msgstring, err = NotificationPartPictureURL.Get(n)
 	if err != nil {

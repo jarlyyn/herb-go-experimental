@@ -8,7 +8,6 @@ type CommonService struct {
 	registeredSender           map[string][]Sender
 	registeredInstancesBuilder map[string]InstancesBuilder
 	idGenerator                IDGenerator
-	defaultInstancesBuilder    InstancesBuilder
 	c                          chan Notification
 	closeChan                  chan bool
 	recover                    func()
@@ -24,7 +23,6 @@ func NewCommonService() *CommonService {
 		closeChan:                  make(chan bool),
 		recover:                    DefaultRecover,
 	}
-	s.SetDefaultInstancesBuilder(NewCommonInstancesBuilder())
 	return s
 }
 func (m *CommonService) Recover() func() {
@@ -58,10 +56,6 @@ func (m *CommonService) Stop() error {
 	return nil
 }
 
-func (m *CommonService) SetDefaultInstancesBuilder(b InstancesBuilder) {
-	m.defaultInstancesBuilder = b
-}
-
 func (m *CommonService) RegisterInstancesBuilder(notificationtype string, builder InstancesBuilder) error {
 	m.registeredInstancesBuilder[notificationtype] = builder
 	return nil
@@ -69,8 +63,8 @@ func (m *CommonService) RegisterInstancesBuilder(notificationtype string, builde
 
 func (m *CommonService) InstancesBuildersByType(notificationtype string) (InstancesBuilder, error) {
 	b := m.registeredInstancesBuilder[notificationtype]
-	if b == nil && m.defaultInstancesBuilder != nil {
-		return m.defaultInstancesBuilder, nil
+	if b == nil && m.registeredInstancesBuilder[NotificationTypeDefault] != nil {
+		return m.registeredInstancesBuilder[NotificationTypeDefault], nil
 	}
 	return b, nil
 }
@@ -100,6 +94,6 @@ func (m *CommonService) SendersByType(notificationtype string) ([]Sender, error)
 func init() {
 	s := NewCommonService()
 	DefaultService = s
-	DefaultService.SetDefaultInstancesBuilder(NewCommonInstancesBuilder())
+	DefaultService.RegisterInstancesBuilder(NotificationTypeDefault, NewCommonInstancesBuilder())
 	DefaultNotifier = DefaultService
 }
