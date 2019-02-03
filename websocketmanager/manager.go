@@ -13,6 +13,18 @@ type Manager struct {
 	ID          string
 	IDGenerator func() (string, error)
 	Registered  sync.Map
+	messages    chan *ConnMessage
+	errors      chan *ConnError
+}
+
+type ConnMessage struct {
+	*Message
+	Info *ConnInfo
+}
+
+type ConnError struct {
+	Error error
+	Info  *ConnInfo
 }
 
 func (m *Manager) Register(conn Conn) (*RegisteredConn, error) {
@@ -28,6 +40,27 @@ func (m *Manager) Register(conn Conn) (*RegisteredConn, error) {
 			Timestamp: time.Now().Unix(),
 		},
 	}
+	go func() {
+		defer func() {
+			m.Registered.Delete(r.Info.ID)
+		}()
+		for {
+			select {
+			case message := <-conn.Messages():
+				m.messages <- &ConnMessage{
+					Message: message,
+					Info:    r.Info,
+				}
+			case err := <-conn.Errors():
+				m.errors <- &ConnError{
+					Error: err,
+					Info:  r.Info,
+				}
+			case <-conn.C():
+				break
+			}
+		}
+	}()
 	m.Registered.Store(id, r)
 	return r, nil
 }
@@ -46,8 +79,4 @@ func (m *Manager) SendByID(id string, msg *Message) error {
 		return nil
 	}
 	return c.Send(msg)
-}
-
-func (m *Manager) OnClose(r *RegisteredConn) {
-	m.Registered.Delete(r.Info.ID)
 }
