@@ -26,6 +26,15 @@ type Conn struct {
 	c           chan int
 }
 
+func (c *Conn) C() chan int {
+	return c.c
+}
+func (c *Conn) Messages() chan *websocketmanager.Message {
+	return c.messages
+}
+func (c *Conn) Errors() chan error {
+	return c.errors
+}
 func (c *Conn) Close() error {
 	defer c.closelocker.Unlock()
 	c.closelocker.Lock()
@@ -47,7 +56,9 @@ func (c *Conn) Send(m *websocketmanager.Message) error {
 	return c.Conn.WriteMessage(websocket.TextMessage, []byte(*m))
 }
 func New() *Conn {
-	return &Conn{}
+	return &Conn{
+		closed: true,
+	}
 }
 
 var upgrader = websocket.Upgrader{} // use default options
@@ -58,6 +69,7 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*Conn, error) {
 		return nil, err
 	}
 	c := New()
+	c.closed = false
 	c.Conn = wc
 	go func() {
 		defer func() {
