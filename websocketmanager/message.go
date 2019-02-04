@@ -1,4 +1,3 @@
 package websocketmanager
 
-type Message struct {
-}
+type Message []byte
