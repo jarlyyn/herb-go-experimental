@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"sync"
@@ -9,17 +10,12 @@ import (
 	"github.com/jarlyyn/herb-go-experimental/websocketmanager"
 )
 
-// type Conn interface {
-// 	Close() error
-// 	Send(*websocketmanager.Message) error
-// 	Messages() chan *websocketmanager.Message
-// 	Errors() chan error
-// 	C() chan int
-// }
+var ErrMsgTypeNotMatch = errors.New("websocket message type not match")
 
 type Conn struct {
 	*websocket.Conn
 	closed      bool
+	messageType int
 	closelocker sync.Mutex
 	messages    chan *websocketmanager.Message
 	errors      chan error
@@ -53,7 +49,7 @@ func (c *Conn) Send(m *websocketmanager.Message) error {
 	if closed {
 		return nil
 	}
-	return c.Conn.WriteMessage(websocket.TextMessage, []byte(*m))
+	return c.Conn.WriteMessage(c.messageType, []byte(*m))
 }
 func New() *Conn {
 	return &Conn{
@@ -63,7 +59,7 @@ func New() *Conn {
 
 var upgrader = websocket.Upgrader{} // use default options
 
-func Upgrade(w http.ResponseWriter, r *http.Request) (*Conn, error) {
+func Upgrade(w http.ResponseWriter, r *http.Request, msgtype int) (*Conn, error) {
 	wc, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
@@ -71,6 +67,7 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*Conn, error) {
 	c := New()
 	c.closed = false
 	c.Conn = wc
+	c.messageType = msgtype
 	go func() {
 		defer func() {
 
@@ -79,7 +76,7 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*Conn, error) {
 			recover()
 		}()
 		for {
-			_, msg, err := c.ReadMessage()
+			mt, msg, err := c.ReadMessage()
 			if err == io.EOF {
 				break
 			}
@@ -95,6 +92,10 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*Conn, error) {
 					break
 				}
 				c.errors <- err
+				continue
+			}
+			if mt != c.messageType {
+				c.errors <- ErrMsgTypeNotMatch
 				continue
 			}
 			m := websocketmanager.Message(msg)
