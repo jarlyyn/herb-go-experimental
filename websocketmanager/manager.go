@@ -3,28 +3,42 @@ package websocketmanager
 import (
 	"sync"
 	"time"
+
+	"github.com/satori/go.uuid"
 )
 
-func New() *Manager {
-	return &Manager{}
-}
-
-type Manager struct {
-	ID          string
-	IDGenerator func() (string, error)
-	Registered  sync.Map
-	messages    chan *ConnMessage
-	errors      chan *ConnError
+var DefaultIDGenerator = func() (string, error) {
+	unid, err := uuid.NewV1()
+	if err != nil {
+		return "", err
+	}
+	return unid.String(), nil
 }
 
 type ConnMessage struct {
-	*Message
-	Info *ConnInfo
+	Message []byte
+	Info    *ConnInfo
 }
 
 type ConnError struct {
 	Error error
 	Info  *ConnInfo
+}
+
+func New() *Manager {
+	return &Manager{
+		IDGenerator:  DefaultIDGenerator,
+		ConnMessages: make(chan *ConnMessage),
+		ConnErrors:   make(chan *ConnError),
+	}
+}
+
+type Manager struct {
+	ID           string
+	IDGenerator  func() (string, error)
+	Registered   sync.Map
+	ConnMessages chan *ConnMessage
+	ConnErrors   chan *ConnError
 }
 
 func (m *Manager) Register(conn Conn) (*RegisteredConn, error) {
@@ -47,12 +61,12 @@ func (m *Manager) Register(conn Conn) (*RegisteredConn, error) {
 		for {
 			select {
 			case message := <-conn.Messages():
-				m.messages <- &ConnMessage{
+				m.ConnMessages <- &ConnMessage{
 					Message: message,
 					Info:    r.Info,
 				}
 			case err := <-conn.Errors():
-				m.errors <- &ConnError{
+				m.ConnErrors <- &ConnError{
 					Error: err,
 					Info:  r.Info,
 				}
@@ -73,7 +87,7 @@ func (m *Manager) ConnByID(id string) *RegisteredConn {
 	r := val.(*RegisteredConn)
 	return r
 }
-func (m *Manager) SendByID(id string, msg *Message) error {
+func (m *Manager) SendByID(id string, msg []byte) error {
 	c := m.ConnByID(id)
 	if c == nil {
 		return nil

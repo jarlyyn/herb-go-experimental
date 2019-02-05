@@ -7,8 +7,10 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/jarlyyn/herb-go-experimental/websocketmanager"
 )
+
+const MsgTypeText = websocket.TextMessage
+const MsgTypeBinary = websocket.BinaryMessage
 
 var ErrMsgTypeNotMatch = errors.New("websocket message type not match")
 
@@ -17,7 +19,7 @@ type Conn struct {
 	closed      bool
 	messageType int
 	closelocker sync.Mutex
-	messages    chan *websocketmanager.Message
+	messages    chan []byte
 	errors      chan error
 	c           chan int
 }
@@ -25,7 +27,7 @@ type Conn struct {
 func (c *Conn) C() chan int {
 	return c.c
 }
-func (c *Conn) Messages() chan *websocketmanager.Message {
+func (c *Conn) Messages() chan []byte {
 	return c.messages
 }
 func (c *Conn) Errors() chan error {
@@ -42,18 +44,21 @@ func (c *Conn) Close() error {
 	return c.Conn.Close()
 }
 
-func (c *Conn) Send(m *websocketmanager.Message) error {
+func (c *Conn) Send(m []byte) error {
 	c.closelocker.Lock()
 	closed := c.closed
 	c.closelocker.Unlock()
 	if closed {
 		return nil
 	}
-	return c.Conn.WriteMessage(c.messageType, []byte(*m))
+	return c.Conn.WriteMessage(c.messageType, m)
 }
 func New() *Conn {
 	return &Conn{
-		closed: true,
+		closed:   true,
+		c:        make(chan int),
+		messages: make(chan []byte),
+		errors:   make(chan error),
 	}
 }
 
@@ -98,8 +103,7 @@ func Upgrade(w http.ResponseWriter, r *http.Request, msgtype int) (*Conn, error)
 				c.errors <- ErrMsgTypeNotMatch
 				continue
 			}
-			m := websocketmanager.Message(msg)
-			c.messages <- &m
+			c.messages <- msg
 		}
 	}()
 	return c, nil

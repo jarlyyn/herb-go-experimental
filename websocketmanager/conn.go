@@ -2,8 +2,8 @@ package websocketmanager
 
 type Conn interface {
 	Close() error
-	Send(*Message) error
-	Messages() chan *Message
+	Send([]byte) error
+	Messages() chan []byte
 	Errors() chan error
 	C() chan int
 }
