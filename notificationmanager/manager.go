@@ -3,7 +3,7 @@ package notificationmanager
 import "sync"
 import "github.com/herb-go/herb/notification"
 
-type Manager struct {
+type Gateway struct {
 	notification.CommonInstancesBuilder
 	Fields   map[string]*Field
 	complied map[string]complied
@@ -11,7 +11,7 @@ type Manager struct {
 	lock     sync.Mutex
 }
 
-func (m *Manager) RenderTemplate(name string, data interface{}) ([]byte, error) {
+func (m *Gateway) RenderTemplate(name string, data interface{}) ([]byte, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	var err error
@@ -30,7 +30,7 @@ func (m *Manager) RenderTemplate(name string, data interface{}) ([]byte, error) 
 	return complied(data)
 }
 
-func (m *Manager) UpdateTemplate(name string, template string) error {
+func (m *Gateway) UpdateTemplate(name string, template string) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	f := m.Fields[name]
