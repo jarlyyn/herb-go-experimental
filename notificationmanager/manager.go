@@ -35,7 +35,7 @@ func (m *Gateway) UpdateTemplate(name string, template string) error {
 	defer m.lock.Unlock()
 	f := m.Fields[name]
 	if f == nil {
-		return ErrTemplateFieldNotRegistered
+		return ErrTemplateFieldNotConnections
 	}
 
 	f.Template = template

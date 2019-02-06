@@ -26,7 +26,7 @@ func NewGateway() *Gateway {
 type Gateway struct {
 	ID          string
 	IDGenerator func() (string, error)
-	Registered  sync.Map
+	Connections sync.Map
 	Messages    chan *Message
 	Errors      chan *Error
 }
@@ -46,7 +46,7 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 	}
 	go func() {
 		defer func() {
-			m.Registered.Delete(r.Info.ID)
+			m.Connections.Delete(r.Info.ID)
 		}()
 		for {
 			select {
@@ -65,11 +65,11 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 			}
 		}
 	}()
-	m.Registered.Store(id, r)
+	m.Connections.Store(id, r)
 	return r, nil
 }
 func (m *Gateway) Conn(id string) *Conn {
-	val, ok := m.Registered.Load(id)
+	val, ok := m.Connections.Load(id)
 	if ok == false {
 		return nil
 	}

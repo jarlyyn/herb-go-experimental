@@ -2,4 +2,4 @@ package notificationmanager
 
 import "errors"
 
-var ErrTemplateFieldNotRegistered = errors.New("template field not registered")
+var ErrTemplateFieldNotConnections = errors.New("template field not registered")
