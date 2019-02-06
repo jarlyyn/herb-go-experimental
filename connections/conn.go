@@ -1,10 +1,15 @@
 package connections
 
+import (
+	"net"
+)
+
 type RawConnection interface {
 	Close() error
 	Send([]byte) error
 	Messages() chan []byte
 	Errors() chan error
+	RemoteAddr() net.Addr
 	C() chan int
 }
 type Info struct {

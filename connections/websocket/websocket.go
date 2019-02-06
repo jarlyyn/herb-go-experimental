@@ -3,6 +3,7 @@ package websocket
 import (
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"sync"
 
@@ -52,6 +53,10 @@ func (c *Conn) Send(m []byte) error {
 		return nil
 	}
 	return c.Conn.WriteMessage(c.messageType, m)
+}
+
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.Conn.RemoteAddr()
 }
 func New() *Conn {
 	return &Conn{
