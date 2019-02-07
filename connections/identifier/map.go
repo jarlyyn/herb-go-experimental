@@ -7,6 +7,17 @@ import (
 	"github.com/jarlyyn/herb-go-experimental/connections"
 )
 
+var GenerateDefaultMapOnLogout = func(m *Map) func(id string, conn *connections.Conn) error {
+	return func(id string, conn *connections.Conn) error {
+		if conn.RawConnection != nil {
+			conn.Close()
+			return nil
+		}
+		m.Connections.Close(conn.Info.ID)
+		return nil
+	}
+}
+
 type MapIdentity struct {
 	Conn      *connections.Conn
 	Timestamp int64
@@ -20,7 +31,7 @@ func NewMapIdentity() *MapIdentity {
 }
 
 type Map struct {
-	connections connections.Connections
+	Connections connections.Connections
 	Identities  sync.Map
 	lock        sync.Mutex
 	onLogout    func(id string, conn *connections.Conn) error
@@ -56,7 +67,10 @@ func (m *Map) Logout(id string, c *connections.Conn) error {
 		if c != nil && conn.Info.ID != c.Info.ID {
 			return nil
 		}
-		return m.onLogout(id, conn)
+		err := m.onLogout(id, conn)
+		if err != nil {
+			return err
+		}
 	}
 	m.Identities.Delete(id)
 	return nil
@@ -83,8 +97,11 @@ func (m *Map) SetOnLogout(f func(id string, conn *connections.Conn) error) {
 }
 
 func NewMap() *Map {
-	return &Map{
-		connections: nil,
+
+	m := &Map{
+		Connections: nil,
 		Identities:  sync.Map{},
 	}
+	m.onLogout = GenerateDefaultMapOnLogout(m)
+	return m
 }

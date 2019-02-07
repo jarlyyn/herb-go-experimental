@@ -7,6 +7,6 @@ type Identifier interface {
 	Logout(id string, conn *connections.Conn) error
 	Verify(id string, conn *connections.Conn) (bool, error)
 	SendByID(id string, msg []byte) error
-	OnLogout() func(conn *connections.Conn)
-	SetOnLogout(func(conn *connections.Conn))
+	OnLogout() func(id string, conn *connections.Conn) error
+	SetOnLogout(func(id string, conn *connections.Conn) error)
 }
