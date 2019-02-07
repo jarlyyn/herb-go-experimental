@@ -18,8 +18,8 @@ var DefaultIDGenerator = func() (string, error) {
 func NewGateway() *Gateway {
 	return &Gateway{
 		IDGenerator: DefaultIDGenerator,
-		Messages:    make(chan *Message),
-		Errors:      make(chan *Error),
+		messages:    make(chan *Message),
+		errors:      make(chan *Error),
 	}
 }
 
@@ -27,8 +27,8 @@ type Gateway struct {
 	ID          string
 	IDGenerator func() (string, error)
 	Connections sync.Map
-	Messages    chan *Message
-	Errors      chan *Error
+	messages    chan *Message
+	errors      chan *Error
 }
 
 func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
@@ -51,12 +51,12 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 		for {
 			select {
 			case message := <-conn.Messages():
-				m.Messages <- &Message{
+				m.messages <- &Message{
 					Message: message,
 					Info:    r.Info,
 				}
 			case err := <-conn.Errors():
-				m.Errors <- &Error{
+				m.errors <- &Error{
 					Error: err,
 					Info:  r.Info,
 				}
@@ -82,4 +82,19 @@ func (m *Gateway) Send(id string, msg []byte) error {
 		return nil
 	}
 	return c.Send(msg)
+}
+
+func (m *Gateway) Close(id string) error {
+	c := m.Conn(id)
+	if c == nil {
+		return nil
+	}
+	return c.Close()
+}
+
+func (m *Gateway) Messages() chan *Message {
+	return m.messages
+}
+func (m *Gateway) Errors() chan *Error {
+	return m.errors
 }
