@@ -38,24 +38,27 @@ func (m *Map) Login(id string, conn *connections.Conn) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	conn, ok := m.conn(id)
-	m.Identities.Delete(id)
 	if ok {
 		err := m.onLogout(id, conn)
 		if err != nil {
 			return err
 		}
 	}
+	m.Identities.Delete(id)
 	m.Identities.Store(id, conn)
 	return nil
 }
-func (m *Map) Logout(id string) error {
+func (m *Map) Logout(id string, c *connections.Conn) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	conn, ok := m.conn(id)
-	m.Identities.Delete(id)
 	if ok {
+		if c != nil && conn.Info.ID != c.Info.ID {
+			return nil
+		}
 		return m.onLogout(id, conn)
 	}
+	m.Identities.Delete(id)
 	return nil
 }
 func (m *Map) Verify(id string, conn *connections.Conn) (bool, error) {
