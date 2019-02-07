@@ -40,7 +40,6 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 		RawConnection: conn,
 		Info: &Info{
 			ID:        id,
-			GatewayID: m.ID,
 			Timestamp: time.Now().Unix(),
 		},
 	}

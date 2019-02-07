@@ -14,7 +14,6 @@ type RawConnection interface {
 }
 type Info struct {
 	ID        string
-	GatewayID string
 	UID       string
 	Timestamp int64
 }
