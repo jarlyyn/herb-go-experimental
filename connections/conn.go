@@ -14,7 +14,6 @@ type RawConnection interface {
 }
 type Info struct {
 	ID        string
-	UID       string
 	Timestamp int64
 }
 
