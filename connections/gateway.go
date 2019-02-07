@@ -36,6 +36,9 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	if m.ID != "" {
+		id = m.ID + "-" + id
+	}
 	r := &Conn{
 		RawConnection: conn,
 		Info: &Info{
