@@ -45,6 +45,7 @@ func (m *Map) conn(id string) (*connections.Conn, bool) {
 	conn, ok := data.(*connections.Conn)
 	return conn, ok
 }
+
 func (m *Map) Login(id string, conn *connections.Conn) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
