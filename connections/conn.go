@@ -12,6 +12,12 @@ type RawConnection interface {
 	RemoteAddr() net.Addr
 	C() chan int
 }
+
+type OutputConn interface {
+	Close() error
+	Send([]byte) error
+	ID() string
+}
 type Info struct {
 	ID        string
 	Timestamp int64
@@ -22,12 +28,22 @@ type Conn struct {
 	Info *Info
 }
 
+func New() *Conn {
+	return &Conn{}
+}
+func (c *Conn) ID() string {
+	if c.Info != nil {
+		return c.Info.ID
+	}
+	return ""
+}
+
 type Message struct {
 	Message []byte
-	Info    *Info
+	Conn    OutputConn
 }
 
 type Error struct {
 	Error error
-	Info  *Info
+	Conn  OutputConn
 }

@@ -55,12 +55,12 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 			case message := <-conn.Messages():
 				m.messages <- &Message{
 					Message: message,
-					Info:    r.Info,
+					Conn:    r,
 				}
 			case err := <-conn.Errors():
 				m.errors <- &Error{
 					Error: err,
-					Info:  r.Info,
+					Conn:  r,
 				}
 			case <-conn.C():
 				break
