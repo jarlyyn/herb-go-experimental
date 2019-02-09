@@ -13,10 +13,19 @@ type RawConnection interface {
 	C() chan int
 }
 
-type OutputConn interface {
+type ConnectionOutput interface {
 	Close() error
 	Send([]byte) error
 	ID() string
+}
+type ConnectionsOutput interface {
+	Send(id string, msg []byte)
+	Close(id string) error
+}
+
+type ConnectionsInput interface {
+	Messages() chan *Message
+	Errors() chan *Error
 }
 type Info struct {
 	ID        string
@@ -40,10 +49,10 @@ func (c *Conn) ID() string {
 
 type Message struct {
 	Message []byte
-	Conn    OutputConn
+	Conn    ConnectionOutput
 }
 
 type Error struct {
 	Error error
-	Conn  OutputConn
+	Conn  ConnectionOutput
 }
