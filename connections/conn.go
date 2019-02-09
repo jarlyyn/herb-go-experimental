@@ -26,6 +26,8 @@ type ConnectionsOutput interface {
 type ConnectionsInput interface {
 	Messages() chan *Message
 	Errors() chan *Error
+	OnCloseEvents() chan ConnectionOutput
+	OnOpenEvents() chan ConnectionOutput
 }
 type Info struct {
 	ID        string

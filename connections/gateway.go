@@ -17,18 +17,22 @@ var DefaultIDGenerator = func() (string, error) {
 
 func NewGateway() *Gateway {
 	return &Gateway{
-		IDGenerator: DefaultIDGenerator,
-		messages:    make(chan *Message),
-		errors:      make(chan *Error),
+		IDGenerator:   DefaultIDGenerator,
+		messages:      make(chan *Message),
+		errors:        make(chan *Error),
+		onCloseEvents: make(chan ConnectionOutput),
+		onOpenEvents:  make(chan ConnectionOutput),
 	}
 }
 
 type Gateway struct {
-	ID          string
-	IDGenerator func() (string, error)
-	Connections sync.Map
-	messages    chan *Message
-	errors      chan *Error
+	ID            string
+	IDGenerator   func() (string, error)
+	Connections   sync.Map
+	messages      chan *Message
+	errors        chan *Error
+	onCloseEvents chan ConnectionOutput
+	onOpenEvents  chan ConnectionOutput
 }
 
 func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
@@ -46,6 +50,7 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 			Timestamp: time.Now().Unix(),
 		},
 	}
+	m.onOpenEvents <- r
 	go func() {
 		defer func() {
 			m.Connections.Delete(r.Info.ID)
@@ -66,6 +71,7 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 				break
 			}
 		}
+		m.onCloseEvents <- r
 	}()
 	m.Connections.Store(id, r)
 	return r, nil
@@ -99,4 +105,11 @@ func (m *Gateway) Messages() chan *Message {
 }
 func (m *Gateway) Errors() chan *Error {
 	return m.errors
+}
+
+func (m *Gateway) OnCloseEvents() chan ConnectionOutput {
+	return m.onCloseEvents
+}
+func (m *Gateway) OnOpenEvents() chan ConnectionOutput {
+	return m.onOpenEvents
 }
