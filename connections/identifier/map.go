@@ -27,10 +27,9 @@ func NewMapIdentity() *MapIdentity {
 }
 
 type Map struct {
-	Connections connections.Connections
-	Identities  sync.Map
-	lock        sync.Mutex
-	onLogout    func(id string, conn connections.OutputConn) error
+	Identities sync.Map
+	lock       sync.Mutex
+	onLogout   func(id string, conn connections.OutputConn) error
 }
 
 func (m *Map) conn(id string) (connections.OutputConn, bool) {
@@ -96,8 +95,7 @@ func (m *Map) SetOnLogout(f func(id string, conn connections.OutputConn) error) 
 func NewMap() *Map {
 
 	m := &Map{
-		Connections: nil,
-		Identities:  sync.Map{},
+		Identities: sync.Map{},
 	}
 	m.onLogout = GenerateDefaultMapOnLogout(m)
 	return m
