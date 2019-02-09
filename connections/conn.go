@@ -19,7 +19,7 @@ type ConnectionOutput interface {
 	ID() string
 }
 type ConnectionsOutput interface {
-	Send(id string, msg []byte)
+	Send(id string, msg []byte) error
 	Close(id string) error
 }
 
