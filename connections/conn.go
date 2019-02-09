@@ -29,6 +29,13 @@ type ConnectionsInput interface {
 	OnCloseEvents() chan ConnectionOutput
 	OnOpenEvents() chan ConnectionOutput
 }
+
+type ConnectionsConsumer interface {
+	OnMessage(*Message)
+	OnError(*Error)
+	OnClose(ConnectionOutput)
+	OnOpen(ConnectionOutput)
+}
 type Info struct {
 	ID        string
 	Timestamp int64
