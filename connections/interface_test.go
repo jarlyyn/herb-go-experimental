@@ -19,4 +19,9 @@ func TestInterface(t *testing.T) {
 	if c3 == nil {
 		t.Error(c3)
 	}
+	var consumer ConnectionsConsumer
+	consumer = EmptyConsumer{}
+	if consumer == nil {
+		t.Error(consumer)
+	}
 }
