@@ -55,6 +55,7 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 		defer func() {
 			m.Connections.Delete(r.Info.ID)
 		}()
+	Listener:
 		for {
 			select {
 			case message := <-conn.Messages():
@@ -68,7 +69,7 @@ func (m *Gateway) Register(conn RawConnection) (*Conn, error) {
 					Conn:  r,
 				}
 			case <-conn.C():
-				break
+				break Listener
 			}
 		}
 		m.onCloseEvents <- r

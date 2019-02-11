@@ -22,3 +22,18 @@ func (e EmptyConsumer) OnClose(ConnectionOutput) {
 func (e EmptyConsumer) OnOpen(ConnectionOutput) {
 
 }
+
+func Consume(i ConnectionsInput, c ConnectionsConsumer) {
+	for {
+		select {
+		case m := <-i.Messages():
+			c.OnMessage(m)
+		case e := <-i.Errors():
+			c.OnError(e)
+		case conn := <-i.OnCloseEvents():
+			c.OnClose(conn)
+		case conn := <-i.OnOpenEvents():
+			c.OnOpen(conn)
+		}
+	}
+}

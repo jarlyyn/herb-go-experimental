@@ -2,7 +2,6 @@ package identifier
 
 import (
 	"sync"
-	"time"
 
 	"github.com/jarlyyn/herb-go-experimental/connections"
 )
@@ -11,18 +10,6 @@ var GenerateDefaultMapOnLogout = func(m *Map) func(id string, conn connections.C
 	return func(id string, conn connections.ConnectionOutput) error {
 		conn.Close()
 		return nil
-	}
-}
-
-type MapIdentity struct {
-	Conn      *connections.Conn
-	Timestamp int64
-}
-
-func NewMapIdentity() *MapIdentity {
-	return &MapIdentity{
-		Conn:      nil,
-		Timestamp: time.Now().Unix(),
 	}
 }
 
@@ -41,7 +28,7 @@ func (m *Map) conn(id string) (connections.ConnectionOutput, bool) {
 	return conn, ok
 }
 
-func (m *Map) Login(id string, conn connections.ConnectionOutput) error {
+func (m *Map) Login(id string, c connections.ConnectionOutput) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	conn, ok := m.conn(id)
@@ -52,7 +39,7 @@ func (m *Map) Login(id string, conn connections.ConnectionOutput) error {
 		}
 	}
 	m.Identities.Delete(id)
-	m.Identities.Store(id, conn)
+	m.Identities.Store(id, c)
 	return nil
 }
 func (m *Map) Logout(id string, c connections.ConnectionOutput) error {
