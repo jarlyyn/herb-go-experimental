@@ -9,6 +9,7 @@ import (
 type ConnContext struct {
 	connections.ConnectionOutput
 	Data sync.Map
+	Lock sync.RWMutex
 }
 
 func NewConnContext() *ConnContext {
@@ -18,7 +19,6 @@ func NewConnContext() *ConnContext {
 type Contexts struct {
 	connections.EmptyConsumer
 	conns sync.Map
-	lock  sync.Mutex
 }
 
 func (c *Contexts) OnClose(conn connections.ConnectionOutput) {
