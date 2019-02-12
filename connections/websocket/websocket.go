@@ -27,9 +27,7 @@ type Conn struct {
 }
 
 func (c *Conn) Send(msg []byte) error {
-	go func() {
-		c.output <- msg
-	}()
+	c.output <- msg
 	return nil
 }
 func (c *Conn) C() chan int {
