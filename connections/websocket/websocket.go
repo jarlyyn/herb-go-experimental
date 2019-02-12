@@ -21,10 +21,17 @@ type Conn struct {
 	messageType int
 	closelocker sync.Mutex
 	messages    chan []byte
+	output      chan []byte
 	errors      chan error
 	c           chan int
 }
 
+func (c *Conn) Send(msg []byte) error {
+	go func() {
+		c.output <- msg
+	}()
+	return nil
+}
 func (c *Conn) C() chan int {
 	return c.c
 }
@@ -45,7 +52,7 @@ func (c *Conn) Close() error {
 	return c.Conn.Close()
 }
 
-func (c *Conn) Send(m []byte) error {
+func (c *Conn) send(m []byte) error {
 	c.closelocker.Lock()
 	closed := c.closed
 	c.closelocker.Unlock()
@@ -64,6 +71,7 @@ func New() *Conn {
 		c:        make(chan int),
 		messages: make(chan []byte),
 		errors:   make(chan error),
+		output:   make(chan []byte),
 	}
 }
 
@@ -78,6 +86,22 @@ func Upgrade(w http.ResponseWriter, r *http.Request, msgtype int) (*Conn, error)
 	c.closed = false
 	c.Conn = wc
 	c.messageType = msgtype
+	go func() {
+		for {
+			select {
+			case m := <-c.output:
+				err := c.send(m)
+				if err != nil {
+					go func() {
+						c.errors <- err
+					}()
+				}
+			case <-c.C():
+				return
+			}
+		}
+	}()
+
 	go func() {
 		defer func() {
 
