@@ -1,0 +1,8 @@
+所有命名以驼峰明明
+结构名为 [功能描述][组件类型]
+例如 UserLoginForm，UserLogin为功能描述，Form为组建类型
+
+创建实例的方法命名模式与结构名一样
+
+实例/变量名为 [功能描述][组件类型][变量识别符]，功能描述可以省略
+例如 MiddlewaresHome, UserLoginActionWap
