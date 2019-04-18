@@ -1,7 +1,7 @@
 package notificationmanager
 
 import "sync"
-import "github.com/herb-go/herb/notification"
+import "github.com/herb-go/notification"
 
 type Gateway struct {
 	notification.CommonInstancesBuilder

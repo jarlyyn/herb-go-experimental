@@ -1,7 +1,7 @@
 package notificationmanager
 
 import (
-	"github.com/herb-go/herb/notification"
+	"github.com/herb-go/notification"
 )
 
 type DataNotification interface {
