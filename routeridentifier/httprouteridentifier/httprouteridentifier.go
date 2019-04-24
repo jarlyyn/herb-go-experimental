@@ -16,6 +16,7 @@ type Indentifier struct {
 
 func NewIndentifier() *Indentifier {
 	return &Indentifier{
+		Router:     httprouter.New(),
 		SubRouters: map[string]*httprouter.Router{},
 	}
 }
@@ -24,7 +25,7 @@ type emptWriter struct {
 }
 
 func (w *emptWriter) Header() http.Header {
-	return nil
+	return http.Header{}
 }
 func (w *emptWriter) Write([]byte) (int, error) {
 	return 0, nil
@@ -32,11 +33,11 @@ func (w *emptWriter) Write([]byte) (int, error) {
 func (w *emptWriter) WriteHeader(statusCode int) {
 
 }
-func (i *Indentifier) MustIdentifyRouter(prefix string, r *http.Request) {
+func (i *Indentifier) MustIdentifyRouter(host string, r *http.Request) {
 	if i.Enabled {
 		var err error
 		req := new(http.Request)
-		req.Host = prefix
+		req.Host = host
 		req.Method = r.Method
 		req.URL, err = url.Parse(r.RequestURI)
 		if err != nil {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/herb-go/herb/middleware/router"
 	"github.com/jarlyyn/herb-go-experimental/routeridentifier"
 )
 
@@ -21,6 +20,11 @@ type Action struct {
 	Tags        []string
 }
 
+func NewAction() *Action {
+	return &Action{
+		Tags: []string{},
+	}
+}
 func (a *Action) ApplyTo(i *Indentifier, router *httprouter.Router) error {
 	if a.Enabled {
 		if a.IsSubRouter {
@@ -29,21 +33,10 @@ func (a *Action) ApplyTo(i *Indentifier, router *httprouter.Router) error {
 			}
 		}
 	}
+	a.Method = strings.ToUpper(a.Method)
 	switch a.Method {
-	case "GET":
-		router.GET(a.Path, a.NewAction(i))
-	case "PUT":
-		router.PUT(a.Path, a.NewAction(i))
-	case "POST":
-		router.POST(a.Path, a.NewAction(i))
-	case "DELETE":
-		router.DELETE(a.Path, a.NewAction(i))
-	case "PATCH":
-		router.PATCH(a.Path, a.NewAction(i))
-	case "OPTIONS":
-		router.OPTIONS(a.Path, a.NewAction(i))
-	case "HEAD":
-		router.HEAD(a.Path, a.NewAction(i))
+	case "GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS", "HEAD":
+		router.Handle(a.Method, a.Path, a.NewAction(i))
 	default:
 		if !(a.Method == "ALL" || a.IsSubRouter) {
 			return errors.New("httprouteridentifier:unkown method '" + a.Method + "' for action path '" + a.Path + "'")
@@ -77,12 +70,12 @@ func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.R
 				id.ID = a.MakeID(r)
 				return
 			}
-			sr, ok := i.SubRouters[id.ID]
+			sr, ok := i.SubRouters[a.ID]
 			if ok == false {
 				return
 			}
-			urlparam := router.GetParams(r).Get("path")
-			r.URL, err = url.Parse(urlparam)
+			urlparam := p.ByName("path")
+			r.URL, err = url.Parse("/" + urlparam)
 			if err != nil {
 				panic(err)
 			}
@@ -91,7 +84,7 @@ func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.R
 	}
 }
 
-type Router []Action
+type Router []*Action
 
 func (r Router) ApplyTo(i *Indentifier, router *httprouter.Router) error {
 	for _, v := range r {
@@ -103,6 +96,10 @@ func (r Router) ApplyTo(i *Indentifier, router *httprouter.Router) error {
 	return nil
 }
 
+func NewRouter() Router {
+	return []*Action{}
+}
+
 type Config struct {
 	Enabled    bool
 	Router     Router
@@ -111,6 +108,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
+		Router:     []*Action{},
 		SubRouters: map[string]Router{},
 	}
 }
@@ -119,13 +117,13 @@ func (c *Config) ApplyTo(i *Indentifier) error {
 	i.Enabled = c.Enabled
 	err = c.Router.ApplyTo(i, i.Router)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for k := range c.SubRouters {
 		router := httprouter.New()
 		err = c.SubRouters[k].ApplyTo(i, router)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		i.SubRouters[k] = router
 	}

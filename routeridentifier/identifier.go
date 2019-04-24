@@ -3,16 +3,16 @@ package routeridentifier
 import "net/http"
 
 type Identifier interface {
-	MustIdentifyRouter(prefix string, r *http.Request)
+	MustIdentifyRouter(host string, r *http.Request)
 }
 
 var Debug bool
 
 var DebugHeader = "herbgo-router-identification"
 
-func Middleware(i Identifier, prefix string) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func Middleware(i Identifier, host string) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		i.MustIdentifyRouter(prefix, r)
+		i.MustIdentifyRouter(host, r)
 		if Debug {
 			id := GetIdentificationFromRequest(r)
 			if id != nil {
