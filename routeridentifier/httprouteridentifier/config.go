@@ -59,7 +59,7 @@ func (a *Action) ApplyTo(i *Indentifier, router *httprouter.Router) error {
 	return nil
 }
 func (a *Action) MakeID(r *http.Request) string {
-	return r.Method + "://" + r.Host + "/" + a.ID
+	return r.Host + "/" + a.ID + "#" + r.Method
 }
 func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
