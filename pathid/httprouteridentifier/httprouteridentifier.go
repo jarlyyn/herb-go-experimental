@@ -33,11 +33,11 @@ func (w *emptWriter) Write([]byte) (int, error) {
 func (w *emptWriter) WriteHeader(statusCode int) {
 
 }
-func (i *Indentifier) MustIdentifyRouter(host string, r *http.Request) {
+func (i *Indentifier) MustIdentifyRouter(namespace string, r *http.Request) {
 	if i.Enabled {
 		var err error
 		req := new(http.Request)
-		req.Host = host
+		req.Host = namespace
 		req.Method = r.Method
 		req.URL, err = url.Parse(r.RequestURI)
 		if err != nil {

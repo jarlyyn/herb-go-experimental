@@ -51,7 +51,7 @@ func TestIdentifier(t *testing.T) {
 	ActionSubRouterNormal.ID = "subrouternormal"
 	ActionSubRouterNormal.Method = "POST"
 	ActionSubRouterNormal.Tags = []string{"subrouternormaltag"}
-	config.SubRouters["subrouterid"] = append(config.SubRouters["subrouterid"], ActionSubRouterNormal)
+	config.SubRouters["testhost::subrouterid"] = append(config.SubRouters["subrouterid"], ActionSubRouterNormal)
 	err = config.ApplyTo(idfer)
 	if err != nil {
 		t.Fatal(err)
@@ -90,7 +90,7 @@ func TestIdentifier(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.ID != "testhost/normal#GET" || !result.HasTag("normaltag") {
+	if result.ID != "testhost::normal" || !result.HasTag("normaltag") {
 		t.Fatal(result)
 	}
 	req, err = http.NewRequest("POST", server.URL+"/subrouter"+"/normal", nil)
@@ -111,7 +111,7 @@ func TestIdentifier(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.ID != "testhost/subrouternormal#POST" || !result.HasTag("subroutertag") || !result.HasTag("subrouternormaltag") || len(result.Parents) != 1 || result.Parents[0] != "subrouterid" {
+	if result.ID != "testhost::subrouternormal" || !result.HasTag("subroutertag") || !result.HasTag("subrouternormaltag") || len(result.Parents) != 1 || result.Parents[0] != "testhost::subrouterid" {
 		t.Fatal(result)
 	}
 	req, err = http.NewRequest("POST", server.URL+"/subrouter"+"/notexist", nil)
@@ -188,4 +188,8 @@ func TestActions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func init() {
+	pathid.Debug = true
 }

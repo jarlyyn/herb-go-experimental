@@ -20,7 +20,7 @@ func (i *Identification) String() string {
 	var id = i.ID
 	parents := strings.Join(i.Parents, ",")
 	if parents != "" {
-		id = id + "@" + parents
+		id = parents + "::" + id
 	}
 	tags := strings.Join(i.Tags, ",")
 	if tags != "" {

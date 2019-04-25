@@ -2,6 +2,7 @@ package httprouteridentifier
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -49,11 +50,29 @@ func (a *Action) ApplyTo(i *Indentifier, router *httprouter.Router) error {
 		router.OPTIONS(a.Path, a.NewAction(i))
 		router.HEAD(a.Path, a.NewAction(i))
 	}
+	if pathid.Debug {
+		a.Debug()
+	}
 	return nil
 }
-func (a *Action) MakeID(r *http.Request) string {
-	return r.Host + "/" + a.ID + "#" + r.Method
+func (a *Action) Debug() {
+	var output string
+	output = "Path '" + a.Path + "' by method '" + a.Method + "' registered as "
+	if a.IsSubRouter {
+		output = output + " subrouter"
+	} else {
+		output = output + " id "
+	}
+	output = output + a.ID
+	fmt.Println(output)
 }
+func (a *Action) MakeID(r *http.Request) string {
+	if r.Host == "" {
+		return a.ID
+	}
+	return r.Host + "::" + a.ID
+}
+
 func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		if a.Enabled {
@@ -70,8 +89,8 @@ func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.R
 				id.ID = a.MakeID(r)
 				return
 			}
-			id.AddParent(a.ID)
-			sr, ok := i.SubRouters[a.ID]
+			id.AddParent(a.MakeID(r))
+			sr, ok := i.SubRouters[a.MakeID(r)]
 			if ok == false {
 				return
 			}
