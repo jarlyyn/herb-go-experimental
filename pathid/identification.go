@@ -17,11 +17,16 @@ type Identification struct {
 }
 
 func (i *Identification) String() string {
+	var id = i.ID
+	parents := strings.Join(i.Parents, ",")
+	if parents != "" {
+		id = id + "@" + parents
+	}
 	tags := strings.Join(i.Tags, ",")
 	if tags != "" {
-		return i.ID + "|" + tags
+		id = id + "|" + tags
 	}
-	return i.ID
+	return id
 }
 func (i *Identification) AddTag(tag string) {
 	if tag == "" {

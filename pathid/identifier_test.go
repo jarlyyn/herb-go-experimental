@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -15,6 +16,13 @@ type stuctTestIdentifier struct {
 func (i *stuctTestIdentifier) MustIdentifyRouter(prefix string, r *http.Request) {
 	id := NewIdentification()
 	id.ID = prefix + r.URL.Path
+	parents := r.Header.Get("parents")
+	if parents != "" {
+		plist := strings.Split(parents, ",")
+		for _, v := range plist {
+			id.AddParent(v)
+		}
+	}
 	for k := range i.TagFields {
 		if i.TagFields[k] {
 			if r.Header.Get(k) != "" {
@@ -114,6 +122,7 @@ func TestIdentifier(t *testing.T) {
 	}()
 	testreq, err = http.NewRequest("GET", server.URL+"/test", nil)
 	testreq.Header.Add("testheader1", "testvalue1")
+	testreq.Header.Add("parents", "testparent1,testparent2")
 	if err != nil {
 		t.Fatal(err)
 	}
