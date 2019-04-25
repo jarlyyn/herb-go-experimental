@@ -1,4 +1,4 @@
-package routeridentifier
+package pathid
 
 import (
 	"context"
@@ -11,8 +11,9 @@ import (
 const ContextNameRouterIdentification = router.ContextName("routerIdentification")
 
 type Identification struct {
-	ID   string
-	Tags []string
+	ID      string
+	Parents []string
+	Tags    []string
 }
 
 func (i *Identification) String() string {
@@ -41,6 +42,9 @@ func (i *Identification) HasTag(tag string) bool {
 		}
 	}
 	return false
+}
+func (i *Identification) AddParent(parent string) {
+	i.Parents = append(i.Parents, parent)
 }
 func NewIdentification() *Identification {
 	return &Identification{

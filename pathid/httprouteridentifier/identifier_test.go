@@ -9,7 +9,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/jarlyyn/herb-go-experimental/routeridentifier"
+	"github.com/jarlyyn/herb-go-experimental/pathid"
 )
 
 func TestIdentifier(t *testing.T) {
@@ -17,7 +17,7 @@ func TestIdentifier(t *testing.T) {
 	var req *http.Request
 	var resp *http.Response
 	var content []byte
-	var result *routeridentifier.Identification
+	var result *pathid.Identification
 	idfer := NewIndentifier()
 	config := NewConfig()
 	config.Enabled = true
@@ -57,7 +57,7 @@ func TestIdentifier(t *testing.T) {
 		t.Fatal(err)
 	}
 	var testAction = func(w http.ResponseWriter, r *http.Request) {
-		id := routeridentifier.GetIdentificationFromRequest(r)
+		id := pathid.GetIdentificationFromRequest(r)
 		if id == nil {
 			w.Write([]byte(""))
 			return
@@ -69,7 +69,7 @@ func TestIdentifier(t *testing.T) {
 		w.Write(bs)
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		routeridentifier.Middleware(idfer, "testhost")(w, r, testAction)
+		pathid.Middleware(idfer, "testhost")(w, r, testAction)
 	}))
 	defer server.Close()
 	req, err = http.NewRequest("GET", server.URL+"/normal", nil)
@@ -85,7 +85,7 @@ func TestIdentifier(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp.Body.Close()
-	result = routeridentifier.NewIdentification()
+	result = pathid.NewIdentification()
 	err = json.Unmarshal(content, result)
 	if err != nil {
 		t.Fatal(err)
@@ -106,12 +106,12 @@ func TestIdentifier(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp.Body.Close()
-	result = routeridentifier.NewIdentification()
+	result = pathid.NewIdentification()
 	err = json.Unmarshal(content, result)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.ID != "testhost/subrouternormal#POST" || !result.HasTag("subroutertag") || !result.HasTag("subrouternormaltag") {
+	if result.ID != "testhost/subrouternormal#POST" || !result.HasTag("subroutertag") || !result.HasTag("subrouternormaltag") || len(result.Parents) != 1 || result.Parents[0] != "subrouterid" {
 		t.Fatal(result)
 	}
 	req, err = http.NewRequest("POST", server.URL+"/subrouter"+"/notexist", nil)
@@ -127,7 +127,7 @@ func TestIdentifier(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp.Body.Close()
-	result = routeridentifier.NewIdentification()
+	result = pathid.NewIdentification()
 	err = json.Unmarshal(content, result)
 	if err != nil {
 		t.Fatal(err)

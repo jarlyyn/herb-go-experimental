@@ -1,4 +1,4 @@
-package routeridentifier
+package pathid
 
 import "net/http"
 

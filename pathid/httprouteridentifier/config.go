@@ -8,7 +8,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/jarlyyn/herb-go-experimental/routeridentifier"
+	"github.com/jarlyyn/herb-go-experimental/pathid"
 )
 
 type Action struct {
@@ -58,10 +58,10 @@ func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.R
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		if a.Enabled {
 			var err error
-			id := routeridentifier.GetIdentificationFromRequest(r)
+			id := pathid.GetIdentificationFromRequest(r)
 			if id == nil {
-				id = routeridentifier.NewIdentification()
-				routeridentifier.SetIdentificationToRequest(r, id)
+				id = pathid.NewIdentification()
+				pathid.SetIdentificationToRequest(r, id)
 			}
 			for k := range a.Tags {
 				id.AddTag(a.Tags[k])
@@ -70,6 +70,7 @@ func (a *Action) NewAction(i *Indentifier) func(w http.ResponseWriter, r *http.R
 				id.ID = a.MakeID(r)
 				return
 			}
+			id.AddParent(a.ID)
 			sr, ok := i.SubRouters[a.ID]
 			if ok == false {
 				return

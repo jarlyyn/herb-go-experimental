@@ -1,4 +1,4 @@
-package routeridentifier
+package pathid
 
 import (
 	"encoding/json"
@@ -50,6 +50,11 @@ func TestIdentification(t *testing.T) {
 	id = NewIdentification()
 	id.ID = "test"
 	if id.String() != "test" {
+		t.Fatal(id)
+	}
+	id.AddParent("parent1")
+	id.AddParent("parent2")
+	if len(id.Parents) != 2 || id.Parents[0] != "parent1" || id.Parents[1] != "parent2" {
 		t.Fatal(id)
 	}
 }

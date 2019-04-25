@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/jarlyyn/herb-go-experimental/routeridentifier"
+	"github.com/jarlyyn/herb-go-experimental/pathid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -44,9 +44,9 @@ func (i *Indentifier) MustIdentifyRouter(host string, r *http.Request) {
 			panic(err)
 		}
 		i.Router.ServeHTTP(&emptWriter{}, req)
-		id := routeridentifier.GetIdentificationFromRequest(req)
+		id := pathid.GetIdentificationFromRequest(req)
 		if id != nil {
-			routeridentifier.SetIdentificationToRequest(r, id)
+			pathid.SetIdentificationToRequest(r, id)
 		}
 	}
 }
