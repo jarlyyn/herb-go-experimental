@@ -8,7 +8,7 @@ import (
 	"github.com/herb-go/herb/middleware/router"
 )
 
-const ContextNameRouterIdentification = router.ContextName("routerIdentification")
+const ContextNameRouterIdentification = router.ContextName("pathid")
 
 type Identification struct {
 	ID      string
