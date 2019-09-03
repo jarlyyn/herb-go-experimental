@@ -1,8 +1,10 @@
 package uniqueid
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-//Option store option interface.
+//Option generator option interface.
 type Option interface {
 	ApplyTo(*Generator) error
 }
@@ -20,13 +22,13 @@ func NewOptionConfigJSON() *OptionConfigJSON {
 	}
 }
 
-//ApplyTo apply option to file store.
-func (o *OptionConfigJSON) ApplyTo(store *Generator) error {
+//ApplyTo apply option to generator.
+func (o *OptionConfigJSON) ApplyTo(g *Generator) error {
 	driver, err := NewDriver(o.Driver, &o.Config, "")
 	if err != nil {
 		return err
 	}
-	store.Driver = driver
+	g.Driver = driver
 	return nil
 }
 
@@ -37,12 +39,12 @@ type OptionConfigMap struct {
 }
 
 //ApplyTo apply option to file store.
-func (o *OptionConfigMap) ApplyTo(store *Generator) error {
+func (o *OptionConfigMap) ApplyTo(g *Generator) error {
 	driver, err := NewDriver(o.Driver, &o.Config, "")
 	if err != nil {
 		return err
 	}
-	store.Driver = driver
+	g.Driver = driver
 	return nil
 }
 

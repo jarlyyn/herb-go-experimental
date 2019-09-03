@@ -6,13 +6,41 @@ import (
 	"sync"
 )
 
+//Generator unique id generator
 type Generator struct {
 	Driver Driver
 }
 
-type Driver func() (string, error)
+//GenerateID generate unique id.
+//Return  generated id and any error if rasied.
+func (g *Generator) GenerateID() (string, error) {
+	return g.Driver.GenerateID()
+}
 
-// Factory store driver create factory.
+//MustGenerateID generate unique id.
+//Return  generated id.
+//Panic if any error raised
+func (g *Generator) MustGenerateID() string {
+	id, err := g.Driver.GenerateID()
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+//NewGenerator create new Generator
+func NewGenerator() *Generator {
+	return &Generator{}
+}
+
+//Driver unique id generator driver interface
+type Driver interface {
+	//GenerateID generate unique id.
+	//Return  generated id and any error if rasied.
+	GenerateID() (string, error)
+}
+
+// Factory unique id generator driver create factory.
 type Factory func(conf Config, prefix string) (Driver, error)
 
 var (
@@ -27,10 +55,10 @@ func Register(name string, f Factory) {
 	factorysMu.Lock()
 	defer factorysMu.Unlock()
 	if f == nil {
-		panic("file: Register cache factory is nil")
+		panic("unique: Register cache factory is nil")
 	}
 	if _, dup := factories[name]; dup {
-		panic("file: Register called twice for factory " + name)
+		panic("unique: Register called twice for factory " + name)
 	}
 	factories[name] = f
 }
