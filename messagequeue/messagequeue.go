@@ -1,26 +1,19 @@
 package messagequeue
 
-var EmptyConsumed = func(bool) error {
-	return nil
-}
-
 type Message struct {
 	ID   string
 	Type string
 	Data []byte
 }
 
-type ConsumerMessage struct {
-	Message
-	Consumed func(bool) error
-}
+type Consumer func(*Message) bool
 
 type Broker struct {
-	Driver
+	Driver Driver
 }
 type Driver interface {
 	Start() error
 	Close() error
-	ProduceMessages(...*Message) error
-	MessageCuonsumer() chan *ConsumerMessage
+	ProduceMessages(...*Message) (unsend []*Message, err error)
+	SetConsumer(Consumer)
 }
