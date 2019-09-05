@@ -1,19 +1,17 @@
 package messagequeue
 
-type Message struct {
-	ID   string
-	Type string
-	Data []byte
-}
+type ConsumerStatus int
 
-type Consumer func(*Message) bool
+const ConsumerStatusSuccess = ConsumerStatus(0)
+const ConsumerStatusFail = ConsumerStatus(-1)
 
 type Broker struct {
 	Driver Driver
 }
+
 type Driver interface {
 	Start() error
 	Close() error
-	ProduceMessages(...*Message) (unsend []*Message, err error)
-	SetConsumer(Consumer)
+	ProduceMessages(...[]byte) (sent []bool, err error)
+	SetConsumer(func([]byte) ConsumerStatus)
 }
