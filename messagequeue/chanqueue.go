@@ -11,6 +11,8 @@ func (q *ChanQueue) SetRecover(r func()) {
 	q.recover = r
 }
 func (q *ChanQueue) Start() error {
+	q.queue = make(chan []byte)
+	q.c = make(chan int)
 	go func() {
 		for {
 			select {

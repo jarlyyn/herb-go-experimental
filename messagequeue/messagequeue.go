@@ -12,9 +12,12 @@ const ConsumerStatusSuccess = ConsumerStatus(0)
 const ConsumerStatusFail = ConsumerStatus(-1)
 
 type Broker struct {
-	Driver Driver
+	Driver
 }
 
+func NewBroker() *Broker {
+	return &Broker{}
+}
 func NewChanConsumer(c chan []byte) func([]byte) ConsumerStatus {
 	return func(message []byte) ConsumerStatus {
 		go func() {
