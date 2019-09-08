@@ -17,7 +17,7 @@ func (q *ChanQueue) Start() error {
 		for {
 			select {
 			case m := <-q.queue:
-				q.consumer(m)
+				go q.consumer(m)
 			case <-q.c:
 				return
 			}
