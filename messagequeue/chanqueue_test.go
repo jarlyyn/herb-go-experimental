@@ -1,7 +1,8 @@
 package messagequeue
 
 import (
-	"sync"
+	"bytes"
+	"container/list"
 	"testing"
 )
 
@@ -13,7 +14,7 @@ func newTestBroker() *Broker {
 	return b
 }
 
-func TestBrokerOrderedMessages(t *testing.T) {
+func TestBroker(t *testing.T) {
 	b := newTestBroker()
 	err := b.Start()
 	if err != nil {
@@ -25,40 +26,41 @@ func TestBrokerOrderedMessages(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
-	received := [][]byte{}
-	wg := &sync.WaitGroup{}
-	l := &sync.Mutex{}
-	b.SetConsumer(func(m []byte) ConsumerStatus {
-		l.Lock()
-		defer l.Unlock()
-		received = append(received, m)
-		wg.Done()
-		return ConsumerStatusSuccess
-	})
+	testchan := make(chan []byte, 100)
+	b.SetConsumer(NewChanConsumer(testchan))
 	messages := [][]byte{}
+	unreceived := list.New()
 	for i := byte(0); i < 5; i++ {
-		wg.Add(1)
 		messages = append(messages, []byte{i})
+		unreceived.PushBack([]byte{i})
 	}
-	go func() {
-		sent, err := b.ProduceMessages(messages...)
-		if err != nil {
-			t.Fatal(err)
+	sent, err := b.ProduceMessages(messages...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k := range sent {
+		if sent[k] == false {
+			t.Fatal(k)
 		}
-		for k := range sent {
-			if sent[k] == false {
-				t.Fatal(k)
-			}
-		}
-	}()
-	wg.Wait()
-	if len(received) != 5 {
-		t.Fatal(len(received))
+	}
+	if len(testchan) != 5 {
+		t.Fatal(len(testchan))
+	}
+	if unreceived.Len() != 5 {
+		t.Fatal(unreceived.Len())
 	}
 	for i := byte(0); i < 5; i++ {
-		b := received[i]
-		if len(b) != 1 || b[0] != i {
-			t.Fatal(i, b)
+		m := <-testchan
+		e := unreceived.Front()
+		for e != nil {
+			if bytes.Compare(e.Value.([]byte), m) == 0 {
+				unreceived.Remove(e)
+				break
+			}
+			e = e.Next()
 		}
+	}
+	if unreceived.Len() != 0 {
+		t.Fatal(unreceived)
 	}
 }
