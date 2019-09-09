@@ -225,6 +225,119 @@ func QueueFactory(conf messagequeue.Config, prefix string) (messagequeue.Driver,
 	if err != nil {
 		return nil, err
 	}
+
+	err = conf.Get(prefix+"LocalAddr", &c.LocalAddr)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"DialTimeoutInSecond", &c.DialTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"ReadTimeoutInSecond", &c.ReadTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"WriteTimeoutInSecond", &c.WriteTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"LookupdPollIntervalInSecond", &c.LookupdPollIntervalInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"LookupdPollJitter", &c.LookupdPollJitter)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"MaxRequeueDelayInSecond", &c.MaxRequeueDelayInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"DefaultRequeueDelayInSecond", &c.DefaultRequeueDelayInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"MaxBackoffDurationInSecond", &c.MaxBackoffDurationInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"BackoffMultiplierInSecond", &c.BackoffMultiplierInSecond)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conf.Get(prefix+"MaxAttempts", &c.MaxAttempts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conf.Get(prefix+"LowRdyIdleTimeoutInSecond", &c.LowRdyIdleTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"LowRdyTimeoutInSecond", &c.LowRdyTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"RDYRedistributeIntervalInSecond", &c.RDYRedistributeIntervalInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"ClientID", &c.ClientID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conf.Get(prefix+"Hostname", &c.Hostname)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"UserAgent", &c.UserAgent)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"HeartbeatIntervalInSecond", &c.HeartbeatIntervalInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"SampleRate", &c.SampleRate)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"Deflate", &c.Deflate)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"DeflateLevel", &c.DeflateLevel)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"Snappy", &c.Snappy)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"OutputBufferSize", &c.OutputBufferSize)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"OutputBufferTimeoutInSecond", &c.OutputBufferTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"MaxInFlight", &c.MaxInFlight)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"MsgTimeoutInSecond", &c.MsgTimeoutInSecond)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get(prefix+"MsgTimeoAuthSecretutInSecond", &c.AuthSecret)
+	if err != nil {
+		return nil, err
+	}
+
 	q := NewQueue()
 	err = c.ApplyTo(q)
 	if err != nil {
