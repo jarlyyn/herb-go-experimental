@@ -1,6 +1,7 @@
 package messagequeue
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -50,10 +51,10 @@ func Register(name string, f Factory) {
 	factorysMu.Lock()
 	defer factorysMu.Unlock()
 	if f == nil {
-		panic("messagequeue: Register messagequeue factory is nil")
+		panic(errors.New("messagequeue: Register messagequeue factory is nil"))
 	}
 	if _, dup := factories[name]; dup {
-		panic("messagequeue: Register called twice for factory " + name)
+		panic(errors.New("messagequeue: Register called twice for factory " + name))
 	}
 	factories[name] = f
 }
