@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"container/list"
 	"testing"
+	"time"
 )
 
 func newTestBroker() *Broker {
@@ -13,7 +14,9 @@ func newTestBroker() *Broker {
 	c.ApplyTo(b)
 	return b
 }
+func testrecover() {
 
+}
 func TestBroker(t *testing.T) {
 	b := newTestBroker()
 	err := b.Start()
@@ -26,6 +29,7 @@ func TestBroker(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
+	b.SetRecover(testrecover)
 	testchan := make(chan []byte, 100)
 	b.SetConsumer(NewChanConsumer(testchan))
 	messages := [][]byte{}
@@ -38,6 +42,7 @@ func TestBroker(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(time.Second)
 	for k := range sent {
 		if sent[k] == false {
 			t.Fatal(k)
