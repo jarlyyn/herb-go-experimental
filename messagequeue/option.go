@@ -1,6 +1,8 @@
 package messagequeue
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 //Option store option interface.
 type Option interface {
@@ -13,13 +15,13 @@ type OptionConfigMap struct {
 	Config ConfigMap
 }
 
-//ApplyTo apply option to file store.
-func (o *OptionConfigMap) ApplyTo(store *Broker) error {
+//ApplyTo apply option to message queue broker.
+func (o *OptionConfigMap) ApplyTo(broker *Broker) error {
 	driver, err := NewDriver(o.Driver, &o.Config, "")
 	if err != nil {
 		return err
 	}
-	store.Driver = driver
+	broker.Driver = driver
 	return nil
 }
 
