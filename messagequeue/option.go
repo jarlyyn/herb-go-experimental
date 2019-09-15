@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-//Option store option interface.
+//Option broker option interface.
 type Option interface {
 	ApplyTo(*Broker) error
 }
