@@ -146,7 +146,7 @@ type Queue struct {
 	Config     *nsq.Config
 	Producer   *nsq.Producer
 	Consumer   *nsq.Consumer
-	consumer   func([]byte) messagequeue.ConsumerStatus
+	consumer   func(*messagequeue.Message) messagequeue.ConsumerStatus
 	recover    func()
 }
 
@@ -154,7 +154,13 @@ func (q *Queue) SetRecover(r func()) {
 	q.recover = r
 }
 func (q *Queue) Hanlder(message *nsq.Message) error {
-	q.consumer(message.Body)
+	id := [nsq.MsgIDLength]byte(message.ID)
+	q.consumer(
+		messagequeue.NewMessage(message.Body).
+			SetID(
+				string(id[:]),
+			),
+	)
 	return nil
 }
 func (q *Queue) Start() error {
@@ -195,7 +201,7 @@ func (q *Queue) ProduceMessages(messages ...[]byte) (sent []bool, err error) {
 	}
 	return sent, nil
 }
-func (q *Queue) SetConsumer(c func([]byte) messagequeue.ConsumerStatus) {
+func (q *Queue) SetConsumer(c func(*messagequeue.Message) messagequeue.ConsumerStatus) {
 	q.consumer = c
 }
 

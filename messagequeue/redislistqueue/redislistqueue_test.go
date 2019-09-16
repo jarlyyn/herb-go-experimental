@@ -36,7 +36,7 @@ func TestBroker(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
-	testchan := make(chan []byte, 100)
+	testchan := make(chan *messagequeue.Message, 100)
 	b.SetConsumer(messagequeue.NewChanConsumer(testchan))
 	messages := [][]byte{}
 	unreceived := list.New()
@@ -64,7 +64,7 @@ func TestBroker(t *testing.T) {
 		m := <-testchan
 		e := unreceived.Front()
 		for e != nil {
-			if bytes.Compare(e.Value.([]byte), m) == 0 {
+			if bytes.Compare(e.Value.([]byte), m.Data) == 0 {
 				unreceived.Remove(e)
 				break
 			}

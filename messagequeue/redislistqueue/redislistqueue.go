@@ -11,7 +11,7 @@ type Queue struct {
 	pool     *redispool.Pool
 	Topic    string
 	Timeout  int
-	consumer func([]byte) messagequeue.ConsumerStatus
+	consumer func(*messagequeue.Message) messagequeue.ConsumerStatus
 	recover  func()
 }
 
@@ -29,7 +29,7 @@ func (q *Queue) brpop() {
 	if err != nil {
 		panic(err)
 	}
-	q.consumer(r[1])
+	q.consumer(messagequeue.NewMessage(r[1]))
 }
 func (q *Queue) pull() {
 	defer q.recover()
@@ -64,7 +64,7 @@ func (q *Queue) ProduceMessages(messages ...[]byte) (sent []bool, err error) {
 	}
 	return sent, nil
 }
-func (q *Queue) SetConsumer(c func([]byte) messagequeue.ConsumerStatus) {
+func (q *Queue) SetConsumer(c func(*messagequeue.Message) messagequeue.ConsumerStatus) {
 	q.consumer = c
 }
 

@@ -1,9 +1,9 @@
 package messagequeue
 
 type ChanQueue struct {
-	queue    chan []byte
+	queue    chan *Message
 	c        chan int
-	consumer func([]byte) ConsumerStatus
+	consumer func(*Message) ConsumerStatus
 	recover  func()
 }
 
@@ -11,7 +11,7 @@ func (q *ChanQueue) SetRecover(r func()) {
 	q.recover = r
 }
 func (q *ChanQueue) Start() error {
-	q.queue = make(chan []byte)
+	q.queue = make(chan *Message)
 	q.c = make(chan int)
 	go func() {
 		for {
@@ -32,12 +32,12 @@ func (q *ChanQueue) Close() error {
 func (q *ChanQueue) ProduceMessages(messages ...[]byte) (sent []bool, err error) {
 	sent = make([]bool, len(messages))
 	for k := range messages {
-		q.queue <- messages[k]
+		q.queue <- NewMessage(messages[k])
 		sent[k] = true
 	}
 	return sent, nil
 }
-func (q *ChanQueue) SetConsumer(c func([]byte) ConsumerStatus) {
+func (q *ChanQueue) SetConsumer(c func(*Message) ConsumerStatus) {
 	q.consumer = c
 }
 

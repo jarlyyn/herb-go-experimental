@@ -19,8 +19,8 @@ type Broker struct {
 func NewBroker() *Broker {
 	return &Broker{}
 }
-func NewChanConsumer(c chan []byte) func([]byte) ConsumerStatus {
-	return func(message []byte) ConsumerStatus {
+func NewChanConsumer(c chan *Message) func(*Message) ConsumerStatus {
+	return func(message *Message) ConsumerStatus {
 		go func() {
 			c <- message
 		}()
@@ -33,7 +33,7 @@ type Driver interface {
 	Close() error
 	SetRecover(func())
 	ProduceMessages(...[]byte) (sent []bool, err error)
-	SetConsumer(func([]byte) ConsumerStatus)
+	SetConsumer(func(*Message) ConsumerStatus)
 }
 
 // Factory unique id generator driver create factory.
