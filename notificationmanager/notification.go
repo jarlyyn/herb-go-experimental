@@ -13,11 +13,6 @@ type DataInterfaceNotification struct {
 	notification.CommonNotification
 }
 
-func NewDataInterfaceNotification(data interface{}) *DataInterfaceNotification {
-	return &DataInterfaceNotification{
-		Data: data,
-	}
-}
 func (n *DataInterfaceNotification) NotificationData() (interface{}, error) {
 	return n.Data, nil
 }
