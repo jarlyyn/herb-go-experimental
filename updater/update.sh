@@ -9,5 +9,6 @@ go get -u -d github.com/herb-go/fetch
 go get -u -d github.com/herb-go/notification
 go get -u -d github.com/herb-go/herb-go
 go get -u -d github.com/herb-go/uniqueid
+go get -u -d github.com/herb-go/messagequeue
 go install github.com/herb-go/herb-go
 
