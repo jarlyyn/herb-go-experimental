@@ -8,28 +8,32 @@ import (
 
 func TestConfig(t *testing.T) {
 	var err error
+	Reset()
+	o := newOption()
+	as := o.server()
+	as.CleanConfig()
 	defer func() {
-		CleanConfig()
+		Reset()
+		as.CleanConfig()
 	}()
-	CleanConfig()
-	if config != nil {
+	if as.config != nil {
 		t.Fatal(defaultConfig)
 	}
-	c := Config()
+	c := as.Config()
 	if c != defaultConfig {
 		t.Fatal(c)
 	}
-	CleanConfig()
+	as.CleanConfig()
 	config := &httpserver.Config{}
-	err = SetConfig(config)
+	err = as.SetConfig(config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	c = Config()
+	c = as.Config()
 	if c != config {
 		t.Fatal(c)
 	}
-	err = SetConfig(config)
+	err = as.SetConfig(config)
 	if err == nil {
 		t.Fatal(err)
 	}

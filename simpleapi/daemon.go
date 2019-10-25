@@ -1,94 +1,153 @@
 package simpleapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
+
+	"github.com/herb-go/util/httpserver"
 )
 
-var listener net.Listener
+type serverMap struct {
+	sync.Map
+}
 
-var server *http.Server
+var serversLock = sync.Mutex{}
+var servers = serverMap{}
 
-var runningLock = sync.Mutex{}
+func newAPIServer() *apiServer {
+	return &apiServer{}
+}
 
-var runningCount = int32(0)
+type apiServer struct {
+	serverName   string
+	listener     net.Listener
+	server       *http.Server
+	runningLock  sync.Mutex
+	runningCount int32
+	running      sync.Map
+	config       *httpserver.Config
+	configLock   sync.Mutex
+}
 
-var running = sync.Map{}
-
-func Start(name string, h func(w http.ResponseWriter, r *http.Request)) error {
-	runningLock.Lock()
-	defer runningLock.Unlock()
-	s, ok := running.LoadOrStore(name, h)
+func (as *apiServer) Start(name string, h func(w http.ResponseWriter, r *http.Request)) error {
+	as.runningLock.Lock()
+	defer as.runningLock.Unlock()
+	s, ok := as.running.LoadOrStore(name, h)
 	if ok == true && s != nil {
 		return fmt.Errorf("simple api :\" %s\" is already running", name)
 	}
-	r := atomic.LoadInt32(&runningCount)
-	atomic.AddInt32(&runningCount, 1)
+	r := atomic.LoadInt32(&as.runningCount)
+	atomic.AddInt32(&as.runningCount, 1)
 	if r == 0 {
-		return startServer()
+		return as.startServer()
 	}
 	return nil
 }
 
-func Stop(name string) error {
-	runningLock.Lock()
-	defer runningLock.Unlock()
-	s, ok := running.Load(name)
+func (as *apiServer) Stop(name string) error {
+	as.runningLock.Lock()
+	defer as.runningLock.Unlock()
+	s, ok := as.running.Load(name)
 	if ok == false || s == nil {
 		return fmt.Errorf("simple api :\" %s\" is not running", name)
 	}
-	running.Delete(name)
-	r := atomic.AddInt32(&runningCount, -1)
+	as.running.Delete(name)
+	r := atomic.AddInt32(&as.runningCount, -1)
 	if r <= 0 {
-		return stopServer()
+		return as.stopServer()
 	}
 	return nil
 }
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	h, _ := running.Load(r.URL.Path)
-	if h == nil {
-		http.Error(w, http.StatusText(404), 404)
-		return
-	}
-	h.(func(w http.ResponseWriter, r *http.Request))(w, r)
-})
+func (as *apiServer) handler() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h, _ := as.running.Load(r.URL.Path)
+		if h == nil {
+			http.Error(w, http.StatusText(404), 404)
+			return
+		}
+		h.(func(w http.ResponseWriter, r *http.Request))(w, r)
+	})
+}
 
-var startServer = func() error {
-	c := Config()
-	server = c.Server()
-	server.Handler = handler
+func (as *apiServer) startServer() error {
+	c := as.Config()
+	as.server = c.Server()
+	as.server.Handler = as.handler()
 	l, err := net.Listen(c.Net, c.Addr)
 	if err != nil {
 		return err
 	}
 
-	listener = l
+	as.listener = l
 
 	go func() {
 		if !c.TLS {
-			server.Serve(l)
+			as.server.Serve(l)
 		} else {
-			server.ServeTLS(l, c.TLSCertPath, c.TLSKeyPath)
+			as.server.ServeTLS(l, c.TLSCertPath, c.TLSKeyPath)
 		}
 	}()
 	return nil
 }
 
-var stopServer = func() error {
-	err := listener.Close()
-	server.Close()
+func (as *apiServer) stopServer() error {
+	err := as.listener.Close()
+	as.server.Close()
 	return err
 }
 
 func Reset() {
-	runningLock.Lock()
-	defer runningLock.Unlock()
-	running = sync.Map{}
-	runningCount = 0
-	listener = nil
-	server = nil
+	serversLock.Lock()
+	defer serversLock.Unlock()
+	servers = serverMap{}
+}
+
+func (as *apiServer) errConfigSetted() error {
+	configcontent, err := json.Marshal(as.config)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("simpleapi : config has been setted as \"%s\"", string(configcontent))
+}
+
+func (as *apiServer) CleanConfig() {
+	as.configLock.Lock()
+	defer as.configLock.Unlock()
+	as.config = nil
+}
+
+func (as *apiServer) SetConfig(c *httpserver.Config) error {
+	as.configLock.Lock()
+	defer as.configLock.Unlock()
+	if as.config != nil {
+		return as.errConfigSetted()
+	}
+	as.config = c
+	return nil
+}
+
+func (as *apiServer) Config() *httpserver.Config {
+	as.configLock.Lock()
+	defer as.configLock.Unlock()
+	if as.config == nil {
+		as.config = defaultConfig
+	}
+	return as.config
+}
+
+func server(name string) *apiServer {
+	serversLock.Lock()
+	defer serversLock.Unlock()
+	v, ok := servers.Load(name)
+	if v == nil || ok == false {
+		s := newAPIServer()
+		servers.Store(name, s)
+		return s
+	}
+	return v.(*apiServer)
 }

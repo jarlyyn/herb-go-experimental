@@ -7,20 +7,35 @@ import (
 	"github.com/herb-go/util/httpserver"
 )
 
+type Server struct {
+	httpserver.Config
+	Name string
+}
 type Option struct {
-	Server httpserver.Config
+	Server Server
 	API    fetch.Server
 	fetch.Clients
 	Method  string
 	Channel string
 }
 
+func (o *Option) server() *apiServer {
+	return server(o.Server.Name)
+}
+
+func (o *Option) ApplyServer() error {
+	if o.Server.IsEmpty() {
+		return nil
+	}
+	return server(o.Server.Name).SetConfig(&o.Server.Config)
+}
+
 func (o *Option) Start(handler func(w http.ResponseWriter, r *http.Request)) error {
-	return Start(o.Channel, MethodMiddleware(o.Method, handler))
+	return server(o.Server.Name).Start(o.Channel, MethodMiddleware(o.Method, handler))
 }
 
 func (o *Option) Stop() error {
-	return Stop(o.Channel)
+	return server(o.Server.Name).Stop(o.Channel)
 }
 
 func (o *Option) EndPoint() *fetch.EndPoint {

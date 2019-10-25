@@ -8,30 +8,41 @@ import (
 	"github.com/herb-go/util/httpserver"
 )
 
+func newOption() *Option {
+	return &Option{
+		Server: Server{
+			Name: "testServer",
+			Config: httpserver.Config{
+				Net:  "tcp",
+				Addr: ":6789",
+			},
+		},
+		Channel: "test",
+	}
+}
 func TestRouter(t *testing.T) {
 	var err error
 	Reset()
-	CleanConfig()
-	defer func() {
-		Reset()
-		CleanConfig()
-	}()
-	config := &httpserver.Config{
-		Net:  "tcp",
-		Addr: ":6789",
-	}
-	err = SetConfig(config)
+	o := newOption()
+	err = o.ApplyServer()
 	if err != nil {
 		t.Fatal(err)
 	}
-	Start("/test", func(w http.ResponseWriter, r *http.Request) {
+	as := o.server()
+	as.CleanConfig()
+	defer func() {
+		Reset()
+		as.CleanConfig()
+	}()
+	config := as.Config()
+	as.Start("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("/test"))
 	})
-	defer Stop("/test")
-	Start("/test2", func(w http.ResponseWriter, r *http.Request) {
+	defer as.Stop("/test")
+	as.Start("/test2", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("/test2"))
 	})
-	defer Stop("/test2")
+	defer as.Stop("/test2")
 	resp, err := http.Get("http://" + config.Addr + "/test")
 	if err != nil {
 		t.Fatal(err)
@@ -67,67 +78,71 @@ func TestRouter(t *testing.T) {
 }
 func TestDaemon(t *testing.T) {
 	var err error
+	Reset()
+	o := newOption()
+	as := o.server()
+	defer Reset()
 	defer func() {
-		CleanConfig()
+		as.CleanConfig()
 	}()
-	if runningCount != 0 {
-		t.Fatal(runningCount)
+	if as.runningCount != 0 {
+		t.Fatal(as.runningCount)
 	}
-	err = Stop("test")
+	err = as.Stop("test")
 	if err == nil {
 		t.Fatal(err)
 	}
-	err = Start("test", func(w http.ResponseWriter, r *http.Request) {})
+	err = as.Start("test", func(w http.ResponseWriter, r *http.Request) {})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if runningCount != 1 {
-		t.Fatal(runningCount)
+	if as.runningCount != 1 {
+		t.Fatal(as.runningCount)
 	}
-	err = Start("test", func(w http.ResponseWriter, r *http.Request) {})
+	err = as.Start("test", func(w http.ResponseWriter, r *http.Request) {})
 	if err == nil {
 		t.Fatal(err)
 	}
-	if runningCount != 1 {
-		t.Fatal(runningCount)
+	if as.runningCount != 1 {
+		t.Fatal(as.runningCount)
 	}
-	err = Stop("test")
+	err = as.Stop("test")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if runningCount != 0 {
-		t.Fatal(runningCount)
+	if as.runningCount != 0 {
+		t.Fatal(as.runningCount)
 	}
-	err = Start("test", func(w http.ResponseWriter, r *http.Request) {})
+	err = as.Start("test", func(w http.ResponseWriter, r *http.Request) {})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = Start("test2", func(w http.ResponseWriter, r *http.Request) {})
+	err = as.Start("test2", func(w http.ResponseWriter, r *http.Request) {})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if runningCount != 2 {
-		t.Fatal(runningCount)
+	if as.runningCount != 2 {
+		t.Fatal(as.runningCount)
 	}
-	err = Stop("test")
+	err = as.Stop("test")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if runningCount != 1 {
-		t.Fatal(runningCount)
+	if as.runningCount != 1 {
+		t.Fatal(as.runningCount)
 	}
-	err = Stop("test2")
+	err = as.Stop("test2")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if runningCount != 0 {
-		t.Fatal(runningCount)
+	if as.runningCount != 0 {
+		t.Fatal(as.runningCount)
 	}
-	err = Stop("test")
+	err = as.Stop("test")
 	if err == nil {
 		t.Fatal(err)
 	}
-	if runningCount != 0 {
-		t.Fatal(runningCount)
+	if as.runningCount != 0 {
+		t.Fatal(as.runningCount)
 	}
 }
