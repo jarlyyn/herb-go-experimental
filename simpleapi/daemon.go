@@ -29,6 +29,7 @@ type apiServer struct {
 	runningLock  sync.Mutex
 	runningCount int32
 	running      sync.Map
+	configured   bool
 	config       *httpserver.Config
 	configLock   sync.Mutex
 }
@@ -96,8 +97,12 @@ func (as *apiServer) startServer() error {
 }
 
 func (as *apiServer) stopServer() error {
-	err := as.listener.Close()
+	var err error
+	if as.listener != nil {
+		err = as.listener.Close()
+	}
 	as.server.Close()
+	as.configured = false
 	return err
 }
 
@@ -112,22 +117,24 @@ func (as *apiServer) errConfigSetted() error {
 	if err != nil {
 		return err
 	}
-	return fmt.Errorf("simpleapi : config has been setted as \"%s\"", string(configcontent))
+	return fmt.Errorf("simpleapi : config \"%s\" has been setted as \"%s\"", as.serverName, string(configcontent))
 }
 
 func (as *apiServer) CleanConfig() {
 	as.configLock.Lock()
 	defer as.configLock.Unlock()
 	as.config = nil
+	as.configured = false
 }
 
 func (as *apiServer) SetConfig(c *httpserver.Config) error {
 	as.configLock.Lock()
 	defer as.configLock.Unlock()
-	if as.config != nil {
+	if as.configured {
 		return as.errConfigSetted()
 	}
 	as.config = c
+	as.configured = true
 	return nil
 }
 
@@ -136,6 +143,7 @@ func (as *apiServer) Config() *httpserver.Config {
 	defer as.configLock.Unlock()
 	if as.config == nil {
 		as.config = defaultConfig
+		as.configured = true
 	}
 	return as.config
 }

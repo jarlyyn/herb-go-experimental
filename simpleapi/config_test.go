@@ -2,6 +2,7 @@ package simpleapi
 
 import (
 	"testing"
+	"time"
 
 	"github.com/herb-go/util/httpserver"
 )
@@ -35,6 +36,13 @@ func TestConfig(t *testing.T) {
 	}
 	err = as.SetConfig(config)
 	if err == nil {
+		t.Fatal(err)
+	}
+	as.Start("", nil)
+	as.Stop("")
+	time.Sleep(time.Millisecond)
+	err = as.SetConfig(config)
+	if err != nil {
 		t.Fatal(err)
 	}
 }
