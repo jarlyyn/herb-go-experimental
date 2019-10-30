@@ -1,8 +1,8 @@
 package guarder
 
-import "net/http"
+import "github.com/herb-go/herb/user/httpuser"
 
 type Guarder interface {
-	Authorize(r *http.Request) (bool, error)
-	IdentifyRequest(r *http.Request) (string, error)
+	httpuser.Authorizer
+	httpuser.Identifier
 }
