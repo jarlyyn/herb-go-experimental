@@ -6,8 +6,14 @@ import (
 )
 
 type Client struct {
-	Clients            fetch.Clients
+	Clients            *fetch.Clients
 	CredentialProvider httpuser.CredentialProvider
+}
+
+type CredentialOption struct {
+	Clients fetch.Clients
+	Driver  string
+	Config  Option
 }
 
 type CredentialDriver interface {
