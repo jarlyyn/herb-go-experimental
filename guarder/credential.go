@@ -17,4 +17,5 @@ type CredentialOption struct {
 }
 
 type CredentialDriver interface {
+	CreateProvider() (httpuser.CredentialProvider, error)
 }
