@@ -5,49 +5,49 @@ import (
 	"strings"
 )
 
-type TokenGuarder struct {
+type Token struct {
 	TokenHeader string
 	Token       string
 	ID          string
 }
 
-func (g *TokenGuarder) Authorize(r *http.Request) (bool, error) {
+func (g *Token) Authorize(r *http.Request) (bool, error) {
 	if g.TokenHeader == "" || g.Token == "" {
 		return true, nil
 	}
 	return r.Header.Get(g.TokenHeader) == g.Token, nil
 }
-func (g *TokenGuarder) IdentifyRequest(r *http.Request) (string, error) {
+func (g *Token) IdentifyRequest(r *http.Request) (string, error) {
 	return g.ID, nil
 }
-func (g *TokenGuarder) Credential(id string, r *http.Request) error {
+func (g *Token) Credential(id string, r *http.Request) error {
 	r.Header.Set(g.Token, g.TokenHeader)
 	return nil
 }
 
-type TokenMapGuarder struct {
+type TokenMap struct {
 	IDTokenHeaders
-	TokenMap
+	TokenMapConfig
 }
 
-type TokenMap struct {
+type TokenMapConfig struct {
 	ToLower bool
 	Tokens  map[string]string
 }
 
-func (m *TokenMap) LoadTokenByID(id string) (string, error) {
+func (m *TokenMapConfig) LoadTokenByID(id string) (string, error) {
 	if m.ToLower {
 		id = strings.ToLower(id)
 	}
 	return m.Tokens[id], nil
 }
 
-func (g *TokenMapGuarder) Authorize(r *http.Request) (bool, error) {
+func (g *TokenMap) Authorize(r *http.Request) (bool, error) {
 	return IDTokenLoaderGuarderAuthorize(g, r)
 }
-func (g *TokenMapGuarder) IdentifyRequest(r *http.Request) (string, error) {
+func (g *TokenMap) IdentifyRequest(r *http.Request) (string, error) {
 	return IDTokenLoaderGuarderIdentifyRequest(g, r)
 }
-func (g *TokenMapGuarder) Credential(id string, r *http.Request) error {
-	return IDTokenLoaderGuarderICredential(g, id, r)
+func (g *TokenMap) Credential(id string, r *http.Request) error {
+	return IDTokenLoaderGuarderCredential(g, id, r)
 }

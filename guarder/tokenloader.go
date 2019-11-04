@@ -60,7 +60,7 @@ func IDTokenLoaderGuarderIdentifyRequest(g IDTokenLoaderGuarder, r *http.Request
 	}
 	return id, nil
 }
-func IDTokenLoaderGuarderICredential(g IDTokenLoaderGuarder, id string, r *http.Request) error {
+func IDTokenLoaderGuarderCredential(g IDTokenLoaderGuarder, id string, r *http.Request) error {
 	e, err := g.RequestIDTokenEnabled()
 	if err != nil {
 		return err

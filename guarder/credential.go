@@ -6,16 +6,6 @@ import (
 )
 
 type Client struct {
-	Clients            *fetch.Clients
-	CredentialProvider httpuser.CredentialProvider
-}
-
-type CredentialOption struct {
-	Clients fetch.Clients
-	Driver  string
-	Config  Option
-}
-
-type CredentialDriver interface {
-	CreateProvider() (httpuser.CredentialProvider, error)
+	Clients *fetch.Clients
+	Driver  httpuser.CredentialProvider
 }
