@@ -2,8 +2,6 @@ package guarder
 
 import (
 	"net/http"
-
-	"github.com/herb-go/herb/user"
 )
 
 type IDTokenHeaders struct {
@@ -59,23 +57,4 @@ func IDTokenLoaderGuarderIdentifyRequest(g IDTokenLoaderGuarder, r *http.Request
 		return "", err
 	}
 	return id, nil
-}
-func IDTokenLoaderGuarderCredential(g IDTokenLoaderGuarder, id string, r *http.Request) error {
-	e, err := g.RequestIDTokenEnabled()
-	if err != nil {
-		return err
-	}
-	if !e {
-		return nil
-	}
-	if id != "" {
-		token, err := g.LoadTokenByID(id)
-		if err != nil {
-			return err
-		}
-		if token != "" {
-			return g.SetIDTokenToRequest(r, id, token)
-		}
-	}
-	return user.ErrUserNotExists
 }

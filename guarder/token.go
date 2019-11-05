@@ -45,20 +45,15 @@ func (m *TokenMapConfig) LoadTokenByID(id string) (string, error) {
 	}
 	return m.Tokens[id], nil
 }
-func (g *TokenMap) Guarder() (Guarder, error) {
-	return g, nil
-}
+
 func (g *TokenMap) Authorize(r *http.Request) (bool, error) {
 	return IDTokenLoaderGuarderAuthorize(g, r)
 }
 func (g *TokenMap) IdentifyRequest(r *http.Request) (string, error) {
 	return IDTokenLoaderGuarderIdentifyRequest(g, r)
 }
-func (g *TokenMap) Credential(id string, r *http.Request) error {
-	return IDTokenLoaderGuarderCredential(g, id, r)
-}
 
-func TokenMapFactory(conf Config, prefix string) (GuarderDriver, error) {
+func TokenMapFactory(conf Config, prefix string) (Guarder, error) {
 	var err error
 	d := NewTokenMap()
 	err = conf.Get("IDHeader", &d.IDHeader)

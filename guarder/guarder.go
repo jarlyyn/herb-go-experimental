@@ -14,18 +14,7 @@ type Guarder interface {
 	httpuser.Identifier
 }
 
-type GuarderDriver interface {
-	Guarder() (Guarder, error)
-}
-type GuarderProvider struct {
-	Driver GuarderDriver
-}
-
-func (g *GuarderProvider) Guarder() (Guarder, error) {
-	return g.Driver.Guarder()
-}
-
-type Factory func(conf Config, prefix string) (GuarderDriver, error)
+type Factory func(conf Config, prefix string) (Guarder, error)
 
 var (
 	factorysMu sync.RWMutex
@@ -69,7 +58,7 @@ func Factories() []string {
 
 //NewDriver create new driver with given name,config and prefix.
 //Reutrn driver created and any error if raised.
-func NewDriver(name string, conf Config, prefix string) (GuarderDriver, error) {
+func NewDriver(name string, conf Config, prefix string) (Guarder, error) {
 	factorysMu.RLock()
 	factoryi, ok := factories[name]
 	factorysMu.RUnlock()
