@@ -59,6 +59,23 @@ func (g *TokenMap) Credential(id string, r *http.Request) error {
 }
 
 func TokenMapFactory(conf Config, prefix string) (GuarderDriver, error) {
+	var err error
 	d := NewTokenMap()
+	err = conf.Get("IDHeader", &d.IDHeader)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get("TokenHeader", &d.TokenHeader)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get("ToLower", &d.ToLower)
+	if err != nil {
+		return nil, err
+	}
+	err = conf.Get("Tokens", &d.Tokens)
+	if err != nil {
+		return nil, err
+	}
 	return d, nil
 }
