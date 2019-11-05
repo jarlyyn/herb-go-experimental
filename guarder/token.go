@@ -25,6 +25,10 @@ func (g *Token) Credential(id string, r *http.Request) error {
 	return nil
 }
 
+func NewTokenMap() *TokenMap {
+	return &TokenMap{}
+}
+
 type TokenMap struct {
 	IDTokenHeaders
 	TokenMapConfig
@@ -41,7 +45,9 @@ func (m *TokenMapConfig) LoadTokenByID(id string) (string, error) {
 	}
 	return m.Tokens[id], nil
 }
-
+func (g *TokenMap) Guarder() (Guarder, error) {
+	return g, nil
+}
 func (g *TokenMap) Authorize(r *http.Request) (bool, error) {
 	return IDTokenLoaderGuarderAuthorize(g, r)
 }
@@ -50,4 +56,9 @@ func (g *TokenMap) IdentifyRequest(r *http.Request) (string, error) {
 }
 func (g *TokenMap) Credential(id string, r *http.Request) error {
 	return IDTokenLoaderGuarderCredential(g, id, r)
+}
+
+func TokenMapFactory(conf Config, prefix string) (GuarderDriver, error) {
+	d := NewTokenMap()
+	return d, nil
 }
