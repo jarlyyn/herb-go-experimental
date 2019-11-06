@@ -14,6 +14,7 @@ type Guarder interface {
 	httpuser.Identifier
 }
 
+//Factory guarder factory
 type Factory func(conf Config, prefix string) (Guarder, error)
 
 var (
