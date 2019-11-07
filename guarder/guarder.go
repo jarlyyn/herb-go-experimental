@@ -32,7 +32,9 @@ func (g *Guarder) ServeMiddleware(w http.ResponseWriter, r *http.Request, next h
 	g.OnFail.ServeHTTP(w, r)
 }
 func NewGuarder() *Guarder {
-	return &Guarder{}
+	return &Guarder{
+		OnFail: DefaultOnFail,
+	}
 }
 
 type RequestParamsGuarderOption interface {
