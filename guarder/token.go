@@ -1,76 +1,63 @@
 package guarder
 
-import (
-	"net/http"
-	"strings"
-)
-
 type Token struct {
-	TokenHeader string
-	Token       string
-	ID          string
+	Token string
+	ID    StaticID
 }
 
-func (g *Token) Authorize(r *http.Request) (bool, error) {
-	if g.TokenHeader == "" || g.Token == "" {
-		return true, nil
+func NewToken() *Token {
+	return &Token{}
+}
+func (t *Token) IdentifyRequestParams(p *RequestParams) (string, error) {
+	if !t.ID.IsEmpty() {
+		id := p.ID()
+		if id == "" {
+			return "", nil
+		}
+		if !t.ID.Equal(id) {
+			return "", nil
+		}
 	}
-	return r.Header.Get(g.TokenHeader) == g.Token, nil
-}
-func (g *Token) IdentifyRequest(r *http.Request) (string, error) {
-	return g.ID, nil
-}
-func (g *Token) Credential(id string, r *http.Request) error {
-	r.Header.Set(g.Token, g.TokenHeader)
-	return nil
-}
-
-func NewTokenMap() *TokenMap {
-	return &TokenMap{}
-}
-
-type TokenMap struct {
-	IDTokenHeaders
-	TokenMapConfig
-}
-
-type TokenMapConfig struct {
-	ToLower bool
-	Tokens  map[string]string
-}
-
-func (m *TokenMapConfig) LoadTokenByID(id string) (string, error) {
-	if m.ToLower {
-		id = strings.ToLower(id)
+	token := t.Token
+	if token == "" || token != p.Token() {
+		return "", nil
 	}
-	return m.Tokens[id], nil
+	return t.ID.ID(), nil
 }
 
-func (g *TokenMap) Authorize(r *http.Request) (bool, error) {
-	return IDTokenLoaderGuarderAuthorize(g, r)
-}
-func (g *TokenMap) IdentifyRequest(r *http.Request) (string, error) {
-	return IDTokenLoaderGuarderIdentifyRequest(g, r)
+func (t *Token) CredentialRequestParams() (*RequestParams, error) {
+	p := NewRequestParams()
+	if !t.ID.IsEmpty() {
+		p.SetID(t.ID.ID())
+	}
+	p.SetToken(t.Token)
+	return p, nil
 }
 
-func TokenMapFactory(conf Config, prefix string) (Guarder, error) {
+func createTokenWithConfig(conf Config, prefix string) (*Token, error) {
 	var err error
-	d := NewTokenMap()
-	err = conf.Get("IDHeader", &d.IDHeader)
+	t := NewToken()
+	err = conf.Get("Token", &t.Token)
 	if err != nil {
 		return nil, err
 	}
-	err = conf.Get("TokenHeader", &d.TokenHeader)
+	err = conf.Get("ID", &t.ID)
 	if err != nil {
 		return nil, err
 	}
-	err = conf.Get("ToLower", &d.ToLower)
-	if err != nil {
-		return nil, err
-	}
-	err = conf.Get("Tokens", &d.Tokens)
-	if err != nil {
-		return nil, err
-	}
-	return d, nil
+	return t, nil
+}
+func tokenCredentialFactory(conf Config, prefix string) (RequestParamsCredential, error) {
+	return createTokenWithConfig(conf, prefix)
+}
+func tokenIdentifierFactory(conf Config, prefix string) (RequestParamsIdentifier, error) {
+	return createTokenWithConfig(conf, prefix)
+}
+func registerTokenFactories() {
+	RegisterCredential("token", tokenCredentialFactory)
+	RegisterIdentifier("token", tokenIdentifierFactory)
+}
+
+func init() {
+	registerTokenFactories()
 }

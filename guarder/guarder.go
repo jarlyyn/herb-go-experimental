@@ -1,70 +1,52 @@
 package guarder
 
-import (
-	"errors"
-	"fmt"
-	"sort"
-	"sync"
+import "net/http"
 
-	"github.com/herb-go/herb/user/httpuser"
-)
+var DefaultOnFail = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, http.StatusText(401), 401)
+})
 
-type Guarder interface {
-	httpuser.Authorizer
-	httpuser.Identifier
+type Guarder struct {
+	Reader     RequestParamsReader
+	Identifier RequestParamsIdentifier
+	OnFail     http.Handler
 }
 
-//Factory guarder factory
-type Factory func(conf Config, prefix string) (Guarder, error)
-
-var (
-	factorysMu sync.RWMutex
-	factories  = make(map[string]Factory)
-)
-
-// Register makes a driver creator available by the provided name.
-// If Register is called twice with the same name or if driver is nil,
-// it panics.
-func Register(name string, f Factory) {
-	factorysMu.Lock()
-	defer factorysMu.Unlock()
-	if f == nil {
-		panic(errors.New("guarder: Register guarder factory is nil"))
+func (g *Guarder) IdentifyRequest(r *http.Request) (string, error) {
+	p, err := g.Reader.ReadParamsFromRequest(r)
+	if err != nil {
+		return "", err
 	}
-	if _, dup := factories[name]; dup {
-		panic(errors.New("guarder: Register called twice for factory " + name))
-	}
-	factories[name] = f
+	return g.Identifier.IdentifyRequestParams(p)
 }
 
-//UnregisterAll unregister all driver
-func UnregisterAll() {
-	factorysMu.Lock()
-	defer factorysMu.Unlock()
-	// For tests.
-	factories = make(map[string]Factory)
+func (g *Guarder) ServeMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	id, err := g.IdentifyRequest(r)
+	if err != nil {
+		panic(err)
+	}
+	if id != "" {
+		next(w, r)
+		return
+	}
+	g.OnFail.ServeHTTP(w, r)
+}
+func NewGuarder() *Guarder {
+	return &Guarder{}
 }
 
-//Factories returns a sorted list of the names of the registered factories.
-func Factories() []string {
-	factorysMu.RLock()
-	defer factorysMu.RUnlock()
-	var list []string
-	for name := range factories {
-		list = append(list, name)
-	}
-	sort.Strings(list)
-	return list
+type RequestParamsGuarderOption interface {
+	RequestParamsReaderDriver() string
+	RequestParamsIdentifierDriver() string
+	DriverConfig() *Config
 }
 
-//NewDriver create new driver with given name,config and prefix.
-//Reutrn driver created and any error if raised.
-func NewDriver(name string, conf Config, prefix string) (Guarder, error) {
-	factorysMu.RLock()
-	factoryi, ok := factories[name]
-	factorysMu.RUnlock()
-	if !ok {
-		return nil, fmt.Errorf("guarder: unknown driver %q (forgotten import?)", name)
-	}
-	return factoryi(conf, prefix)
+type DriverConfig struct {
+	RequestParamsIdentifierDriverField
+	RequestParamsReaderDriverField
+}
+
+type RequestParamsGuarderConfigMap struct {
+	DriverConfig
+	Config ConfigMap
 }
