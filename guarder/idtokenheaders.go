@@ -18,7 +18,7 @@ func (h *IDTokenHeaders) ReadParamsFromRequest(r *http.Request) (*RequestParams,
 	p.SetToken(r.Header.Get(h.TokenHeader))
 	return p, nil
 }
-func (h *IDTokenHeaders) WriterParamsToRequest(r *http.Request, p *RequestParams) error {
+func (h *IDTokenHeaders) WriteParamsToRequest(r *http.Request, p *RequestParams) error {
 	if h.IDHeader != "" {
 		r.Header.Set(h.IDHeader, p.ID())
 	}
@@ -43,17 +43,12 @@ func createIDTokenHeadersWithConfig(conf Config, prefix string) (*IDTokenHeaders
 	return v, nil
 }
 
-func idTokenHeadersReaderFactory(conf Config, prefix string) (RequestParamsReader, error) {
-	return createIDTokenHeadersWithConfig(conf, prefix)
-}
-
-func idTokenHeadersWriterFactory(conf Config, prefix string) (RequestParamsWriter, error) {
+func idTokenHeadersMapperFactory(conf Config, prefix string) (RequestParamsMapper, error) {
 	return createIDTokenHeadersWithConfig(conf, prefix)
 }
 
 func registerIDTokenHeadersFactories() {
-	RegisterReader("headers", idTokenHeadersReaderFactory)
-	RegisterWriter("headers", idTokenHeadersWriterFactory)
+	RegisterMapper("headers", idTokenHeadersMapperFactory)
 }
 
 func init() {

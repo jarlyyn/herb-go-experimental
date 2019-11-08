@@ -7,13 +7,13 @@ var DefaultOnFail = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 })
 
 type Guarder struct {
-	Reader     RequestParamsReader
+	Mapper     RequestParamsMapper
 	Identifier RequestParamsIdentifier
 	OnFail     http.Handler
 }
 
 func (g *Guarder) IdentifyRequest(r *http.Request) (string, error) {
-	p, err := g.Reader.ReadParamsFromRequest(r)
+	p, err := g.Mapper.ReadParamsFromRequest(r)
 	if err != nil {
 		return "", err
 	}
@@ -35,20 +35,4 @@ func NewGuarder() *Guarder {
 	return &Guarder{
 		OnFail: DefaultOnFail,
 	}
-}
-
-type RequestParamsGuarderOption interface {
-	RequestParamsReaderDriver() string
-	RequestParamsIdentifierDriver() string
-	DriverConfig() *Config
-}
-
-type DriverConfig struct {
-	RequestParamsIdentifierDriverField
-	RequestParamsReaderDriverField
-}
-
-type RequestParamsGuarderConfigMap struct {
-	DriverConfig
-	Config ConfigMap
 }

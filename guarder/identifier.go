@@ -11,12 +11,15 @@ type RequestParamsIdentifier interface {
 	IdentifyRequestParams(p *RequestParams) (string, error)
 }
 
-type RequestParamsIdentifierDriverField struct {
+type RequestParamsDriverField struct {
 	Driver       string
 	staticDriver string
 }
 
-func (f *RequestParamsIdentifierDriverField) RequestParamsIdentifierDriver() string {
+func (f *RequestParamsDriverField) SetDriver(d string) {
+	f.staticDriver = d
+}
+func (f *RequestParamsDriverField) RequestParamsDriver() string {
 	if f.staticDriver == "" {
 		return f.Driver
 	}

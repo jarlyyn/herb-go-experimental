@@ -2,9 +2,15 @@ package guarder
 
 import (
 	"encoding/json"
-
-	"github.com/herb-go/fetch"
 )
+
+type GuarderOption interface {
+	ApplyToGuarder(g *Guarder) error
+}
+
+type VisitorOption interface {
+	ApplyToVisitor(v *Visitor) error
+}
 
 type Config interface {
 	Get(key string, v interface{}) error
@@ -34,39 +40,72 @@ func (c *ConfigMap) Set(key string, v interface{}) error {
 	return nil
 }
 
-type CredentialOption struct {
-	Clients fetch.Clients
-	Driver  string
-	Config  Config
+type RequestParamsConfig interface {
+	RequestParamsMapperDriver() string
+	RequestParamsDriver() string
+	DriverConfig() Config
 }
 
-type CredentialOptionConfigMap struct {
-	Clients fetch.Clients
-	Driver  string
-	Config  ConfigMap
-}
-
-func (o *CredentialOptionConfigMap) Option() *CredentialOption {
-	return &CredentialOption{
-		Clients: o.Clients,
-		Driver:  o.Driver,
-		Config:  &o.Config,
+func ApplyToGuarder(g *Guarder, c RequestParamsConfig) error {
+	config := c.DriverConfig()
+	if g.Mapper == nil {
+		d := c.RequestParamsMapperDriver()
+		driver, err := NewMapperDriver(d, config, "")
+		if err != nil {
+			return err
+		}
+		g.Mapper = driver
 	}
+	if g.Identifier == nil {
+		d := c.RequestParamsDriver()
+		driver, err := NewIdentifierDriver(d, config, "")
+		if err != nil {
+			return err
+		}
+		g.Identifier = driver
+
+	}
+	return nil
+
 }
 
-type GuarderOption struct {
-	Driver string
-	Config Config
+func ApplyToVisitor(v *Visitor, c RequestParamsConfig) error {
+	config := c.DriverConfig()
+	if v.Mapper == nil {
+		d := c.RequestParamsMapperDriver()
+		driver, err := NewMapperDriver(d, config, "")
+		if err != nil {
+			return err
+		}
+		v.Mapper = driver
+	}
+	if v.Credential == nil {
+		d := c.RequestParamsDriver()
+		driver, err := NewCredentialDriver(d, config, "")
+		if err != nil {
+			return err
+		}
+		v.Credential = driver
+
+	}
+	return nil
+
 }
 
-type GuarderOptionConfigMap struct {
-	Driver string
+type RequestParamsConfigMap struct {
+	RequestParamsDriverField
+	RequestParamsMapperDriverField
 	Config ConfigMap
 }
 
-func (o *GuarderOptionConfigMap) Option() *GuarderOption {
-	return &GuarderOption{
-		Driver: o.Driver,
-		Config: &o.Config,
-	}
+func (c *RequestParamsConfigMap) DriverConfig() Config {
+	return &c.Config
+}
+
+func (c *RequestParamsConfigMap) ApplyToGuarder(g *Guarder) error {
+	return ApplyToGuarder(g, c)
+}
+
+func (c *RequestParamsConfigMap) ApplyToVisitor(v *Visitor) error {
+	return ApplyToVisitor(v, c)
 }
