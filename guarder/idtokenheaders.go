@@ -10,15 +10,15 @@ type IDTokenHeaders struct {
 func NewIDTokenHeaders() *IDTokenHeaders {
 	return &IDTokenHeaders{}
 }
-func (h *IDTokenHeaders) ReadParamsFromRequest(r *http.Request) (*RequestParams, error) {
-	p := NewRequestParams()
+func (h *IDTokenHeaders) ReadParamsFromRequest(r *http.Request) (*Params, error) {
+	p := NewParams()
 	if h.IDHeader != "" {
 		p.SetID(r.Header.Get(h.IDHeader))
 	}
 	p.SetToken(r.Header.Get(h.TokenHeader))
 	return p, nil
 }
-func (h *IDTokenHeaders) WriteParamsToRequest(r *http.Request, p *RequestParams) error {
+func (h *IDTokenHeaders) WriteParamsToRequest(r *http.Request, p *Params) error {
 	if h.IDHeader != "" {
 		r.Header.Set(h.IDHeader, p.ID())
 	}
@@ -43,7 +43,7 @@ func createIDTokenHeadersWithConfig(conf Config, prefix string) (*IDTokenHeaders
 	return v, nil
 }
 
-func idTokenHeadersMapperFactory(conf Config, prefix string) (RequestParamsMapper, error) {
+func idTokenHeadersMapperFactory(conf Config, prefix string) (Mapper, error) {
 	return createIDTokenHeadersWithConfig(conf, prefix)
 }
 

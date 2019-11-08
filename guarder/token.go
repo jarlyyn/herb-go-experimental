@@ -8,7 +8,7 @@ type Token struct {
 func NewToken() *Token {
 	return &Token{}
 }
-func (t *Token) IdentifyRequestParams(p *RequestParams) (string, error) {
+func (t *Token) IdentifyParams(p *Params) (string, error) {
 	if !t.ID.IsEmpty() {
 		id := p.ID()
 		if id == "" {
@@ -25,8 +25,8 @@ func (t *Token) IdentifyRequestParams(p *RequestParams) (string, error) {
 	return t.ID.ID(), nil
 }
 
-func (t *Token) CredentialRequestParams() (*RequestParams, error) {
-	p := NewRequestParams()
+func (t *Token) CredentialParams() (*Params, error) {
+	p := NewParams()
 	if !t.ID.IsEmpty() {
 		p.SetID(t.ID.ID())
 	}
@@ -47,10 +47,10 @@ func createTokenWithConfig(conf Config, prefix string) (*Token, error) {
 	}
 	return t, nil
 }
-func tokenCredentialFactory(conf Config, prefix string) (RequestParamsCredential, error) {
+func tokenCredentialFactory(conf Config, prefix string) (Credential, error) {
 	return createTokenWithConfig(conf, prefix)
 }
-func tokenIdentifierFactory(conf Config, prefix string) (RequestParamsIdentifier, error) {
+func tokenIdentifierFactory(conf Config, prefix string) (Identifier, error) {
 	return createTokenWithConfig(conf, prefix)
 }
 func registerTokenFactories() {

@@ -13,7 +13,7 @@ type TokenMap struct {
 	Tokens  map[string]string
 }
 
-func (t *TokenMap) IdentifyRequestParams(p *RequestParams) (string, error) {
+func (t *TokenMap) IdentifyParams(p *Params) (string, error) {
 	id := p.ID()
 	if id == "" {
 		return "", nil
@@ -45,7 +45,7 @@ func createTokenMapWithConfig(conf Config, prefix string) (*TokenMap, error) {
 	return v, nil
 }
 
-func tokenMapIdentifierFactory(conf Config, prefix string) (RequestParamsIdentifier, error) {
+func tokenMapIdentifierFactory(conf Config, prefix string) (Identifier, error) {
 	return createTokenMapWithConfig(conf, prefix)
 }
 func registerTokenMapFactories() {

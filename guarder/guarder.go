@@ -7,8 +7,8 @@ var DefaultOnFail = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 })
 
 type Guarder struct {
-	Mapper     RequestParamsMapper
-	Identifier RequestParamsIdentifier
+	Mapper     Mapper
+	Identifier Identifier
 	OnFail     http.Handler
 }
 
@@ -17,7 +17,7 @@ func (g *Guarder) IdentifyRequest(r *http.Request) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return g.Identifier.IdentifyRequestParams(p)
+	return g.Identifier.IdentifyParams(p)
 }
 
 func (g *Guarder) ServeMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

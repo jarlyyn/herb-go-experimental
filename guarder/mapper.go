@@ -8,28 +8,13 @@ import (
 	"sync"
 )
 
-type RequestParamsMapper interface {
-	ReadParamsFromRequest(*http.Request) (*RequestParams, error)
-	WriteParamsToRequest(*http.Request, *RequestParams) error
-}
-
-type RequestParamsMapperDriverField struct {
-	MapperDriver       string
-	staticMapperDriver string
-}
-
-func (f *RequestParamsMapperDriverField) SetMapperDriver(d string) {
-	f.staticMapperDriver = d
-}
-func (f *RequestParamsMapperDriverField) RequestParamsMapperDriver() string {
-	if f.staticMapperDriver == "" {
-		return f.MapperDriver
-	}
-	return f.staticMapperDriver
+type Mapper interface {
+	ReadParamsFromRequest(*http.Request) (*Params, error)
+	WriteParamsToRequest(*http.Request, *Params) error
 }
 
 //MapperFactory guarder factory
-type MapperFactory func(conf Config, prefix string) (RequestParamsMapper, error)
+type MapperFactory func(conf Config, prefix string) (Mapper, error)
 
 var (
 	mapperFactorysMu sync.RWMutex
@@ -73,7 +58,7 @@ func MapperFactories() []string {
 
 //NewMapperDriver create new driver with given name,config and prefix.
 //Reutrn driver created and any error if raised.
-func NewMapperDriver(name string, conf Config, prefix string) (RequestParamsMapper, error) {
+func NewMapperDriver(name string, conf Config, prefix string) (Mapper, error) {
 	mapperFactorysMu.RLock()
 	factoryi, ok := mapperFactories[name]
 	mapperFactorysMu.RUnlock()

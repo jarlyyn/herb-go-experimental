@@ -7,27 +7,12 @@ import (
 	"sync"
 )
 
-type RequestParamsIdentifier interface {
-	IdentifyRequestParams(p *RequestParams) (string, error)
-}
-
-type RequestParamsDriverField struct {
-	Driver       string
-	staticDriver string
-}
-
-func (f *RequestParamsDriverField) SetDriver(d string) {
-	f.staticDriver = d
-}
-func (f *RequestParamsDriverField) RequestParamsDriver() string {
-	if f.staticDriver == "" {
-		return f.Driver
-	}
-	return f.staticDriver
+type Identifier interface {
+	IdentifyParams(p *Params) (string, error)
 }
 
 //IdentifierFactory guarder factory
-type IdentifierFactory func(conf Config, prefix string) (RequestParamsIdentifier, error)
+type IdentifierFactory func(conf Config, prefix string) (Identifier, error)
 
 var (
 	identifierFactorysMu sync.RWMutex
@@ -71,7 +56,7 @@ func IdentifierFactories() []string {
 
 //NewIdentifierDriver create new driver with given name,config and prefix.
 //Reutrn driver created and any error if raised.
-func NewIdentifierDriver(name string, conf Config, prefix string) (RequestParamsIdentifier, error) {
+func NewIdentifierDriver(name string, conf Config, prefix string) (Identifier, error) {
 	identifierFactorysMu.RLock()
 	factoryi, ok := identifierFactories[name]
 	identifierFactorysMu.RUnlock()

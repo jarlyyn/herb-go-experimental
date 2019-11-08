@@ -40,16 +40,16 @@ func (c *ConfigMap) Set(key string, v interface{}) error {
 	return nil
 }
 
-type RequestParamsConfig interface {
-	RequestParamsMapperDriver() string
-	RequestParamsDriver() string
+type DriverConfig interface {
+	MapperDriverName() string
+	DriverName() string
 	DriverConfig() Config
 }
 
-func ApplyToGuarder(g *Guarder, c RequestParamsConfig) error {
+func ApplyToGuarder(g *Guarder, c DriverConfig) error {
 	config := c.DriverConfig()
 	if g.Mapper == nil {
-		d := c.RequestParamsMapperDriver()
+		d := c.MapperDriverName()
 		driver, err := NewMapperDriver(d, config, "")
 		if err != nil {
 			return err
@@ -57,7 +57,7 @@ func ApplyToGuarder(g *Guarder, c RequestParamsConfig) error {
 		g.Mapper = driver
 	}
 	if g.Identifier == nil {
-		d := c.RequestParamsDriver()
+		d := c.DriverName()
 		driver, err := NewIdentifierDriver(d, config, "")
 		if err != nil {
 			return err
@@ -69,10 +69,10 @@ func ApplyToGuarder(g *Guarder, c RequestParamsConfig) error {
 
 }
 
-func ApplyToVisitor(v *Visitor, c RequestParamsConfig) error {
+func ApplyToVisitor(v *Visitor, c DriverConfig) error {
 	config := c.DriverConfig()
 	if v.Mapper == nil {
-		d := c.RequestParamsMapperDriver()
+		d := c.MapperDriverName()
 		driver, err := NewMapperDriver(d, config, "")
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ func ApplyToVisitor(v *Visitor, c RequestParamsConfig) error {
 		v.Mapper = driver
 	}
 	if v.Credential == nil {
-		d := c.RequestParamsDriver()
+		d := c.DriverName()
 		driver, err := NewCredentialDriver(d, config, "")
 		if err != nil {
 			return err
@@ -92,20 +92,54 @@ func ApplyToVisitor(v *Visitor, c RequestParamsConfig) error {
 
 }
 
-type RequestParamsConfigMap struct {
-	RequestParamsDriverField
-	RequestParamsMapperDriverField
+type DriverField struct {
+	Driver       string
+	staticDriver string
+}
+
+func (f *DriverField) SetStaticDriver(d string) {
+	f.staticDriver = d
+}
+func (f *DriverField) DriverName() string {
+	if f.staticDriver == "" {
+		return f.Driver
+	}
+	return f.staticDriver
+}
+
+type MapperDriverField struct {
+	MapperDriver       string
+	staticMapperDriver string
+}
+
+func (f *MapperDriverField) SetStaticMapperDriver(d string) {
+	f.staticMapperDriver = d
+}
+func (f *MapperDriverField) MapperDriverName() string {
+	if f.staticMapperDriver == "" {
+		return f.MapperDriver
+	}
+	return f.staticMapperDriver
+}
+
+func NewDriverConfigMap() *DirverConfigMap {
+	return &DirverConfigMap{}
+}
+
+type DirverConfigMap struct {
+	DriverField
+	MapperDriverField
 	Config ConfigMap
 }
 
-func (c *RequestParamsConfigMap) DriverConfig() Config {
+func (c *DirverConfigMap) DriverConfig() Config {
 	return &c.Config
 }
 
-func (c *RequestParamsConfigMap) ApplyToGuarder(g *Guarder) error {
+func (c *DirverConfigMap) ApplyToGuarder(g *Guarder) error {
 	return ApplyToGuarder(g, c)
 }
 
-func (c *RequestParamsConfigMap) ApplyToVisitor(v *Visitor) error {
+func (c *DirverConfigMap) ApplyToVisitor(v *Visitor) error {
 	return ApplyToVisitor(v, c)
 }

@@ -5,12 +5,12 @@ import (
 )
 
 type Visitor struct {
-	Credential RequestParamsCredential
-	Mapper     RequestParamsMapper
+	Credential Credential
+	Mapper     Mapper
 }
 
 func (c *Visitor) CredentialRequest(r *http.Request) error {
-	p, err := c.Credential.CredentialRequestParams()
+	p, err := c.Credential.CredentialParams()
 	if err != nil {
 		return err
 	}

@@ -7,12 +7,12 @@ import (
 	"sync"
 )
 
-type RequestParamsCredential interface {
-	CredentialRequestParams() (*RequestParams, error)
+type Credential interface {
+	CredentialParams() (*Params, error)
 }
 
 //CredentialFactory guarder factory
-type CredentialFactory func(conf Config, prefix string) (RequestParamsCredential, error)
+type CredentialFactory func(conf Config, prefix string) (Credential, error)
 
 var (
 	credentialFactorysMu sync.RWMutex
@@ -56,7 +56,7 @@ func CredentialFactories() []string {
 
 //NewCredentialDriver create new driver with given name,config and prefix.
 //Reutrn driver created and any error if raised.
-func NewCredentialDriver(name string, conf Config, prefix string) (RequestParamsCredential, error) {
+func NewCredentialDriver(name string, conf Config, prefix string) (Credential, error) {
 	credentialFactorysMu.RLock()
 	factoryi, ok := credentialFactories[name]
 	credentialFactorysMu.RUnlock()
