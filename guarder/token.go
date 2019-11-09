@@ -19,7 +19,7 @@ func (t *Token) IdentifyParams(p *Params) (string, error) {
 		}
 	}
 	token := t.Token
-	if token == "" || token != p.Token() {
+	if token == "" || token != p.Credential() {
 		return "", nil
 	}
 	return t.ID.ID(), nil
@@ -30,7 +30,7 @@ func (t *Token) CredentialParams() (*Params, error) {
 	if !t.ID.IsEmpty() {
 		p.SetID(t.ID.ID())
 	}
-	p.SetToken(t.Token)
+	p.SetCredential(t.Token)
 	return p, nil
 }
 

@@ -33,7 +33,7 @@ func TestTokenMap(t *testing.T) {
 	if id != "" {
 		t.Fatal(id)
 	}
-	p.SetToken("testtoken")
+	p.SetCredential("testtoken")
 	id, err = d.IdentifyParams(p)
 	if err != nil {
 		t.Fatal(err)

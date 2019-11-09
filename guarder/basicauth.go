@@ -15,11 +15,11 @@ func (h *BasicAuth) ReadParamsFromRequest(r *http.Request) (*Params, error) {
 		return p, nil
 	}
 	p.SetID(id)
-	p.SetToken(token)
+	p.SetCredential(token)
 	return p, nil
 }
 func (h *BasicAuth) WriteParamsToRequest(r *http.Request, p *Params) error {
-	r.SetBasicAuth(p.ID(), p.Token())
+	r.SetBasicAuth(p.ID(), p.Credential())
 	return nil
 }
 

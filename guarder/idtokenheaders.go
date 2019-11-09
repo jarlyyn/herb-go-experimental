@@ -15,14 +15,14 @@ func (h *IDTokenHeaders) ReadParamsFromRequest(r *http.Request) (*Params, error)
 	if h.IDHeader != "" {
 		p.SetID(r.Header.Get(h.IDHeader))
 	}
-	p.SetToken(r.Header.Get(h.TokenHeader))
+	p.SetCredential(r.Header.Get(h.TokenHeader))
 	return p, nil
 }
 func (h *IDTokenHeaders) WriteParamsToRequest(r *http.Request, p *Params) error {
 	if h.IDHeader != "" {
 		r.Header.Set(h.IDHeader, p.ID())
 	}
-	r.Header.Set(h.TokenHeader, p.Token())
+	r.Header.Set(h.TokenHeader, p.Credential())
 	return nil
 }
 

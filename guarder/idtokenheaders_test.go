@@ -20,18 +20,18 @@ func TestIDTokenHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.ID() != "" || p.Token() != "" {
+	if p.ID() != "" || p.Credential() != "" {
 		t.Fatal(*p)
 	}
 	p = NewParams()
 	p.SetID("testid")
-	p.SetToken("teestoken")
+	p.SetCredential("teestoken")
 	d.WriteParamsToRequest(req, p)
 	p, err = d.ReadParamsFromRequest(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.ID() != "testid" || p.Token() != "teestoken" {
+	if p.ID() != "testid" || p.Credential() != "teestoken" {
 		t.Fatal(*p)
 	}
 }

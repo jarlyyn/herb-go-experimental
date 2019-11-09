@@ -22,7 +22,7 @@ func (t *TokenMap) IdentifyParams(p *Params) (string, error) {
 		id = strings.ToLower(id)
 	}
 	token := t.Tokens[id]
-	if token == "" || token != p.Token() {
+	if token == "" || token != p.Credential() {
 		return "", nil
 	}
 	return id, nil

@@ -11,7 +11,7 @@ func (k ParamsKey) SetTo(p *Params, v string) {
 }
 
 const ParamsKeyID = ParamsKey("id")
-const ParamsKeyToken = ParamsKey("token")
+const ParamsKeyCredential = ParamsKey("token")
 
 type Params map[string]string
 
@@ -23,12 +23,12 @@ func (p *Params) SetID(v string) {
 	ParamsKeyID.SetTo(p, v)
 }
 
-func (p *Params) Token() string {
-	return ParamsKeyToken.LoadFrom(p)
+func (p *Params) Credential() string {
+	return ParamsKeyCredential.LoadFrom(p)
 }
 
-func (p *Params) SetToken(v string) {
-	ParamsKeyToken.SetTo(p, v)
+func (p *Params) SetCredential(v string) {
+	ParamsKeyCredential.SetTo(p, v)
 }
 
 func NewParams() *Params {
