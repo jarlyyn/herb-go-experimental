@@ -40,6 +40,9 @@ func createIDTokenHeadersWithConfig(conf Config, prefix string) (*IDTokenHeaders
 	if err != nil {
 		return nil, err
 	}
+	if v.TokenHeader == "" {
+		v.TokenHeader = "token"
+	}
 	return v, nil
 }
 
