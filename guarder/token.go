@@ -53,11 +53,11 @@ func tokenCredentialFactory(conf Config, prefix string) (Credential, error) {
 func tokenIdentifierFactory(conf Config, prefix string) (Identifier, error) {
 	return createTokenWithConfig(conf, prefix)
 }
-func registerTokenFactories() {
+func registerTokenFactory() {
 	RegisterCredential("token", tokenCredentialFactory)
 	RegisterIdentifier("token", tokenIdentifierFactory)
 }
 
 func init() {
-	registerTokenFactories()
+	registerTokenFactory()
 }

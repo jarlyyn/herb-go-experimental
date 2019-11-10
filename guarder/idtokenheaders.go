@@ -50,10 +50,10 @@ func idTokenHeadersMapperFactory(conf Config, prefix string) (Mapper, error) {
 	return createIDTokenHeadersWithConfig(conf, prefix)
 }
 
-func registerIDTokenHeadersFactories() {
+func registerIDTokenHeadersFactory() {
 	RegisterMapper("header", idTokenHeadersMapperFactory)
 }
 
 func init() {
-	registerIDTokenHeadersFactories()
+	registerIDTokenHeadersFactory()
 }

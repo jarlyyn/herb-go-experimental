@@ -48,10 +48,10 @@ func createTokenMapWithConfig(conf Config, prefix string) (*TokenMap, error) {
 func tokenMapIdentifierFactory(conf Config, prefix string) (Identifier, error) {
 	return createTokenMapWithConfig(conf, prefix)
 }
-func registerTokenMapFactories() {
+func registerTokenMapFactory() {
 	RegisterIdentifier("tokenmap", tokenMapIdentifierFactory)
 }
 
 func init() {
-	registerTokenMapFactories()
+	registerTokenMapFactory()
 }

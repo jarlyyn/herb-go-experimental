@@ -33,10 +33,10 @@ func basicAuthMapperFactory(conf Config, prefix string) (Mapper, error) {
 	return createBasicAuthWithConfig(conf, prefix)
 }
 
-func registerBasicAuthFactories() {
+func registerBasicAuthFactory() {
 	RegisterMapper("basicauth", basicAuthMapperFactory)
 }
 
 func init() {
-	registerBasicAuthFactories()
+	registerBasicAuthFactory()
 }
