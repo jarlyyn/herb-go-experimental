@@ -12,7 +12,7 @@ func TestIDTokenHeaders(t *testing.T) {
 	}
 	c := &ConfigMap{}
 	c.Set("IDHeader", "id")
-	d, err := NewMapperDriver("headers", c, "")
+	d, err := NewMapperDriver("header", c, "")
 	if err != nil {
 		t.Fatal(err)
 	}

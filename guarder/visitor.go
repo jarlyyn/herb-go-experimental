@@ -16,3 +16,10 @@ func (c *Visitor) CredentialRequest(r *http.Request) error {
 	}
 	return c.Mapper.WriteParamsToRequest(r, p)
 }
+
+func (c *Visitor) Init(o VisitorOption) error {
+	return o.ApplyToVisitor(c)
+}
+func NewVisitor() *Visitor {
+	return &Visitor{}
+}
