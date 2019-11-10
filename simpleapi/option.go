@@ -41,18 +41,3 @@ func (o *Option) Stop() error {
 func (o *Option) EndPoint() *fetch.EndPoint {
 	return o.API.EndPoint(o.Method, o.Channel)
 }
-
-type TokenOption struct {
-	Option
-	Token
-}
-
-func (o *TokenOption) Start(handler func(w http.ResponseWriter, r *http.Request)) error {
-	return o.Option.Start(o.Token.Wrap(handler))
-}
-
-func (o *TokenOption) EndPoint() *fetch.EndPoint {
-	ep := o.Option.EndPoint()
-	ep.Headers.Set(o.Token.TokenHeader, o.Token.Token)
-	return ep
-}
