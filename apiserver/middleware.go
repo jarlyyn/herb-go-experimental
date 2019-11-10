@@ -1,4 +1,4 @@
-package simpleapi
+package apiserver
 
 import "net/http"
 

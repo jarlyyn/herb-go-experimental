@@ -1,4 +1,4 @@
-package simpleapi
+package apiserver
 
 import (
 	"encoding/json"
@@ -117,7 +117,7 @@ func (as *apiServer) errConfigSetted() error {
 	if err != nil {
 		return err
 	}
-	return fmt.Errorf("simpleapi : config \"%s\" has been setted as \"%s\"", as.serverName, string(configcontent))
+	return fmt.Errorf("apiserver : config \"%s\" has been setted as \"%s\"", as.serverName, string(configcontent))
 }
 
 func (as *apiServer) CleanConfig() {

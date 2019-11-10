@@ -1,4 +1,4 @@
-package simpleapi
+package apiserver
 
 import (
 	"github.com/herb-go/util/httpserver"

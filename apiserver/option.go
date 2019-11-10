@@ -1,9 +1,8 @@
-package simpleapi
+package apiserver
 
 import (
 	"net/http"
 
-	"github.com/herb-go/fetch"
 	"github.com/herb-go/util/httpserver"
 )
 
@@ -12,9 +11,7 @@ type Server struct {
 	Name string
 }
 type Option struct {
-	Server Server
-	API    fetch.Server
-	fetch.Clients
+	Server  Server
 	Method  string
 	Channel string
 }
@@ -36,8 +33,4 @@ func (o *Option) Start(handler func(w http.ResponseWriter, r *http.Request)) err
 
 func (o *Option) Stop() error {
 	return server(o.Server.Name).Stop(o.Channel)
-}
-
-func (o *Option) EndPoint() *fetch.EndPoint {
-	return o.API.EndPoint(o.Method, o.Channel)
 }
