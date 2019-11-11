@@ -19,7 +19,9 @@ var serversLock = sync.Mutex{}
 var servers = serverMap{}
 
 func newAPIServer() *apiServer {
-	return &apiServer{}
+	s := &apiServer{}
+	s.Handler = s.handler()
+	return s
 }
 
 type apiServer struct {
@@ -29,6 +31,7 @@ type apiServer struct {
 	runningLock  sync.Mutex
 	runningCount int32
 	running      sync.Map
+	Handler      http.Handler
 	configured   bool
 	config       *server.HTTPConfig
 	configLock   sync.Mutex
@@ -78,7 +81,7 @@ func (as *apiServer) handler() http.HandlerFunc {
 func (as *apiServer) startServer() error {
 	c := as.Config()
 	as.server = c.Server()
-	as.server.Handler = as.handler()
+	as.server.Handler = as.Handler
 	l, err := net.Listen(c.Net, c.Addr)
 	if err != nil {
 		return err
