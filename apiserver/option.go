@@ -3,11 +3,11 @@ package apiserver
 import (
 	"net/http"
 
-	"github.com/herb-go/util/httpserver"
+	"github.com/herb-go/herb/server"
 )
 
 type Server struct {
-	httpserver.Config
+	server.HTTPConfig
 	Name string
 }
 type Option struct {
@@ -17,20 +17,20 @@ type Option struct {
 }
 
 func (o *Option) server() *apiServer {
-	return server(o.Server.Name)
+	return apiserver(o.Server.Name)
 }
 
 func (o *Option) ApplyServer() error {
 	if o.Server.IsEmpty() {
 		return nil
 	}
-	return server(o.Server.Name).SetConfig(&o.Server.Config)
+	return apiserver(o.Server.Name).SetConfig(&o.Server.HTTPConfig)
 }
 
 func (o *Option) Start(handler func(w http.ResponseWriter, r *http.Request)) error {
-	return server(o.Server.Name).Start(o.Channel, MethodMiddleware(o.Method, handler))
+	return apiserver(o.Server.Name).Start(o.Channel, MethodMiddleware(o.Method, handler))
 }
 
 func (o *Option) Stop() error {
-	return server(o.Server.Name).Stop(o.Channel)
+	return apiserver(o.Server.Name).Stop(o.Channel)
 }

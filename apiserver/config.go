@@ -1,10 +1,10 @@
 package apiserver
 
-import (
-	"github.com/herb-go/util/httpserver"
-)
+import "github.com/herb-go/herb/server"
 
-var defaultConfig = &httpserver.Config{
-	Net:  "tcp",
-	Addr: ":6789",
+var defaultConfig = &server.HTTPConfig{
+	ListenerConfig: server.ListenerConfig{
+		Net:  "tcp",
+		Addr: ":6789",
+	},
 }
