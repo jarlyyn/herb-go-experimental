@@ -42,6 +42,5 @@ func Fetch(result Result, client Client, t TargetGetter, b ...TargetBuilder) err
 	if err != nil {
 		return err
 	}
-	result.FromResponse(resp)
-	return nil
+	return result.FromResponse(resp)
 }

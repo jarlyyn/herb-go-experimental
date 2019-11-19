@@ -39,8 +39,8 @@ type Client interface {
 }
 
 type Result interface {
-	FromResponse(*http.Response)
-	Response() *http.Response
+	FromResponse(*http.Response) error
+	ToResponse() (*http.Response, error)
 	Error() string
 }
 
