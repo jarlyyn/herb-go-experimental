@@ -8,16 +8,24 @@ import (
 type RequestBuilder func(*http.Request) error
 
 type TargetGetter interface {
+	//RequestMethod return request method
 	RequestMethod() string
+	//RequestURL return request url
 	RequestURL() string
+	//RequestBody return request body
 	RequestBody() io.Reader
+	//RequestBuilders return request builders
 	RequestBuilders() []func(*http.Request) error
 }
 
 type TargetSetter interface {
+	//SetRequestMethod set request method
 	SetRequestMethod(string)
+	//SetRequesetURL set request url
 	SetRequesetURL(string)
+	//SetRequestBody set request body
 	SetRequestBody(io.Reader)
+	//SetRequestBuilders set request builders
 	SetRequestBuilders([]func(*http.Request) error)
 }
 
@@ -36,14 +44,7 @@ type Result interface {
 	Error() string
 }
 
-type APIErrCode interface {
-	GetAPIErrCode(err error) string
-	CompareAPIErrCode(err error, code interface{}) bool
-}
-type ResultWithErrCode interface {
-	Result
-	APIErrCode
-}
 type TargetBuilder interface {
+	//BuildRequest builde given request and return any error raised
 	BuildTarget(method string, url string, body io.Reader, builders []func(*http.Request) error) (string, string, io.Reader, []func(*http.Request) error, error)
 }
