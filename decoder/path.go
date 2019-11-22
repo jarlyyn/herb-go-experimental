@@ -1,0 +1,70 @@
+package decoder
+
+import (
+	"strconv"
+)
+
+type StringStep string
+
+func (s StringStep) Type() interface{} {
+	return TypeString
+}
+func (s *StringStep) String() string {
+	return string(*s)
+}
+func (s *StringStep) Int() (int, bool) {
+	return 0, false
+}
+func (s *StringStep) Interface() interface{} {
+	return string(*s)
+}
+
+type IntStep int
+
+func (s *IntStep) Type() interface{} {
+	return TypeInt
+}
+func (s *IntStep) String() string {
+	return strconv.Itoa(int(*s))
+}
+func (s *IntStep) Int() (int, bool) {
+	return int(*s), true
+}
+func (s *IntStep) Interface() interface{} {
+	return int(*s)
+}
+
+type Step interface {
+	Type() interface{}
+	String() string
+	Int() (int, bool)
+	Interface() interface{}
+}
+type Steps []Step
+
+func (s *Steps) Join(steps ...Step) {
+	*s = append(*s, steps...)
+}
+func (s *Steps) Clone() Path {
+	newpath := make([]Step, len(*s))
+	copy(newpath, *s)
+	p := Steps(newpath)
+	return &p
+}
+func (s *Steps) Unshift() (Step, Path) {
+	if len(*s) == 0 {
+		return nil, nil
+	}
+	newpath := Steps((*s)[1:])
+	return (*s)[0], &newpath
+}
+func NewSteps() *Steps {
+	s := Steps([]Step{})
+	return &s
+}
+
+type Path interface {
+	Join(...Step)
+	Unshift() (Step, Path)
+	Clone() Path
+}
