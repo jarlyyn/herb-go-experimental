@@ -1,24 +1,24 @@
-package decoder
+package assembler
 
 type Child struct {
 	Field Step
-	Node  Node
+	Part  Part
 }
-type Node interface {
+type Part interface {
 	Children() ([]Child, error)
 	GetData(path Path) (interface{}, error)
 }
 
-type MapNode struct {
+type MapPart struct {
 	Value interface{}
 }
 
-func NewMapNode(v interface{}) *MapNode {
-	return &MapNode{
+func NewMapPart(v interface{}) *MapPart {
+	return &MapPart{
 		Value: v,
 	}
 }
-func (d *MapNode) GetData(path Path) (interface{}, error) {
+func (d *MapPart) GetData(path Path) (interface{}, error) {
 	if path == nil {
 		return d.Value, nil
 	}

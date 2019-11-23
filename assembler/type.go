@@ -1,13 +1,8 @@
-package decoder
+package assembler
 
 import (
 	"reflect"
 )
-
-type TypeChecker struct {
-	Type      interface{}
-	CheckType func(d *Decoder, rt reflect.Type) (bool, error)
-}
 
 type CommonType interface{}
 

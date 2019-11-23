@@ -1,4 +1,4 @@
-package decoder
+package assembler
 
 import (
 	"strconv"
