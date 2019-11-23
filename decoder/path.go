@@ -42,8 +42,10 @@ type Step interface {
 }
 type Steps []Step
 
-func (s *Steps) Join(steps ...Step) {
-	*s = append(*s, steps...)
+func (s *Steps) Join(steps ...Step) Path {
+	p := s.Clone().(*Steps)
+	*p = append(*p, steps...)
+	return p
 }
 func (s *Steps) Clone() Path {
 	newpath := make([]Step, len(*s))
@@ -55,7 +57,9 @@ func (s *Steps) Unshift() (Step, Path) {
 	if len(*s) == 0 {
 		return nil, nil
 	}
-	newpath := Steps((*s)[1:])
+	steps := make([]Step, len(*s)-1)
+	copy(steps, (*s)[1:])
+	newpath := Steps(steps)
 	return (*s)[0], &newpath
 }
 func NewSteps() *Steps {
@@ -64,7 +68,7 @@ func NewSteps() *Steps {
 }
 
 type Path interface {
-	Join(...Step)
+	Join(...Step) Path
 	Unshift() (Step, Path)
 	Clone() Path
 }
