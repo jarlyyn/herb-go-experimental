@@ -8,24 +8,24 @@ type Unifier interface {
 
 type Unifiers map[interface{}][]Unifier
 
-func (u *Unifiers) Unify(d *Decoder, rv reflect.Value, v interface{}) (bool, error) {
+func (u *Unifiers) Unify(d *Decoder, rv reflect.Value, v interface{}) error {
 	rv = reflect.Indirect(rv)
 	tp, err := d.CheckType(rv.Type())
 	if err != nil {
-		return false, err
+		return err
 	}
 	unifiers, ok := (*u)[tp]
 	if ok == false {
-		return false, nil
+		return nil
 	}
 	for k := range unifiers {
 		result, err := unifiers[k].Unify(d, rv, v)
 		if err != nil {
-			return false, err
+			return err
 		}
 		if result {
-			return result, nil
+			return nil
 		}
 	}
-	return false, nil
+	return nil
 }
