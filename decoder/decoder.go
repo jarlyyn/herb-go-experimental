@@ -9,11 +9,11 @@ type Decoder struct {
 	Unifiers Unifiers
 }
 
-func (d *Decoder) DecodeDataSource(v interface{}, ds DataSource) error {
+func (d *Decoder) DecodeDataSource(v interface{}, n Node) error {
 	ctx := NewContext()
 	ctx.Decoder = d
-	ctx.DataSource = ds
-	data, err := ds.GetData(nil)
+	ctx.Node = n
+	data, err := n.GetData(nil)
 	if err != nil {
 		return err
 	}
