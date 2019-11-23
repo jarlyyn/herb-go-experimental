@@ -1,5 +1,7 @@
 package decoder
 
+import "reflect"
+
 // type Decoder struct {
 // 	Checkers []TypeChecker
 // 	Unifiers Unifiers
@@ -47,6 +49,18 @@ type Decoder struct {
 	step   Step
 }
 
+func (d *Decoder) CheckType(rt reflect.Type) (tp interface{}, err error) {
+	for k := range d.config.Checkers {
+		result, err := d.config.Checkers[k].CheckType(d, rt)
+		if err != nil {
+			return nil, err
+		}
+		if result {
+			return d.config.Checkers[k].Type, nil
+		}
+	}
+	return nil, nil
+}
 func (d *Decoder) WithConfig(c *Config) *Decoder {
 	return &Decoder{
 		config: c,

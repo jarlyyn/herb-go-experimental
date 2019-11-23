@@ -3,14 +3,14 @@ package decoder
 import "reflect"
 
 type Unifier interface {
-	Unify(ctx *Context, rv reflect.Value, v interface{}) (bool, error)
+	Unify(d *Decoder, rv reflect.Value, v interface{}) (bool, error)
 }
 
 type Unifiers map[interface{}][]Unifier
 
-func (u *Unifiers) Unify(ctx *Context, rv reflect.Value, v interface{}) (bool, error) {
+func (u *Unifiers) Unify(d *Decoder, rv reflect.Value, v interface{}) (bool, error) {
 	rv = reflect.Indirect(rv)
-	tp, err := ctx.Decoder.CheckType(ctx, rv.Type())
+	tp, err := d.CheckType(rv.Type())
 	if err != nil {
 		return false, err
 	}
@@ -19,7 +19,7 @@ func (u *Unifiers) Unify(ctx *Context, rv reflect.Value, v interface{}) (bool, e
 		return false, nil
 	}
 	for k := range unifiers {
-		result, err := unifiers[k].Unify(ctx, rv, v)
+		result, err := unifiers[k].Unify(d, rv, v)
 		if err != nil {
 			return false, err
 		}

@@ -6,7 +6,7 @@ import (
 
 type TypeChecker struct {
 	Type      interface{}
-	CheckType func(ctx *Context, rt reflect.Type) (bool, error)
+	CheckType func(d *Decoder, rt reflect.Type) (bool, error)
 }
 
 type CommonType interface{}
