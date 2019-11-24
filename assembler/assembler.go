@@ -23,8 +23,13 @@ func (a *Assembler) Assemble(v interface{}) (err error) {
 	return a.config.Unifiers.Unify(a, dv)
 }
 func (a *Assembler) CheckType() (tp interface{}, err error) {
+	v, err := a.Value()
+	if err != nil {
+		return nil, err
+	}
+	rt := getReflectType(v)
 	for k := range a.config.Checkers {
-		result, err := a.config.Checkers[k].CheckType(a)
+		result, err := a.config.Checkers[k].CheckType(a, rt)
 		if err != nil {
 			return nil, err
 		}
@@ -45,13 +50,7 @@ func (a *Assembler) WithConfig(c *Config) *Assembler {
 }
 
 func (a *Assembler) WithPart(p Part) *Assembler {
-	return &Assembler{
-		config: a.config,
-		part:   p,
-		path:   a.path,
-		parent: nil,
-		step:   a.step,
-	}
+	return a.WithChild(p, nil, nil)
 }
 
 func (a *Assembler) WithChild(p Part, parent reflect.Type, step Step) *Assembler {
@@ -62,6 +61,25 @@ func (a *Assembler) WithChild(p Part, parent reflect.Type, step Step) *Assembler
 		parent: parent,
 		step:   step,
 	}
+}
+func (a *Assembler) Config() *Config {
+	return a.config
+}
+
+func (a *Assembler) Part() Part {
+	return a.part
+}
+
+func (a *Assembler) Path() Path {
+	return a.path
+}
+
+func (a *Assembler) Step() Step {
+	return a.step
+}
+
+func (a *Assembler) Parent() reflect.Type {
+	return a.parent
 }
 
 var BaseAssembler = &Assembler{

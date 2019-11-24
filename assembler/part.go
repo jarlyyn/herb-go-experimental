@@ -1,11 +1,7 @@
 package assembler
 
-type Child struct {
-	Field Step
-	Part  Part
-}
 type Part interface {
-	Children() ([]Child, error)
+	Child(step Step) (Part, error)
 	GetData(path Path) (interface{}, error)
 }
 
