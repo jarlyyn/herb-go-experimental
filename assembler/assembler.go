@@ -1,10 +1,14 @@
 package assembler
 
+import (
+	"reflect"
+)
+
 type Assembler struct {
 	config *Config
 	part   Part
 	path   Path
-	parent Part
+	parent reflect.Type
 	step   Step
 }
 
@@ -50,7 +54,7 @@ func (a *Assembler) WithPart(p Part) *Assembler {
 	}
 }
 
-func (a *Assembler) WithChild(p Part, steps ...Step) *Assembler {
+func (a *Assembler) WithChild(parent reflect.Type, p Part, steps ...Step) *Assembler {
 	if len(steps) == 0 {
 		return a
 	}
@@ -58,7 +62,7 @@ func (a *Assembler) WithChild(p Part, steps ...Step) *Assembler {
 		config: a.config,
 		part:   p,
 		path:   a.path.Join(steps...),
-		parent: a.part,
+		parent: parent,
 		step:   steps[len(steps)-1],
 	}
 }
