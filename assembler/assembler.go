@@ -54,16 +54,13 @@ func (a *Assembler) WithPart(p Part) *Assembler {
 	}
 }
 
-func (a *Assembler) WithChild(parent reflect.Type, p Part, steps ...Step) *Assembler {
-	if len(steps) == 0 {
-		return a
-	}
+func (a *Assembler) WithChild(p Part, parent reflect.Type, step Step) *Assembler {
 	return &Assembler{
 		config: a.config,
 		part:   p,
-		path:   a.path.Join(steps...),
+		path:   a.path.Join(step),
 		parent: parent,
-		step:   steps[len(steps)-1],
+		step:   step,
 	}
 }
 
