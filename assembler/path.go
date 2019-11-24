@@ -1,6 +1,7 @@
 package assembler
 
 import (
+	"reflect"
 	"strconv"
 )
 
@@ -32,6 +33,29 @@ func (s *IntStep) Int() (int, bool) {
 }
 func (s *IntStep) Interface() interface{} {
 	return int(*s)
+}
+
+type FieldStep struct {
+	*reflect.StructField
+}
+
+func (s *FieldStep) Type() interface{} {
+	return TypeStructField
+}
+func (s *FieldStep) String() string {
+	return s.Name
+}
+func (s *FieldStep) Int() (int, bool) {
+	return 0, true
+}
+func (s *FieldStep) Interface() interface{} {
+	return *s
+}
+
+func NewFieldStep(f *reflect.StructField) *FieldStep {
+	return &FieldStep{
+		f,
+	}
 }
 
 type Step interface {

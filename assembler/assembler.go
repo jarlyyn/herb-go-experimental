@@ -40,7 +40,7 @@ func (a *Assembler) WithConfig(c *Config) *Assembler {
 	}
 }
 
-func (a *Assembler) WithNode(p Part) *Assembler {
+func (a *Assembler) WithPart(p Part) *Assembler {
 	return &Assembler{
 		config: a.config,
 		part:   p,
