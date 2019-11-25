@@ -14,6 +14,7 @@ var TypeInt64 = CommonType(reflect.TypeOf(int64(0)))
 var TypeUint64 = CommonType(reflect.TypeOf(int64(0)))
 
 var TypeMap = CommonType(reflect.TypeOf(map[interface{}]interface{}{}))
-var TypeArray = CommonType(reflect.TypeOf([]interface{}{}))
+var TypeArray = CommonType(reflect.TypeOf([0]interface{}{}))
 var TypeStruct = CommonType(reflect.TypeOf(&struct{}{}))
 var TypeStructField = CommonType(reflect.TypeOf(&reflect.StructField{}))
+var TypeInterface = CommonType(reflect.TypeOf((*interface{})(nil)).Elem())

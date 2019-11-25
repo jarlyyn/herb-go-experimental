@@ -1,9 +1,34 @@
 package assembler
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 )
+
+type InterfaceStep struct {
+	value interface{}
+}
+
+func (s InterfaceStep) Type() interface{} {
+	return TypeInterface
+}
+func (s *InterfaceStep) String() string {
+	return fmt.Sprint(s.value)
+}
+func (s *InterfaceStep) Int() (int, bool) {
+	return 0, false
+}
+func (s *InterfaceStep) Interface() interface{} {
+	return s.value
+}
+
+func NewInterfaceStep(i interface{}) *InterfaceStep {
+	s := InterfaceStep{
+		value: i,
+	}
+	return &s
+}
 
 type StringStep string
 
@@ -20,19 +45,9 @@ func (s *StringStep) Interface() interface{} {
 	return string(*s)
 }
 
-type IntStep int
-
-func (s *IntStep) Type() interface{} {
-	return TypeInt
-}
-func (s *IntStep) String() string {
-	return strconv.Itoa(int(*s))
-}
-func (s *IntStep) Int() (int, bool) {
-	return int(*s), true
-}
-func (s *IntStep) Interface() interface{} {
-	return int(*s)
+func NewStringStep(str string) *StringStep {
+	s := StringStep(str)
+	return &s
 }
 
 type FieldStep struct {
@@ -56,6 +71,26 @@ func NewFieldStep(f *reflect.StructField) *FieldStep {
 	return &FieldStep{
 		f,
 	}
+}
+
+type ArrayStep int
+
+func (s *ArrayStep) Type() interface{} {
+	return TypeArray
+}
+func (s *ArrayStep) String() string {
+	return strconv.Itoa(int(*s))
+}
+func (s *ArrayStep) Int() (int, bool) {
+	return int(*s), true
+}
+func (s *ArrayStep) Interface() interface{} {
+	return int(*s)
+}
+
+func NewArrayStep(i int) *ArrayStep {
+	s := ArrayStep(i)
+	return &s
 }
 
 type Step interface {

@@ -2,40 +2,12 @@ package assembler
 
 type Part interface {
 	Child(step Step) (Part, error)
-	GetData(path Path) (interface{}, error)
+	Iter() (*PartIter, error)
+	Value() (interface{}, error)
 }
 
-type MapPart struct {
-	Value interface{}
-}
-
-func NewMapPart(v interface{}) *MapPart {
-	return &MapPart{
-		Value: v,
-	}
-}
-func (d *MapPart) GetData(path Path) (interface{}, error) {
-	if path == nil {
-		return d.Value, nil
-	}
-	var ok bool
-	var m map[string]interface{}
-	var v interface{}
-	var step Step
-	v = d.Value
-	path = path.Clone()
-	for {
-		step, path = path.Unshift()
-		m, ok = v.(map[string]interface{})
-		if ok == false {
-
-		}
-		v, ok = m[step.String()]
-		if ok == false {
-
-		}
-		if path == nil {
-			return v, nil
-		}
-	}
+type PartIter struct {
+	Step Step
+	Part Part
+	Next func() (*PartIter, error)
 }

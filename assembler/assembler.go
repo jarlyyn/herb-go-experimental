@@ -13,7 +13,7 @@ type Assembler struct {
 }
 
 func (a *Assembler) Value() (interface{}, error) {
-	return a.part.GetData(nil)
+	return a.part.Value()
 }
 func (a *Assembler) Assemble(v interface{}) (err error) {
 	dv, err := a.Value()

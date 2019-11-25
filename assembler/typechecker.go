@@ -49,3 +49,24 @@ var TypeCheckerUint64 = &TypeChecker{
 		return rt.Kind() == reflect.Uint64, nil
 	},
 }
+
+var TypeCheckerStringKeyMap = &TypeChecker{
+	Type: TypeMap,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Map && rt.Key().Kind() == reflect.String, nil
+	},
+}
+
+var TypeCheckerArray = &TypeChecker{
+	Type: TypeArray,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Array, nil
+	},
+}
+
+var TypeCheckerStruct = &TypeChecker{
+	Type: TypeStruct,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Struct, nil
+	},
+}
