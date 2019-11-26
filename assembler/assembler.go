@@ -16,18 +16,9 @@ func (a *Assembler) Value() (interface{}, error) {
 	return a.part.Value()
 }
 func (a *Assembler) Assemble(v interface{}) (ok bool, err error) {
-	dv, err := a.Value()
-	if err != nil {
-		return false, err
-	}
-	return a.config.Unifiers.Unify(a, dv)
+	return a.config.Unifiers.Unify(a, v)
 }
-func (a *Assembler) CheckType() (tp interface{}, err error) {
-	v, err := a.Value()
-	if err != nil {
-		return nil, err
-	}
-	rt := getReflectType(v)
+func (a *Assembler) CheckType(rt reflect.Type) (tp Type, err error) {
 	return a.Config().Checkers.CheckType(a, rt)
 }
 func (a *Assembler) WithConfig(c *Config) *Assembler {
@@ -73,6 +64,6 @@ func (a *Assembler) Parent() reflect.Type {
 	return a.parent
 }
 
-var BaseAssembler = &Assembler{
+var RootAssembler = &Assembler{
 	path: NewSteps(),
 }

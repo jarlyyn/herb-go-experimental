@@ -6,8 +6,8 @@ import (
 )
 
 type Config struct {
-	Checkers      TypeCheckers
-	Unifiers      Unifiers
+	Checkers      *TypeCheckers
+	Unifiers      *Unifiers
 	TagName       string
 	TagParser     func(value string) (*Tag, error)
 	CaseSensitive bool
@@ -30,13 +30,15 @@ func (c *Config) GetTags(structType reflect.Type, field reflect.StructField) (*T
 func NewConfig() *Config {
 	return &Config{
 		TagParser: ParseTag,
+		Unifiers:  &Unifiers{},
+		Checkers:  &TypeCheckers{},
 	}
 }
 
 func NewCommonConfig() *Config {
 	c := NewConfig()
 	c.TagName = "config"
-	SetCommonTypeCheckers(&c.Checkers)
-	SetCommonUnifiers(&c.Unifiers)
+	SetCommonTypeCheckers(c.Checkers)
+	SetCommonUnifiers(c.Unifiers)
 	return c
 }

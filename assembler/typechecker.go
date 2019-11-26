@@ -3,23 +3,23 @@ package assembler
 import "reflect"
 
 type TypeChecker struct {
-	Type      interface{}
+	Type      Type
 	CheckType func(a *Assembler, rt reflect.Type) (bool, error)
 }
 
 type TypeCheckers []*TypeChecker
 
-func (c *TypeCheckers) CheckType(a *Assembler, rt reflect.Type) (interface{}, error) {
+func (c *TypeCheckers) CheckType(a *Assembler, rt reflect.Type) (Type, error) {
 	for _, v := range *c {
 		ok, err := v.CheckType(a, rt)
 		if err != nil {
-			return nil, err
+			return TypeUnkonwn, err
 		}
 		if ok {
 			return v.Type, nil
 		}
 	}
-	return nil, nil
+	return TypeUnkonwn, nil
 }
 func (c *TypeCheckers) Append(checkers ...*TypeChecker) {
 	*c = append(*c, checkers...)

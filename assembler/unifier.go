@@ -9,18 +9,18 @@ type Unifier interface {
 	Unify(a *Assembler, rv reflect.Value) (bool, error)
 }
 
-type Unifiers map[interface{}][]Unifier
+type Unifiers map[Type][]Unifier
 
 func (u *Unifiers) Unify(a *Assembler, v interface{}) (bool, error) {
-	rv := reflect.Indirect(reflect.ValueOf(v))
-	return u.UnifyReflectValue(a, rv)
+	return u.UnifyReflectValue(a, reflect.ValueOf(v))
 }
 func (u *Unifiers) UnifyReflectValue(a *Assembler, rv reflect.Value) (bool, error) {
-	tp, err := a.CheckType()
+	rv = reflect.Indirect(rv)
+	tp, err := a.CheckType(rv.Type())
 	if err != nil {
 		return false, err
 	}
-	if tp == nil {
+	if tp == TypeUnkonwn {
 		return false, nil
 	}
 	unifiers, ok := (*u)[tp]
@@ -39,15 +39,20 @@ func (u *Unifiers) UnifyReflectValue(a *Assembler, rv reflect.Value) (bool, erro
 	return false, nil
 
 }
-func (u *Unifiers) Append(tp interface{}, unifier Unifier) {
-	v := (*u)[tp]
+func (u *Unifiers) Append(tp Type, unifier Unifier) {
+	m := (*u)
+	v := m[tp]
 	v = append(v, unifier)
-	(*u)[tp] = v
+	m[tp] = v
+	*u = m
 }
-func (u *Unifiers) Insert(tp interface{}, unifier Unifier) {
+func (u *Unifiers) Insert(tp Type, unifier Unifier) {
+	m := (*u)
 	v := []Unifier{unifier}
-	v = append(v, (*u)[tp]...)
-	(*u)[tp] = v
+	v = append(v, m[tp]...)
+	m[tp] = v
+	*u = m
+
 }
 
 type String interface {
@@ -224,6 +229,26 @@ var UnifierMap = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) 
 	rv.Set(mv)
 	return true, nil
 })
+
+var UnifierEmptyInterface = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+	v, err := a.Part().Value()
+	if err != nil {
+		return false, err
+	}
+	rt := reflect.TypeOf(v)
+	switch rt.Kind() {
+	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8, reflect.String, reflect.Bool:
+		rv.Set(reflect.ValueOf(v))
+		return true, nil
+	case reflect.Slice:
+		return UnifierSlice(a, rv)
+	case reflect.Map:
+		return UnifierMap(a, rv)
+	case reflect.Struct:
+		return UnifierStruct(a, rv)
+	}
+	return false, nil
+})
 var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	iter, err := a.Part().Iter()
 	if err != nil {
@@ -250,10 +275,10 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	}
 	rt := rv.Type()
 	fl := rt.NumField()
-	value := reflect.New(rt)
+	value := reflect.New(rt).Elem()
 	for i := 0; i < fl; i++ {
-		field := rt.FieldByIndex([]int{i})
-		fv := value.FieldByIndex([]int{i})
+		field := rt.Field(i)
+		fv := value.Field(i)
 		tag, err := a.Config().GetTags(rt, field)
 		if err != nil {
 			return false, err
@@ -290,5 +315,5 @@ func SetCommonUnifiers(u *Unifiers) {
 	u.Append(TypeFloat64, UnifierFloat64)
 	u.Append(TypeSlice, UnifierSlice)
 	u.Append(TypeMap, UnifierMap)
-	u.Append(TypeMap, UnifierStruct)
+	u.Append(TypeStruct, UnifierStruct)
 }

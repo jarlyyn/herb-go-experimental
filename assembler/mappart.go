@@ -20,7 +20,7 @@ func (d *MapPart) mapIter(rt reflect.Type, rv reflect.Value) (*PartIter, error) 
 	mes := mapElements{}
 	iter := rv.MapRange()
 	keykind := rt.Key().Kind()
-	for iter != nil {
+	for iter.Next() {
 		var key Step
 		switch keykind {
 		case reflect.String:
@@ -34,8 +34,6 @@ func (d *MapPart) mapIter(rt reflect.Type, rv reflect.Value) (*PartIter, error) 
 		}
 
 		mes = append(mes, m)
-
-		iter.Next()
 	}
 	return mes.Next()
 }
