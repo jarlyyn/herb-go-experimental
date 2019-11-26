@@ -15,10 +15,10 @@ type Assembler struct {
 func (a *Assembler) Value() (interface{}, error) {
 	return a.part.Value()
 }
-func (a *Assembler) Assemble(v interface{}) (err error) {
+func (a *Assembler) Assemble(v interface{}) (ok bool, err error) {
 	dv, err := a.Value()
 	if err != nil {
-		return err
+		return false, err
 	}
 	return a.config.Unifiers.Unify(a, dv)
 }
@@ -28,16 +28,7 @@ func (a *Assembler) CheckType() (tp interface{}, err error) {
 		return nil, err
 	}
 	rt := getReflectType(v)
-	for k := range a.config.Checkers {
-		result, err := a.config.Checkers[k].CheckType(a, rt)
-		if err != nil {
-			return nil, err
-		}
-		if result {
-			return a.config.Checkers[k].Type, nil
-		}
-	}
-	return nil, nil
+	return a.Config().Checkers.CheckType(a, rt)
 }
 func (a *Assembler) WithConfig(c *Config) *Assembler {
 	return &Assembler{

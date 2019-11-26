@@ -7,6 +7,27 @@ type TypeChecker struct {
 	CheckType func(a *Assembler, rt reflect.Type) (bool, error)
 }
 
+type TypeCheckers []*TypeChecker
+
+func (c *TypeCheckers) CheckType(a *Assembler, rt reflect.Type) (interface{}, error) {
+	for _, v := range *c {
+		ok, err := v.CheckType(a, rt)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return v.Type, nil
+		}
+	}
+	return nil, nil
+}
+func (c *TypeCheckers) Append(checkers ...*TypeChecker) {
+	*c = append(*c, checkers...)
+}
+
+func (c *TypeCheckers) Insert(checkers ...*TypeChecker) {
+	*c = TypeCheckers(append(checkers, *c...))
+}
 func getReflectType(v interface{}) reflect.Type {
 	return reflect.TypeOf(reflect.Indirect(reflect.ValueOf(v)))
 }
@@ -31,7 +52,8 @@ var TypeCheckerInt = &TypeChecker{
 		return rt.Kind() == reflect.Int, nil
 	},
 }
-var TypeCheckerUiit = &TypeChecker{
+
+var TypeCheckerUint = &TypeChecker{
 	Type: TypeUint,
 	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
 		return rt.Kind() == reflect.Uint, nil
@@ -49,7 +71,18 @@ var TypeCheckerUint64 = &TypeChecker{
 		return rt.Kind() == reflect.Uint64, nil
 	},
 }
-
+var TypeCheckerFloat32 = &TypeChecker{
+	Type: TypeFloat32,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Float32, nil
+	},
+}
+var TypeCheckerFloat64 = &TypeChecker{
+	Type: TypeFloat64,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Float64, nil
+	},
+}
 var TypeCheckerStringKeyMap = &TypeChecker{
 	Type: TypeMap,
 	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
@@ -69,4 +102,26 @@ var TypeCheckerStruct = &TypeChecker{
 	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
 		return rt.Kind() == reflect.Struct, nil
 	},
+}
+var TypeCheckerEmptyInterface = &TypeChecker{
+	Type: TypeEmptyInterface,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Interface && rt.NumMethod() == 0, nil
+	},
+}
+
+func SetCommonTypeCheckers(c *TypeCheckers) {
+	c.Append(
+		TypeCheckerBool,
+		TypeCheckerInt,
+		TypeCheckerUint,
+		TypeCheckerInt64,
+		TypeCheckerUint64,
+		TypeCheckerFloat32,
+		TypeCheckerFloat64,
+		TypeCheckerStringKeyMap,
+		TypeCheckerArray,
+		TypeCheckerStruct,
+		TypeCheckerEmptyInterface,
+	)
 }

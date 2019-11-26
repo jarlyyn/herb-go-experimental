@@ -7,7 +7,8 @@ import (
 type CommonType interface{}
 
 var TypeBool = CommonType(reflect.TypeOf(false))
-var TypeString = CommonType(reflect.TypeOf(""))
+var ReflectTypeString = reflect.TypeOf("")
+var TypeString = CommonType(ReflectTypeString)
 var TypeInt8 = CommonType(reflect.TypeOf(int8(0)))
 var TypeUint8 = CommonType(reflect.TypeOf(uint8(0)))
 var TypeInt16 = CommonType(reflect.TypeOf(int16(0)))
@@ -21,6 +22,8 @@ var TypeFloat64 = CommonType(reflect.TypeOf(float64(0)))
 
 var TypeMap = CommonType(reflect.TypeOf(map[interface{}]interface{}{}))
 var TypeArray = CommonType(reflect.TypeOf([0]interface{}{}))
+var TypeSlice = CommonType(reflect.TypeOf([]interface{}{}))
 var TypeStruct = CommonType(reflect.TypeOf(&struct{}{}))
 var TypeStructField = CommonType(reflect.TypeOf(&reflect.StructField{}))
-var TypeInterface = CommonType(reflect.TypeOf((*interface{})(nil)).Elem())
+var ReflectTypeEmptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
+var TypeEmptyInterface = CommonType(ReflectTypeEmptyInterface)

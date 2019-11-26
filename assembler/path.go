@@ -11,7 +11,7 @@ type InterfaceStep struct {
 }
 
 func (s InterfaceStep) Type() interface{} {
-	return TypeInterface
+	return TypeEmptyInterface
 }
 func (s *InterfaceStep) String() string {
 	return fmt.Sprint(s.value)
