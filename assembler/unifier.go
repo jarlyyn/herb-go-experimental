@@ -12,10 +12,12 @@ type Unifier interface {
 type Unifiers map[Type][]Unifier
 
 func (u *Unifiers) Unify(a *Assembler, v interface{}) (bool, error) {
-	return u.UnifyReflectValue(a, reflect.ValueOf(v))
+	rv := reflect.Indirect(reflect.ValueOf(v))
+
+	return u.UnifyReflectValue(a, rv)
 }
 func (u *Unifiers) UnifyReflectValue(a *Assembler, rv reflect.Value) (bool, error) {
-	rv = reflect.Indirect(rv)
+	// rv = reflect.Indirect(rv)
 	tp, err := a.CheckType(rv.Type())
 	if err != nil {
 		return false, err
@@ -89,7 +91,7 @@ var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	}
 	s, ok := v.(string)
 	if ok {
-		reflect.ValueOf(v).SetString(s)
+		rv.Set(reflect.ValueOf(s))
 		return true, nil
 	}
 	i, ok := v.(String)
@@ -138,6 +140,7 @@ var UnifierInt64 = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error
 	}
 	return false, nil
 })
+
 var UnifierUint64 = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v, err := a.Part().Value()
 	if err != nil {
@@ -185,21 +188,19 @@ var UnifierSlice = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error
 	if iter == nil {
 		return false, nil
 	}
-	sv := reflect.MakeSlice(rv.Type(), 0, 0)
 	for iter != nil {
 		if iter.Step.Type() == TypeArray {
 			pv, err := iter.Part.Value()
 			if err != nil {
 				return false, err
 			}
-			rv = reflect.Append(rv, reflect.ValueOf(pv))
+			rv.Set(reflect.Append(rv, reflect.ValueOf(pv)))
 		}
 		iter, err = iter.Next()
 		if err != nil {
 			return false, err
 		}
 	}
-	rv.Set(sv)
 	return true, nil
 })
 
@@ -259,8 +260,6 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	}
 	var valuemap = map[string]Part{}
 	var civaluemap = map[string]Part{}
-	var part Part
-	var ok bool
 	ci := !a.Config().CaseSensitive
 	for iter != nil {
 
@@ -277,6 +276,8 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	fl := rt.NumField()
 	value := reflect.New(rt).Elem()
 	for i := 0; i < fl; i++ {
+		var part Part
+		var ok bool
 		field := rt.Field(i)
 		fv := value.Field(i)
 		tag, err := a.Config().GetTags(rt, field)
@@ -304,6 +305,12 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	return true, nil
 })
 
+var UnifierPtr = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+	v := reflect.New(rv.Type().Elem())
+	rv.Set(v)
+	return a.Config().Unifiers.UnifyReflectValue(a, v.Elem())
+})
+
 func SetCommonUnifiers(u *Unifiers) {
 	u.Append(TypeBool, UnifierBool)
 	u.Append(TypeString, UnifierString)
@@ -316,4 +323,5 @@ func SetCommonUnifiers(u *Unifiers) {
 	u.Append(TypeSlice, UnifierSlice)
 	u.Append(TypeMap, UnifierMap)
 	u.Append(TypeStruct, UnifierStruct)
+	u.Append(TypePtr, UnifierPtr)
 }

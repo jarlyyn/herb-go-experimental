@@ -46,3 +46,5 @@ var TypeSlice = Type("slice")
 var TypeStruct = Type("struct")
 var TypeStructField = Type("structFild")
 var TypeEmptyInterface = Type("interface{}")
+
+var TypePtr = Type("*")

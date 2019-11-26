@@ -57,7 +57,7 @@ func (d *MapPart) Iter() (*PartIter, error) {
 	rt := reflect.TypeOf(v)
 	rv := reflect.ValueOf(v)
 	switch rt.Kind() {
-	case reflect.Array:
+	case reflect.Array, reflect.Slice:
 		return d.arrayIter(rv)
 	case reflect.Map:
 		return d.mapIter(rt, rv)

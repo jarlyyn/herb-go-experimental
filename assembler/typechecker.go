@@ -90,10 +90,10 @@ var TypeCheckerStringKeyMap = &TypeChecker{
 	},
 }
 
-var TypeCheckerArray = &TypeChecker{
-	Type: TypeArray,
+var TypeCheckerSlice = &TypeChecker{
+	Type: TypeSlice,
 	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
-		return rt.Kind() == reflect.Array, nil
+		return rt.Kind() == reflect.Slice, nil
 	},
 }
 
@@ -103,6 +103,7 @@ var TypeCheckerStruct = &TypeChecker{
 		return rt.Kind() == reflect.Struct, nil
 	},
 }
+
 var TypeCheckerEmptyInterface = &TypeChecker{
 	Type: TypeEmptyInterface,
 	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
@@ -110,9 +111,17 @@ var TypeCheckerEmptyInterface = &TypeChecker{
 	},
 }
 
+var TypeCheckerPtr = &TypeChecker{
+	Type: TypePtr,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		return rt.Kind() == reflect.Ptr, nil
+	},
+}
+
 func SetCommonTypeCheckers(c *TypeCheckers) {
 	c.Append(
 		TypeCheckerBool,
+		TypeCheckerString,
 		TypeCheckerInt,
 		TypeCheckerUint,
 		TypeCheckerInt64,
@@ -120,8 +129,9 @@ func SetCommonTypeCheckers(c *TypeCheckers) {
 		TypeCheckerFloat32,
 		TypeCheckerFloat64,
 		TypeCheckerStringKeyMap,
-		TypeCheckerArray,
+		TypeCheckerSlice,
 		TypeCheckerStruct,
 		TypeCheckerEmptyInterface,
+		TypeCheckerPtr,
 	)
 }
