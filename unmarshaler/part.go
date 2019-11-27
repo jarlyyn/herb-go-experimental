@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 type Part interface {
 	Child(step Step) (Part, error)

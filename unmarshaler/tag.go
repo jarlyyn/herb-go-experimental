@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 import (
 	"strings"
@@ -11,10 +11,12 @@ type Tag struct {
 }
 
 func NewTag() *Tag {
-	return &Tag{}
+	return &Tag{
+		Flags: map[string]string{},
+	}
 }
 
-func ParseTag(value string) (*Tag, error) {
+func ParseTag(c *Config, value string) (*Tag, error) {
 	t := NewTag()
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -24,7 +26,7 @@ func ParseTag(value string) (*Tag, error) {
 		t.Ignored = true
 		return t, nil
 	}
-	v := strings.Split(value, "")
+	v := strings.Split(value, ",")
 	t.Name = strings.TrimSpace(v[0])
 	l := len(v)
 	for i := 1; i < l; i++ {

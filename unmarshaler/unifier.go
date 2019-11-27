@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 import (
 	"reflect"
@@ -94,10 +94,12 @@ var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 		rv.Set(reflect.ValueOf(s))
 		return true, nil
 	}
-	i, ok := v.(String)
-	if ok {
-		rv.Set(reflect.ValueOf(i))
-		return true, nil
+	if !a.Config().DisableConvertStringInterface {
+		i, ok := v.(String)
+		if ok {
+			rv.Set(reflect.ValueOf(i))
+			return true, nil
+		}
 	}
 	return false, nil
 })
@@ -188,19 +190,22 @@ var UnifierSlice = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error
 	if iter == nil {
 		return false, nil
 	}
+	sv := reflect.MakeSlice(rv.Type(), 0, 0)
 	for iter != nil {
 		if iter.Step.Type() == TypeArray {
-			pv, err := iter.Part.Value()
+			v := reflect.New(rv.Type().Elem()).Elem()
+			_, err = a.Config().Unifiers.UnifyReflectValue(a.WithChild(iter.Part, rv.Type(), iter.Step), v)
 			if err != nil {
 				return false, err
 			}
-			rv.Set(reflect.Append(rv, reflect.ValueOf(pv)))
+			sv = reflect.Append(sv, v)
 		}
 		iter, err = iter.Next()
 		if err != nil {
 			return false, err
 		}
 	}
+	rv.Set(sv)
 	return true, nil
 })
 
@@ -215,13 +220,11 @@ var UnifierMap = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) 
 
 	mv := reflect.MakeMap(rv.Type())
 	for iter != nil {
-		if iter.Step.Type() == TypeArray {
-			pv, err := iter.Part.Value()
-			if err != nil {
-				return false, err
-			}
-			rv.SetMapIndex(reflect.ValueOf(iter.Step.Interface()), reflect.ValueOf(pv))
+		pv, err := iter.Part.Value()
+		if err != nil {
+			return false, err
 		}
+		mv.SetMapIndex(reflect.ValueOf(iter.Step.Interface()), reflect.ValueOf(pv))
 		iter, err = iter.Next()
 		if err != nil {
 			return false, err
@@ -300,8 +303,23 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 		if err != nil {
 			return false, err
 		}
+
 	}
 	rv.Set(value)
+	return true, nil
+})
+
+var UnifierLazyLoadFunc = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+	l := NewLazyLoader()
+	l.Assembler = a
+	rv.Set(reflect.ValueOf(l.LazyLoad))
+	return true, nil
+})
+
+var UnifierLazyLoader = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+	l := NewLazyLoader()
+	l.Assembler = a
+	rv.Set(reflect.ValueOf(l))
 	return true, nil
 })
 
@@ -324,4 +342,8 @@ func SetCommonUnifiers(u *Unifiers) {
 	u.Append(TypeMap, UnifierMap)
 	u.Append(TypeStruct, UnifierStruct)
 	u.Append(TypePtr, UnifierPtr)
+	u.Append(TypeEmptyInterface, UnifierEmptyInterface)
+	u.Append(TypeLazyLoadFunc, UnifierLazyLoadFunc)
+	u.Append(TypeLazyLoader, UnifierLazyLoader)
+
 }

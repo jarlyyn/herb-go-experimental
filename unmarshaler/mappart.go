@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 import (
 	"reflect"

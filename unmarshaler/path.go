@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 import (
 	"fmt"
@@ -64,7 +64,7 @@ func (s *FieldStep) Int() (int, bool) {
 	return 0, true
 }
 func (s *FieldStep) Interface() interface{} {
-	return *s
+	return *((*s).StructField)
 }
 
 func NewFieldStep(f *reflect.StructField) *FieldStep {

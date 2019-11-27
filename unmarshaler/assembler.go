@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 import (
 	"reflect"
@@ -64,6 +64,6 @@ func (a *Assembler) Parent() reflect.Type {
 	return a.parent
 }
 
-var RootAssembler = &Assembler{
+var EmptyAssembler = &Assembler{
 	path: NewSteps(),
 }

@@ -1,4 +1,4 @@
-package assembler
+package unmarshaler
 
 import "reflect"
 
@@ -110,7 +110,44 @@ var TypeCheckerEmptyInterface = &TypeChecker{
 		return rt.Kind() == reflect.Interface && rt.NumMethod() == 0, nil
 	},
 }
-
+var TypeCheckerLazyLoadFunc = &TypeChecker{
+	Type: TypeLazyLoadFunc,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		lt := a.Config().TagLazyLoad
+		if lt == "" {
+			return false, nil
+		}
+		step := a.Step()
+		if step == nil || step.Type() != TypeStructField {
+			return false, nil
+		}
+		field := step.Interface().(reflect.StructField)
+		tags, err := a.Config().GetTags(rt, field)
+		if err != nil {
+			return false, err
+		}
+		return rt.Kind() == reflect.Func && tags != nil && tags.Flags[lt] != "", nil
+	},
+}
+var TypeCheckerLazyLoader = &TypeChecker{
+	Type: TypeLazyLoader,
+	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
+		lt := a.Config().TagLazyLoad
+		if lt == "" {
+			return false, nil
+		}
+		step := a.Step()
+		if step == nil || step.Type() != TypeStructField {
+			return false, nil
+		}
+		field := step.Interface().(reflect.StructField)
+		tags, err := a.Config().GetTags(rt, field)
+		if err != nil {
+			return false, err
+		}
+		return rt.Kind() == reflect.Interface && tags != nil && tags.Flags[lt] != "", nil
+	},
+}
 var TypeCheckerPtr = &TypeChecker{
 	Type: TypePtr,
 	CheckType: func(a *Assembler, rt reflect.Type) (bool, error) {
@@ -133,5 +170,7 @@ func SetCommonTypeCheckers(c *TypeCheckers) {
 		TypeCheckerStruct,
 		TypeCheckerEmptyInterface,
 		TypeCheckerPtr,
+		TypeCheckerLazyLoadFunc,
+		TypeCheckerLazyLoader,
 	)
 }
