@@ -9,18 +9,6 @@ type TypeChecker struct {
 
 type TypeCheckers []*TypeChecker
 
-func (c *TypeCheckers) CheckType(a *Assembler, rt reflect.Type) (Type, error) {
-	for _, v := range *c {
-		ok, err := v.CheckType(a, rt)
-		if err != nil {
-			return TypeUnkonwn, err
-		}
-		if ok {
-			return v.Type, nil
-		}
-	}
-	return TypeUnkonwn, nil
-}
 func (c *TypeCheckers) Append(checkers ...*TypeChecker) {
 	*c = append(*c, checkers...)
 }

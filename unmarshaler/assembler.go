@@ -19,7 +19,7 @@ func (a *Assembler) Assemble(v interface{}) (ok bool, err error) {
 	return a.config.Unifiers.Unify(a, v)
 }
 func (a *Assembler) CheckType(rt reflect.Type) (tp Type, err error) {
-	return a.Config().Checkers.CheckType(a, rt)
+	return a.Config().CheckType(a, rt)
 }
 func (a *Assembler) WithConfig(c *Config) *Assembler {
 	return &Assembler{

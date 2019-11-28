@@ -38,6 +38,18 @@ func (c *Config) GetTags(structType reflect.Type, field reflect.StructField) (*T
 	return c.TagParser(c, field.Tag.Get(c.TagName))
 }
 
+func (c *Config) CheckType(a *Assembler, rt reflect.Type) (Type, error) {
+	for _, v := range *c.Checkers {
+		ok, err := v.CheckType(a, rt)
+		if err != nil {
+			return TypeUnkonwn, err
+		}
+		if ok {
+			return v.Type, nil
+		}
+	}
+	return TypeUnkonwn, nil
+}
 func NewConfig() *Config {
 	return &Config{
 		TagParser:   ParseTag,

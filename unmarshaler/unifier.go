@@ -73,7 +73,7 @@ var UnifierBool = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error)
 	}
 	s, ok := v.(bool)
 	if ok {
-		reflect.ValueOf(v).SetBool(s)
+		rv.SetBool(s)
 		return true, nil
 	}
 	i, ok := v.(String)
@@ -282,6 +282,9 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 		var part Part
 		var ok bool
 		field := rt.Field(i)
+		if field.PkgPath != "" {
+			continue
+		}
 		fv := value.Field(i)
 		tag, err := a.Config().GetTags(rt, field)
 		if err != nil {

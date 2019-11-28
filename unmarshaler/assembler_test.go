@@ -6,11 +6,16 @@ var testData = map[string]interface{}{
 	"Value":              "value",
 	"caseinsensitive":    "ci",
 	"namedcasesensitive": "namedcs",
-	"FieldInt":           int(1),
-	"FieldIntPtr":        int(2),
+	"unexportedfield":    "unexportedfield",
+
+	"FieldInt":    int(1),
+	"FieldIntPtr": int(2),
 
 	"FieldInt64":    int64(64),
 	"FieldInt64Ptr": int64(65),
+
+	"FieldBool":    true,
+	"FieldBoolPtr": true,
 
 	"FieldString":    "str",
 	"FieldStringPtr": "str2",
@@ -32,9 +37,11 @@ var testData = map[string]interface{}{
 }
 
 type testStruct struct {
-	NamedValue       string `config:"Value"`
-	CaseInsensitive  string
-	CaseSensitive    string `config:"Namedcasesensitive"`
+	NamedValue      string `config:"Value"`
+	CaseInsensitive string
+	CaseSensitive   string `config:"Namedcasesensitive"`
+	unexportedfield string
+
 	FieldInt         int
 	FieldEmptyInt    int
 	FieldIntPtr      *int
@@ -44,6 +51,11 @@ type testStruct struct {
 	FieldEmptyInt64    int64
 	FieldInt64Ptr      *int64
 	FieldEmptyInt64Ptr *int64
+
+	FieldBool         bool
+	FieldEmptyBool    bool
+	FieldBoolPtr      *bool
+	FieldEmptyBoolPtr *bool
 
 	FieldString         string
 	FieldEmptyString    string
@@ -107,6 +119,19 @@ func TestAssembler(t *testing.T) {
 		t.Fatal(v)
 	}
 	if v.FieldEmptyInt64Ptr != nil {
+		t.Fatal(v)
+	}
+
+	if v.FieldBool != true {
+		t.Fatal(v)
+	}
+	if v.FieldEmptyBool != false {
+		t.Fatal(v)
+	}
+	if v.FieldBoolPtr == nil || *v.FieldBoolPtr != true {
+		t.Fatal(v)
+	}
+	if v.FieldEmptyBoolPtr != nil {
 		t.Fatal(v)
 	}
 
@@ -192,6 +217,9 @@ func TestAssembler(t *testing.T) {
 		t.Fatal(v)
 	}
 	if v.CaseSensitive != "" {
+		t.Fatal(v)
+	}
+	if v.unexportedfield != "" {
 		t.Fatal(v)
 	}
 }
