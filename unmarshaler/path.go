@@ -6,11 +6,27 @@ import (
 	"strconv"
 )
 
+type NilStep struct {
+}
+
+func (s *NilStep) Type() interface{} {
+	return TypeEmptyInterface
+}
+func (s *NilStep) String() string {
+	return ""
+}
+func (s *NilStep) Int() (int, bool) {
+	return 0, false
+}
+func (s *NilStep) Interface() interface{} {
+	return nil
+}
+
 type InterfaceStep struct {
 	value interface{}
 }
 
-func (s InterfaceStep) Type() interface{} {
+func (s *InterfaceStep) Type() interface{} {
 	return TypeEmptyInterface
 }
 func (s *InterfaceStep) String() string {
@@ -32,7 +48,7 @@ func NewInterfaceStep(i interface{}) *InterfaceStep {
 
 type StringStep string
 
-func (s StringStep) Type() interface{} {
+func (s *StringStep) Type() interface{} {
 	return TypeString
 }
 func (s *StringStep) String() string {
@@ -99,29 +115,6 @@ type Step interface {
 	Int() (int, bool)
 	Interface() interface{}
 }
-
-// type Steps []Step
-
-// func (s *Steps) Join(steps Step) Path {
-// 	p := s.Clone().(*Steps)
-// 	*p = append(*p, steps)
-// 	return p
-// }
-// func (s *Steps) Clone() Path {
-// 	newpath := make([]Step, len(*s))
-// 	copy(newpath, *s)
-// 	p := Steps(newpath)
-// 	return &p
-// }
-// func (s *Steps) Unshift() (Step, Path) {
-// 	if len(*s) == 0 {
-// 		return nil, nil
-// 	}
-// 	steps := make([]Step, len(*s)-1)
-// 	copy(steps, (*s)[1:])
-// 	newpath := Steps(steps)
-// 	return (*s)[0], &newpath
-// }
 
 type Steps struct {
 	step   Step
