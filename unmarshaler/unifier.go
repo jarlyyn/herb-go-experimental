@@ -104,79 +104,21 @@ var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	return false, nil
 })
 
-var UnifierInt = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+var UnifierNumber = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v, err := a.Part().Value()
 	if err != nil {
 		return false, err
 	}
-	s, ok := v.(int)
-	if ok {
-		rv.Set(reflect.ValueOf(s))
-		return true, nil
-	}
-	return false, nil
-})
-
-var UnifierUint = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
-	v, err := a.Part().Value()
-	if err != nil {
-		return false, err
-	}
-	s, ok := v.(uint)
-	if ok {
-		rv.Set(reflect.ValueOf(s))
-		return true, nil
-	}
-	return false, nil
-})
-
-var UnifierInt64 = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
-	v, err := a.Part().Value()
-	if err != nil {
-		return false, err
-	}
-	s, ok := v.(int64)
-	if ok {
-		rv.Set(reflect.ValueOf(s))
-		return true, nil
-	}
-	return false, nil
-})
-
-var UnifierUint64 = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
-	v, err := a.Part().Value()
-	if err != nil {
-		return false, err
-	}
-	s, ok := v.(uint64)
-	if ok {
-		rv.Set(reflect.ValueOf(s))
-		return true, nil
-	}
-	return false, nil
-})
-
-var UnifierFloat32 = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
-	v, err := a.Part().Value()
-	if err != nil {
-		return false, err
-	}
-	s, ok := v.(float32)
-	if ok {
-		rv.Set(reflect.ValueOf(s))
-		return true, nil
-	}
-	return false, nil
-})
-
-var UnifierFloat64 = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
-	v, err := a.Part().Value()
-	if err != nil {
-		return false, err
-	}
-	s, ok := v.(float64)
-	if ok {
-		rv.Set(reflect.ValueOf(s))
+	av := reflect.ValueOf(v)
+	switch av.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		if rv.Kind() == av.Kind() {
+			rv.Set(av)
+			return true, nil
+		}
+		rv.Set(reflect.ValueOf(v).Convert(rv.Type()))
 		return true, nil
 	}
 	return false, nil
@@ -241,19 +183,23 @@ var UnifierEmptyInterface = UnifierFunc(func(a *Assembler, rv reflect.Value) (bo
 	}
 	rt := reflect.TypeOf(v)
 	switch rt.Kind() {
-	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8, reflect.String, reflect.Bool:
+	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8,
+		reflect.String, reflect.Bool,
+		reflect.Map, reflect.Slice:
 		rv.Set(reflect.ValueOf(v))
 		return true, nil
-	case reflect.Slice:
-		return UnifierSlice(a, rv)
-	case reflect.Map:
-		return UnifierMap(a, rv)
-	case reflect.Struct:
-		return UnifierStruct(a, rv)
 	}
 	return false, nil
 })
-var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+
+type structData struct {
+	assembler  *Assembler
+	valuemap   map[string]Part
+	civaluemap map[string]Part
+}
+
+func (d *structData) LoadValues() (bool, error) {
+	a := d.assembler
 	iter, err := a.Part().Iter()
 	if err != nil {
 		return false, err
@@ -261,22 +207,47 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	if iter == nil {
 		return false, nil
 	}
-	var valuemap = map[string]Part{}
-	var civaluemap = map[string]Part{}
+	d.valuemap = map[string]Part{}
+	d.civaluemap = map[string]Part{}
 	ci := !a.Config().CaseSensitive
 	for iter != nil {
 
-		valuemap[iter.Step.String()] = iter.Part
+		d.valuemap[iter.Step.String()] = iter.Part
 		if ci {
-			civaluemap[strings.ToLower(iter.Step.String())] = iter.Part
+			d.civaluemap[strings.ToLower(iter.Step.String())] = iter.Part
 		}
 		iter, err = iter.Next()
 		if err != nil {
 			return false, err
 		}
 	}
+	return true, nil
+}
+func (d *structData) IsAnonymous(field reflect.StructField, tag *Tag) bool {
+	if field.Type.Kind() != reflect.Struct {
+		return false
+	}
+	if tag.Ignored || tag.Name != "" {
+		return false
+	}
+	c := d.assembler.Config()
+	if c.TagAnonymous != "" && tag.Flags[c.TagAnonymous] != "" {
+		return true
+	}
+	if d.valuemap[field.Name] != nil {
+		return false
+	}
+	ci := !c.CaseSensitive
+	if ci && d.civaluemap[strings.ToLower(field.Name)] != nil {
+		return false
+	}
+	return true
+}
+func (d *structData) WalkStruct(rv reflect.Value) (bool, error) {
+	a := d.assembler
 	rt := rv.Type()
 	fl := rt.NumField()
+	ci := !a.Config().CaseSensitive
 	value := reflect.New(rt).Elem()
 	for i := 0; i < fl; i++ {
 		var part Part
@@ -290,14 +261,27 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 		if err != nil {
 			return false, err
 		}
+		if tag.Ignored {
+			continue
+		}
+		if d.IsAnonymous(field, tag) {
+			_, err := d.WalkStruct(fv)
+			if err != nil {
+				return false, err
+			}
+			continue
+		}
+		if err != nil {
+			return false, err
+		}
 		if tag.Name != "" {
-			part, ok = valuemap[tag.Name]
+			part, ok = d.valuemap[tag.Name]
 		}
 		if !ok {
-			part, ok = valuemap[field.Name]
+			part, ok = d.valuemap[field.Name]
 		}
 		if !ok && ci {
-			part, ok = civaluemap[strings.ToLower(field.Name)]
+			part, ok = d.civaluemap[strings.ToLower(field.Name)]
 		}
 		if !ok {
 			continue
@@ -310,6 +294,23 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	}
 	rv.Set(value)
 	return true, nil
+
+}
+func newStructData() *structData {
+	return &structData{
+		valuemap:   map[string]Part{},
+		civaluemap: map[string]Part{},
+	}
+}
+
+var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
+	sd := newStructData()
+	sd.assembler = a
+	ok, err := sd.LoadValues()
+	if ok == false || err != nil {
+		return ok, err
+	}
+	return sd.WalkStruct(rv)
 })
 
 var UnifierLazyLoadFunc = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
@@ -335,12 +336,12 @@ var UnifierPtr = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) 
 func SetCommonUnifiers(u *Unifiers) {
 	u.Append(TypeBool, UnifierBool)
 	u.Append(TypeString, UnifierString)
-	u.Append(TypeInt, UnifierInt)
-	u.Append(TypeUint, UnifierUint)
-	u.Append(TypeInt64, UnifierInt64)
-	u.Append(TypeUint64, UnifierUint64)
-	u.Append(TypeFloat32, UnifierFloat32)
-	u.Append(TypeFloat64, UnifierFloat64)
+	u.Append(TypeInt, UnifierNumber)
+	u.Append(TypeUint, UnifierNumber)
+	u.Append(TypeInt64, UnifierNumber)
+	u.Append(TypeUint64, UnifierNumber)
+	u.Append(TypeFloat32, UnifierNumber)
+	u.Append(TypeFloat64, UnifierNumber)
 	u.Append(TypeSlice, UnifierSlice)
 	u.Append(TypeMap, UnifierMap)
 	u.Append(TypeStruct, UnifierStruct)

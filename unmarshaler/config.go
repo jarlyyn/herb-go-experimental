@@ -10,6 +10,7 @@ type Config struct {
 	Unifiers                      *Unifiers
 	TagName                       string
 	TagLazyLoad                   string
+	TagAnonymous                  string
 	TagParser                     func(c *Config, value string) (*Tag, error)
 	CaseSensitive                 bool
 	DisableConvertStringInterface bool
@@ -52,10 +53,11 @@ func (c *Config) CheckType(a *Assembler, rt reflect.Type) (Type, error) {
 }
 func NewConfig() *Config {
 	return &Config{
-		TagParser:   ParseTag,
-		Unifiers:    &Unifiers{},
-		Checkers:    &TypeCheckers{},
-		TagLazyLoad: "lazyload",
+		TagParser:    ParseTag,
+		Unifiers:     &Unifiers{},
+		Checkers:     &TypeCheckers{},
+		TagLazyLoad:  "lazyload",
+		TagAnonymous: "anonymous",
 	}
 }
 

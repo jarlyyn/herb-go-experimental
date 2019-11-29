@@ -14,6 +14,12 @@ var testData = map[string]interface{}{
 	"FieldInt64":    int64(64),
 	"FieldInt64Ptr": int64(65),
 
+	"FieldFloat32":    float32(32.0),
+	"FieldFloat32Ptr": float32(33.0),
+
+	"FieldFloat64":    float32(64.0),
+	"FieldFloat64Ptr": float32(65.0),
+
 	"FieldBool":    true,
 	"FieldBoolPtr": true,
 
@@ -31,11 +37,35 @@ var testData = map[string]interface{}{
 
 	"FieldInterfaceMap":    map[string]interface{}{"key1": "elem1", "key2": "elem2"},
 	"FieldInterfaceMapPtr": map[string]interface{}{"key3": "elem3", "key4": "elem4"},
-
-	"LazyLoadFunc": "loaderfunc",
-	"LazyLoader":   "loader",
+	"FieldMap":             map[int]string{1: "1"},
+	"FieldSlice":           []string{"slice1"},
+	"LazyLoadFunc":         "loaderfunc",
+	"LazyLoader":           "loader",
+	"AnonymousValue":       "AnonymousValueStr",
+	"NamedAnonymousValue":  "NamedAnonymousValueStr",
+	"ExistAnonymous": map[string]interface{}{
+		"ExistAnonymousValue": "ExistAnonymousValueStr",
+	},
+	"ciexistanonymous": map[string]interface{}{
+		"ciexistanonymousValue": "CIExistAnonymousValueStr",
+	},
 }
 
+type Anonymous struct {
+	AnonymousValue string
+}
+
+type NamedAnonymous struct {
+	NamedAnonymousValue string
+}
+
+type ExistAnonymous struct {
+	ExistAnonymousValue string
+}
+
+type CIExistAnonymous struct {
+	CIExistAnonymousValue string
+}
 type testStruct struct {
 	NamedValue      string `config:"Value"`
 	CaseInsensitive string
@@ -51,6 +81,23 @@ type testStruct struct {
 	FieldEmptyInt64    int64
 	FieldInt64Ptr      *int64
 	FieldEmptyInt64Ptr *int64
+
+	FieldFloat32         int64
+	FieldEmptyFloat32    int64
+	FieldFloat32Ptr      *int64
+	FieldEmptyFloat32Ptr *int64
+
+	FieldFloat64         int64
+	FieldEmptyFloat64    int64
+	FieldFloat64Ptr      *int64
+	FieldEmptyFloat64Ptr *int64
+
+	FieldInt64ToInt     int     `config:"FieldInt64"`
+	FieldInt64ToFloat32 float32 `config:"FieldInt64"`
+	FieldInt64ToFloat64 float64 `config:"FieldInt64"`
+
+	FieldFloat64ToInt int `config:"FieldFloat64"`
+	FieldFloat32ToInt int `config:"FieldFloat32"`
 
 	FieldBool         bool
 	FieldEmptyBool    bool
@@ -83,6 +130,15 @@ type testStruct struct {
 	FieldEmptyStringMapPtr *map[string]interface{}
 	LazyLoadFunc           func(v interface{}) error `config:", lazyload"`
 	NamedLazyLoader        LazyLoader                `config:"LazyLoader,lazyload"`
+
+	FieldMap interface{}
+
+	FieldSlice interface{}
+
+	Anonymous
+	NamedAnonymous `config:"NamedAnonymousNotExist"`
+	ExistAnonymous
+	CIExistAnonymous
 }
 
 func TestAssembler(t *testing.T) {
@@ -119,6 +175,32 @@ func TestAssembler(t *testing.T) {
 		t.Fatal(v)
 	}
 	if v.FieldEmptyInt64Ptr != nil {
+		t.Fatal(v)
+	}
+
+	if v.FieldFloat32 != 32 {
+		t.Fatal(v)
+	}
+	if v.FieldEmptyFloat32 != 0 {
+		t.Fatal(v)
+	}
+	if v.FieldFloat32Ptr == nil || *v.FieldFloat32Ptr != 33 {
+		t.Fatal(v)
+	}
+	if v.FieldEmptyFloat32Ptr != nil {
+		t.Fatal(v)
+	}
+
+	if v.FieldFloat64 != 64 {
+		t.Fatal(v)
+	}
+	if v.FieldEmptyFloat64 != 0 {
+		t.Fatal(v)
+	}
+	if v.FieldFloat64Ptr == nil || *v.FieldFloat64Ptr != 65 {
+		t.Fatal(v)
+	}
+	if v.FieldEmptyFloat64Ptr != nil {
 		t.Fatal(v)
 	}
 
@@ -222,4 +304,37 @@ func TestAssembler(t *testing.T) {
 	if v.unexportedfield != "" {
 		t.Fatal(v)
 	}
+
+	if v.Anonymous.AnonymousValue != "AnonymousValueStr" {
+		t.Fatal(v)
+	}
+	if v.NamedAnonymous.NamedAnonymousValue != "" {
+		t.Fatal(v)
+	}
+	if v.ExistAnonymous.ExistAnonymousValue != "ExistAnonymousValueStr" {
+		t.Fatal(v)
+	}
+	if v.CIExistAnonymous.CIExistAnonymousValue != "CIExistAnonymousValueStr" {
+		t.Fatal(v)
+	}
+	m, ok := v.FieldMap.(map[int]string)
+	if !ok || m[1] != "1" {
+		t.Fatal(v)
+	}
+	s, ok := v.FieldSlice.([]string)
+	if !ok || s[0] != "slice1" {
+		t.Fatal(v)
+	}
+	if v.FieldInt64ToFloat64 != 64.0 {
+		t.Fatal(v)
+	}
+
+	if v.FieldFloat64ToInt != 64 {
+		t.Fatal(v)
+	}
+
+	if v.FieldFloat32ToInt != 32 {
+		t.Fatal(v)
+	}
+
 }
