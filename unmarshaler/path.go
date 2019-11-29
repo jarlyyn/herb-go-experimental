@@ -99,35 +99,52 @@ type Step interface {
 	Int() (int, bool)
 	Interface() interface{}
 }
-type Steps []Step
 
-func (s *Steps) Join(steps ...Step) Path {
-	p := s.Clone().(*Steps)
-	*p = append(*p, steps...)
-	return p
+// type Steps []Step
+
+// func (s *Steps) Join(steps Step) Path {
+// 	p := s.Clone().(*Steps)
+// 	*p = append(*p, steps)
+// 	return p
+// }
+// func (s *Steps) Clone() Path {
+// 	newpath := make([]Step, len(*s))
+// 	copy(newpath, *s)
+// 	p := Steps(newpath)
+// 	return &p
+// }
+// func (s *Steps) Unshift() (Step, Path) {
+// 	if len(*s) == 0 {
+// 		return nil, nil
+// 	}
+// 	steps := make([]Step, len(*s)-1)
+// 	copy(steps, (*s)[1:])
+// 	newpath := Steps(steps)
+// 	return (*s)[0], &newpath
+// }
+
+type Steps struct {
+	step   Step
+	parent *Steps
 }
-func (s *Steps) Clone() Path {
-	newpath := make([]Step, len(*s))
-	copy(newpath, *s)
-	p := Steps(newpath)
-	return &p
+
+func (s *Steps) Join(step Step) Path {
+	steps := NewSteps()
+	steps.parent = s
+	steps.step = step
+	return steps
 }
+
 func (s *Steps) Unshift() (Step, Path) {
-	if len(*s) == 0 {
-		return nil, nil
-	}
-	steps := make([]Step, len(*s)-1)
-	copy(steps, (*s)[1:])
-	newpath := Steps(steps)
-	return (*s)[0], &newpath
+	return s.step, s.parent
 }
+
 func NewSteps() *Steps {
-	s := Steps([]Step{})
+	s := Steps{}
 	return &s
 }
 
 type Path interface {
-	Join(...Step) Path
+	Join(Step) Path
 	Unshift() (Step, Path)
-	Clone() Path
 }
