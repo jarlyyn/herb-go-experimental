@@ -16,9 +16,6 @@ func (c *TypeCheckers) Append(checkers ...*TypeChecker) {
 func (c *TypeCheckers) Insert(checkers ...*TypeChecker) {
 	*c = TypeCheckers(append(checkers, *c...))
 }
-func getReflectType(v interface{}) reflect.Type {
-	return reflect.TypeOf(reflect.Indirect(reflect.ValueOf(v)))
-}
 
 var TypeCheckerString = &TypeChecker{
 	Type: TypeString,
