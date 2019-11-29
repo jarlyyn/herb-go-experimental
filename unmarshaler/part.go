@@ -1,7 +1,6 @@
 package unmarshaler
 
 type Part interface {
-	Child(step Step) (Part, error)
 	Iter() (*PartIter, error)
 	Value() (interface{}, error)
 }
