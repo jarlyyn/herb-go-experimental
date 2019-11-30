@@ -8,7 +8,6 @@ type Assembler struct {
 	config *Config
 	part   Part
 	path   Path
-	parent reflect.Type
 	step   Step
 }
 
@@ -26,21 +25,19 @@ func (a *Assembler) WithConfig(c *Config) *Assembler {
 		config: c,
 		part:   a.part,
 		path:   a.path,
-		parent: a.parent,
 		step:   a.step,
 	}
 }
 
 func (a *Assembler) WithPart(p Part) *Assembler {
-	return a.WithChild(p, nil, nil)
+	return a.WithChild(p, nil)
 }
 
-func (a *Assembler) WithChild(p Part, parent reflect.Type, step Step) *Assembler {
+func (a *Assembler) WithChild(p Part, step Step) *Assembler {
 	return &Assembler{
 		config: a.config,
 		part:   p,
 		path:   a.path.Join(step),
-		parent: parent,
 		step:   step,
 	}
 }
@@ -58,10 +55,6 @@ func (a *Assembler) Path() Path {
 
 func (a *Assembler) Step() Step {
 	return a.step
-}
-
-func (a *Assembler) Parent() reflect.Type {
-	return a.parent
 }
 
 var EmptyAssembler = &Assembler{

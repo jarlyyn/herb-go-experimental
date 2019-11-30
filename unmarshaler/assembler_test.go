@@ -2,6 +2,10 @@ package unmarshaler
 
 import "testing"
 
+type testSubStruct struct {
+	SubStructValue string
+}
+
 var testData = map[string]interface{}{
 	"Value":              "value",
 	"caseinsensitive":    "ci",
@@ -50,6 +54,9 @@ var testData = map[string]interface{}{
 	},
 	"ciexistanonymous": map[string]interface{}{
 		"ciexistanonymousValue": "CIExistAnonymousValueStr",
+	},
+	"SubStruct": testSubStruct{
+		SubStructValue: "SubStructValueStr",
 	},
 }
 
@@ -141,6 +148,7 @@ type testStruct struct {
 	NamedAnonymous `config:"NamedAnonymousNotExist"`
 	ExistAnonymous
 	CIExistAnonymous
+	SubStruct testSubStruct
 }
 
 func TestAssembler(t *testing.T) {
@@ -341,6 +349,10 @@ func TestAssembler(t *testing.T) {
 	}
 
 	if v.FieldFloat32ToInt != 32 {
+		t.Fatal(v)
+	}
+
+	if v.SubStruct.SubStructValue != "SubStructValueStr" {
 		t.Fatal(v)
 	}
 

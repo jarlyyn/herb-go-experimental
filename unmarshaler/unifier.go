@@ -136,7 +136,7 @@ var UnifierSlice = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error
 	for iter != nil {
 		if iter.Step.Type() == TypeArray {
 			v := reflect.New(rv.Type().Elem()).Elem()
-			_, err = a.Config().Unifiers.UnifyReflectValue(a.WithChild(iter.Part, rv.Type(), iter.Step), v)
+			_, err = a.Config().Unifiers.UnifyReflectValue(a.WithChild(iter.Part, iter.Step), v)
 			if err != nil {
 				return false, err
 			}
@@ -359,7 +359,7 @@ func (d *structData) WalkStruct(rv reflect.Value) (bool, error) {
 		if !ok {
 			continue
 		}
-		_, err = a.Config().Unifiers.UnifyReflectValue(a.WithChild(part, rt, NewFieldStep(&field)), fv)
+		_, err = a.Config().Unifiers.UnifyReflectValue(a.WithChild(part, NewFieldStep(&field)), fv)
 		if err != nil {
 			return false, err
 		}
@@ -380,8 +380,17 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	sd := newStructData()
 	sd.assembler = a
 	ok, err := sd.LoadValues()
-	if ok == false || err != nil {
-		return ok, err
+	if err != nil {
+		return false, err
+	}
+	if ok == false {
+		v, err := a.Part().Value()
+		if err != nil {
+			return false, err
+		}
+		prv := reflect.Indirect(reflect.ValueOf(v))
+		rv.Set(prv)
+		return true, nil
 	}
 	return sd.WalkStruct(rv)
 })
