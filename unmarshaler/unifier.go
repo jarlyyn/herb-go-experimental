@@ -176,18 +176,91 @@ var UnifierMap = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) 
 	return true, nil
 })
 
+func convertIterToArray(iter *PartIter) ([]interface{}, error) {
+	a := []interface{}{}
+	for iter != nil {
+		pv, err := iter.Part.Value()
+		if err != nil {
+			return nil, err
+		}
+		a = append(a, pv)
+		iter, err = iter.Next()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
+}
+
+func convertIterToStringMap(iter *PartIter) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	for iter != nil {
+		pv, err := iter.Part.Value()
+		if err != nil {
+			return nil, err
+		}
+		m[iter.Step.String()] = pv
+		iter, err = iter.Next()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return m, nil
+}
+func convertIterToInterfaceMap(iter *PartIter) (map[interface{}]interface{}, error) {
+	m := map[interface{}]interface{}{}
+	for iter != nil {
+		pv, err := iter.Part.Value()
+		if err != nil {
+			return nil, err
+		}
+		m[iter.Step.Interface()] = pv
+		iter, err = iter.Next()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return m, nil
+}
+func convertIter(i *PartIter) (interface{}, error) {
+	switch i.Step.Type() {
+	case TypeArray:
+		return convertIterToArray(i)
+	case TypeString:
+		return convertIterToStringMap(i)
+	case TypeEmptyInterface:
+		return convertIterToInterfaceMap(i)
+	}
+	return nil, nil
+}
+
 var UnifierEmptyInterface = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
-	v, err := a.Part().Value()
+	iter, err := a.Part().Iter()
 	if err != nil {
 		return false, err
 	}
-	rt := reflect.TypeOf(v)
-	switch rt.Kind() {
-	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8,
-		reflect.String, reflect.Bool,
-		reflect.Map, reflect.Slice:
-		rv.Set(reflect.ValueOf(v))
-		return true, nil
+	if iter == nil {
+		v, err := a.Part().Value()
+		if err != nil {
+			return false, err
+		}
+		rt := reflect.TypeOf(v)
+		switch rt.Kind() {
+		case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8,
+			reflect.String, reflect.Bool,
+			reflect.Map, reflect.Slice:
+			rv.Set(reflect.ValueOf(v))
+			return true, nil
+		}
+	} else {
+		val, err := convertIter(iter)
+		if err != nil {
+			return false, err
+		}
+		if val == nil {
+			return false, nil
+		}
+		rv.Set(reflect.ValueOf(val))
 	}
 	return false, nil
 })

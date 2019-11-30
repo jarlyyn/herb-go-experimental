@@ -6,22 +6,6 @@ import (
 	"strconv"
 )
 
-type NilStep struct {
-}
-
-func (s *NilStep) Type() interface{} {
-	return TypeEmptyInterface
-}
-func (s *NilStep) String() string {
-	return ""
-}
-func (s *NilStep) Int() (int, bool) {
-	return 0, false
-}
-func (s *NilStep) Interface() interface{} {
-	return nil
-}
-
 type InterfaceStep struct {
 	value interface{}
 }

@@ -37,12 +37,14 @@ var testData = map[string]interface{}{
 
 	"FieldInterfaceMap":    map[string]interface{}{"key1": "elem1", "key2": "elem2"},
 	"FieldInterfaceMapPtr": map[string]interface{}{"key3": "elem3", "key4": "elem4"},
-	"FieldMap":             map[int]string{1: "1"},
-	"FieldSlice":           []string{"slice1"},
-	"LazyLoadFunc":         "loaderfunc",
-	"LazyLoader":           "loader",
-	"AnonymousValue":       "AnonymousValueStr",
-	"NamedAnonymousValue":  "NamedAnonymousValueStr",
+
+	"FieldMap":   map[int]string{1: "1"},
+	"FieldSlice": []string{"slice1"},
+
+	"LazyLoadFunc":        "loaderfunc",
+	"LazyLoader":          "loader",
+	"AnonymousValue":      "AnonymousValueStr",
+	"NamedAnonymousValue": "NamedAnonymousValueStr",
 	"ExistAnonymous": map[string]interface{}{
 		"ExistAnonymousValue": "ExistAnonymousValueStr",
 	},
@@ -131,8 +133,8 @@ type testStruct struct {
 	LazyLoadFunc           func(v interface{}) error `config:", lazyload"`
 	NamedLazyLoader        LazyLoader                `config:"LazyLoader,lazyload"`
 
-	FieldMap interface{}
-
+	FieldMap   interface{}
+	FieldSMap  interface{} `config:"FieldStringMap"`
 	FieldSlice interface{}
 
 	Anonymous
@@ -317,11 +319,16 @@ func TestAssembler(t *testing.T) {
 	if v.CIExistAnonymous.CIExistAnonymousValue != "CIExistAnonymousValueStr" {
 		t.Fatal(v)
 	}
-	m, ok := v.FieldMap.(map[int]string)
+	m, ok := v.FieldMap.(map[interface{}]interface{})
 	if !ok || m[1] != "1" {
 		t.Fatal(v)
 	}
-	s, ok := v.FieldSlice.([]string)
+
+	ms, ok := v.FieldSMap.(map[string]interface{})
+	if !ok || ms["key1"] != "elem1" {
+		t.Fatal(v)
+	}
+	s, ok := v.FieldSlice.([]interface{})
 	if !ok || s[0] != "slice1" {
 		t.Fatal(v)
 	}
