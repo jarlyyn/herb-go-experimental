@@ -57,6 +57,17 @@ func (a *Assembler) Step() Step {
 	return a.step
 }
 
+func (a *Assembler) SetValue(dst, src reflect.Value) error {
+	if !src.CanSet() {
+
+	}
+	if !dst.Type().AssignableTo(src.Type()) {
+
+	}
+	dst.Set(src)
+	return nil
+}
+
 var EmptyAssembler = &Assembler{
 	path: NewSteps(),
 }
