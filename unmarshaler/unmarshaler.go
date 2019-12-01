@@ -16,3 +16,11 @@ func (c *DataConverter) Marshal(v interface{}) ([]byte, error) {
 func (c *DataConverter) Unmarshal(data []byte, v interface{}) error {
 	return c.unmarshaler(data, v)
 }
+
+func (c *DataConverter) SetMarshaler(f func(v interface{}) ([]byte, error)) {
+	c.marshaler = f
+}
+
+func (c *DataConverter) SetUnmarshaler(f func(data []byte, v interface{}) error) {
+	c.unmarshaler = f
+}
