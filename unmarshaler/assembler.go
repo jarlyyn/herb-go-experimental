@@ -11,9 +11,6 @@ type Assembler struct {
 	step   Step
 }
 
-func (a *Assembler) Value() (interface{}, error) {
-	return a.part.Value()
-}
 func (a *Assembler) Assemble(v interface{}) (ok bool, err error) {
 	return a.config.Unifiers.Unify(a, v)
 }
