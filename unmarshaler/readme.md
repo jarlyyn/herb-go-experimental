@@ -11,7 +11,13 @@
 * map
 * 通过tag指定的 LazyLoadFunc 懒读取函数
 * 通过tag指定的 LazyLoader 懒读取接口
-* interface{} 需要解析到以上任意类型
+* interface{} 
+
+interface{} 解析出的数据取决于传入的Part的Iter字段的Step类型
+* 如果为nil,即不可遍历，解析为part的Value返回值
+* 如果为TypeArray，即数组对象，解析为[]interface{}
+* 如果为TypeString，解析为map[string]interface{}
+* 如果为TypeEmptyInterface ,解析为map[interface{}]interface{}
 
 
 ## 匿名字段规则
