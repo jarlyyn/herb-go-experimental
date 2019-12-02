@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type InterfaceStep struct {
@@ -124,4 +125,14 @@ func NewSteps() *Steps {
 type Path interface {
 	Join(Step) Path
 	Unshift() (Step, Path)
+}
+
+func ConvertPathToString(p Path) string {
+	var results = []string{}
+	var step Step
+	for p != nil {
+		step, p = p.Unshift()
+		results = append(results, step.String())
+	}
+	return strings.Join(results, ".")
 }

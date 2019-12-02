@@ -12,7 +12,11 @@ type Assembler struct {
 }
 
 func (a *Assembler) Assemble(v interface{}) (ok bool, err error) {
-	return a.config.Unifiers.Unify(a, v)
+	ok, err = a.config.Unifiers.Unify(a, v)
+	if err != nil {
+		return ok, NewAssemblerError(a, err)
+	}
+	return ok, nil
 }
 func (a *Assembler) CheckType(rt reflect.Type) (tp Type, err error) {
 	return a.Config().CheckType(a, rt)
@@ -52,17 +56,6 @@ func (a *Assembler) Path() Path {
 
 func (a *Assembler) Step() Step {
 	return a.step
-}
-
-func (a *Assembler) SetValue(dst, src reflect.Value) error {
-	if !src.CanSet() {
-
-	}
-	if !dst.Type().AssignableTo(src.Type()) {
-
-	}
-	dst.Set(src)
-	return nil
 }
 
 var EmptyAssembler = &Assembler{

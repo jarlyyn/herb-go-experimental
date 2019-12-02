@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+func SetValue(dst, src reflect.Value) error {
+	if !dst.CanSet() {
+		return ErrNotSetable
+	}
+	if !src.Type().AssignableTo(dst.Type()) {
+		return ErrNotAssignable
+	}
+	dst.Set(src)
+	return nil
+}
+
 type Unifier interface {
 	Unify(a *Assembler, rv reflect.Value) (bool, error)
 }
@@ -73,7 +84,7 @@ var UnifierBool = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error)
 	}
 	s, ok := v.(bool)
 	if ok {
-		err = a.SetValue(rv, reflect.ValueOf(s))
+		err = SetValue(rv, reflect.ValueOf(s))
 		if err != nil {
 			return false, err
 		}
@@ -89,7 +100,7 @@ var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	}
 	s, ok := v.(string)
 	if ok {
-		err = a.SetValue(rv, reflect.ValueOf(s))
+		err = SetValue(rv, reflect.ValueOf(s))
 		if err != nil {
 			return false, err
 		}
@@ -98,7 +109,7 @@ var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	if !a.Config().DisableConvertStringInterface {
 		i, ok := v.(String)
 		if ok {
-			err = a.SetValue(rv, reflect.ValueOf(i))
+			err = SetValue(rv, reflect.ValueOf(i))
 			if err != nil {
 				return false, err
 			}
@@ -119,13 +130,13 @@ var UnifierNumber = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint64,
 		reflect.Float32, reflect.Float64:
 		if rv.Kind() == av.Kind() {
-			err = a.SetValue(rv, av)
+			err = SetValue(rv, av)
 			if err != nil {
 				return false, err
 			}
 			return true, nil
 		}
-		err = a.SetValue(rv, reflect.ValueOf(v).Convert(rv.Type()))
+		err = SetValue(rv, reflect.ValueOf(v).Convert(rv.Type()))
 		if err != nil {
 			return false, err
 		}
@@ -157,7 +168,7 @@ var UnifierSlice = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error
 			return false, err
 		}
 	}
-	err = a.SetValue(rv, sv)
+	err = SetValue(rv, sv)
 	if err != nil {
 		return false, err
 	}
@@ -185,7 +196,7 @@ var UnifierMap = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) 
 			return false, err
 		}
 	}
-	err = a.SetValue(rv, mv)
+	err = SetValue(rv, mv)
 	if err != nil {
 		return false, err
 	}
@@ -265,7 +276,7 @@ var UnifierEmptyInterface = UnifierFunc(func(a *Assembler, rv reflect.Value) (bo
 		case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8,
 			reflect.String, reflect.Bool,
 			reflect.Map, reflect.Slice:
-			err = a.SetValue(rv, reflect.ValueOf(v))
+			err = SetValue(rv, reflect.ValueOf(v))
 			if err != nil {
 				return false, err
 			}
@@ -279,7 +290,7 @@ var UnifierEmptyInterface = UnifierFunc(func(a *Assembler, rv reflect.Value) (bo
 		if val == nil {
 			return false, nil
 		}
-		err = a.SetValue(rv, reflect.ValueOf(val))
+		err = SetValue(rv, reflect.ValueOf(val))
 		if err != nil {
 			return false, err
 		}
@@ -387,7 +398,7 @@ func (d *structData) WalkStruct(rv reflect.Value) (bool, error) {
 		}
 
 	}
-	err := a.SetValue(rv, value)
+	err := SetValue(rv, value)
 	if err != nil {
 		return false, err
 	}
@@ -414,7 +425,7 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 			return false, err
 		}
 		prv := reflect.Indirect(reflect.ValueOf(v))
-		err = a.SetValue(rv, prv)
+		err = SetValue(rv, prv)
 		if err != nil {
 			return false, err
 		}
@@ -426,7 +437,7 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 var UnifierLazyLoadFunc = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	l := NewLazyLoader()
 	l.Assembler = a
-	err := a.SetValue(rv, reflect.ValueOf(l.LazyLoad))
+	err := SetValue(rv, reflect.ValueOf(l.LazyLoad))
 	if err != nil {
 		return false, err
 	}
@@ -436,7 +447,7 @@ var UnifierLazyLoadFunc = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool
 var UnifierLazyLoader = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	l := NewLazyLoader()
 	l.Assembler = a
-	err := a.SetValue(rv, reflect.ValueOf(l))
+	err := SetValue(rv, reflect.ValueOf(l))
 	if err != nil {
 		return false, err
 	}
@@ -445,7 +456,7 @@ var UnifierLazyLoader = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, 
 
 var UnifierPtr = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v := reflect.New(rv.Type().Elem())
-	err := a.SetValue(rv, v)
+	err := SetValue(rv, v)
 	if err != nil {
 		return false, err
 	}
