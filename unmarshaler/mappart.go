@@ -4,15 +4,20 @@ import (
 	"reflect"
 )
 
+//MapPart assembler interface map part struct
 type MapPart struct {
 	value interface{}
 }
 
+//NewMapPart create new map part
 func NewMapPart(v interface{}) *MapPart {
 	return &MapPart{
 		value: v,
 	}
 }
+
+//Value return part value as empty interface.
+//Shold only used when part is not iterable
 func (d *MapPart) Value() (interface{}, error) {
 	return d.value, nil
 }
@@ -49,6 +54,9 @@ func (d *MapPart) arrayIter(rv reflect.Value) (*PartIter, error) {
 	}
 	return mes.Next()
 }
+
+//Iter return part iter.
+//Nil should be returned If part is not iterable.
 func (d *MapPart) Iter() (*PartIter, error) {
 	v, err := d.Value()
 	if err != nil {
