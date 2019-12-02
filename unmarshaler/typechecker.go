@@ -107,11 +107,11 @@ var TypeCheckerLazyLoadFunc = &TypeChecker{
 			return false, nil
 		}
 		field := step.Interface().(reflect.StructField)
-		tags, err := a.Config().GetTags(rt, field)
+		tag, err := a.Config().GetTag(rt, field)
 		if err != nil {
 			return false, err
 		}
-		return rt.Kind() == reflect.Func && tags != nil && tags.Flags[lt] != "", nil
+		return rt.Kind() == reflect.Func && tag != nil && tag.Flags[lt] != "", nil
 	},
 }
 var TypeCheckerLazyLoader = &TypeChecker{
@@ -126,11 +126,11 @@ var TypeCheckerLazyLoader = &TypeChecker{
 			return false, nil
 		}
 		field := step.Interface().(reflect.StructField)
-		tags, err := a.Config().GetTags(rt, field)
+		tag, err := a.Config().GetTag(rt, field)
 		if err != nil {
 			return false, err
 		}
-		return rt.Kind() == reflect.Interface && tags != nil && tags.Flags[lt] != "", nil
+		return rt.Kind() == reflect.Interface && tag != nil && tag.Flags[lt] != "", nil
 	},
 }
 var TypeCheckerPtr = &TypeChecker{

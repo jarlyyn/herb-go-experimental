@@ -5,20 +5,37 @@ import (
 	"sync"
 )
 
+//Config assembler config struct
 type Config struct {
-	Checkers                      *TypeCheckers
-	Unifiers                      *Unifiers
-	TagName                       string
-	TagLazyLoad                   string
-	TagAnonymous                  string
-	TagParser                     func(c *Config, value string) (*Tag, error)
-	CaseSensitive                 bool
+	//Checkers registered type checkers
+	Checkers *TypeCheckers
+	//Unifiers registered unifiers
+	Unifiers *Unifiers
+	//TagName tag name used when parsed.
+	//Tag will not be parsed if set to empty string
+	//Default value is config
+	TagName string
+	//TagLazyLoad tag for lazyload
+	//Default value is lazyload
+	TagLazyLoad string
+	//TagAnonymous tag for anonymous
+	//Default value is anonymous
+	TagAnonymous string
+	//TagParser func which parses tags with given config
+	TagParser func(c *Config, value string) (*Tag, error)
+	//CaseSensitive convert struct field in case sensitive mode.
+	CaseSensitive bool
+	//DisableConvertStringInterface disable convert String interface to string field
 	DisableConvertStringInterface bool
-	DisableConvertNumber          bool
-	CachedTags                    sync.Map
+	//DisableConvertNumber disable numver converting
+	DisableConvertNumber bool
+	//CachedTags cached struct field tags
+	CachedTags sync.Map
 }
 
-func (c *Config) GetTags(structType reflect.Type, field reflect.StructField) (*Tag, error) {
+//GetTag get tags for given reflect type and struct field.
+//Return tag and any error if raised
+func (c *Config) GetTag(structType reflect.Type, field reflect.StructField) (*Tag, error) {
 	if c.TagName == "" {
 		return nil, nil
 	}
@@ -39,6 +56,8 @@ func (c *Config) GetTags(structType reflect.Type, field reflect.StructField) (*T
 	return c.TagParser(c, field.Tag.Get(c.TagName))
 }
 
+//CheckType check type with given assembler and reflect type.
+//Return type and any error if raised.
 func (c *Config) CheckType(a *Assembler, rt reflect.Type) (Type, error) {
 	for _, v := range *c.Checkers {
 		ok, err := v.CheckType(a, rt)
@@ -51,6 +70,8 @@ func (c *Config) CheckType(a *Assembler, rt reflect.Type) (Type, error) {
 	}
 	return TypeUnkonwn, nil
 }
+
+//NewConfig create new config.
 func NewConfig() *Config {
 	return &Config{
 		TagParser:    ParseTag,
@@ -61,6 +82,7 @@ func NewConfig() *Config {
 	}
 }
 
+//NewCommonConfig create new common config
 func NewCommonConfig() *Config {
 	c := NewConfig()
 	c.TagName = "config"

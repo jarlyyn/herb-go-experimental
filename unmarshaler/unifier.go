@@ -363,7 +363,7 @@ func (d *structData) WalkStruct(rv reflect.Value) (bool, error) {
 			continue
 		}
 		fv := value.Field(i)
-		tag, err := a.Config().GetTags(rt, field)
+		tag, err := a.Config().GetTag(rt, field)
 		if err != nil {
 			return false, err
 		}
