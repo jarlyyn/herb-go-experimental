@@ -86,7 +86,7 @@ func NewConfig() *Config {
 func NewCommonConfig() *Config {
 	c := NewConfig()
 	c.TagName = "config"
-	SetCommonTypeCheckers(c.Checkers)
-	SetCommonUnifiers(c.Unifiers)
+	c.Checkers.AppendWith(CommonTypeCheckers)
+	c.Unifiers.AppendWith(CommonUnifiers)
 	return c
 }

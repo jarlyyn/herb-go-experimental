@@ -15,11 +15,19 @@ type Assembler struct {
 //Assemble assemble data to given value.
 //Return assemble result and any error if raised.
 func (a *Assembler) Assemble(v interface{}) (ok bool, err error) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			err = r.(error)
+			if err == nil {
+				panic(r)
+			}
+			ok = false
+			err = NewAssemblerError(a, err)
+		}
+	}()
 	ok, err = a.config.Unifiers.Unify(a, v)
-	if err != nil {
-		return ok, NewAssemblerError(a, err)
-	}
-	return ok, nil
+	return ok, NewAssemblerError(a, err)
 }
 
 //CheckType check given reflect type type.

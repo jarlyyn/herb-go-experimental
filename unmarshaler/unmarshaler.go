@@ -1,26 +1,35 @@
 package unmarshaler
 
+import (
+	"fmt"
+)
+
+//Unmarshaler unmarshaler interface
 type Unmarshaler interface {
+	//Unmarshal data to giver interface.
+	//Return any error if raised.
 	Unmarshal(data []byte, v interface{}) error
 }
 
-type DataConverter struct {
-	marshaler   func(v interface{}) ([]byte, error)
-	unmarshaler func(data []byte, v interface{}) error
+//unmarshalers all registered unmarshaler
+var unmarshalers = map[string]Unmarshaler{}
+
+//RegisterUnmarshaler register unmarshaler with given name.
+func RegisterUnmarshaler(name string, u Unmarshaler) {
+	unmarshalers[name] = u
 }
 
-func (c *DataConverter) Marshal(v interface{}) ([]byte, error) {
-	return c.marshaler(v)
+//UnregisterAllUnmarshaler unreister all unmarshaler.
+func UnregisterAllUnmarshaler() {
+	unmarshalers = map[string]Unmarshaler{}
 }
 
-func (c *DataConverter) Unmarshal(data []byte, v interface{}) error {
-	return c.unmarshaler(data, v)
-}
-
-func (c *DataConverter) SetMarshaler(f func(v interface{}) ([]byte, error)) {
-	c.marshaler = f
-}
-
-func (c *DataConverter) SetUnmarshaler(f func(data []byte, v interface{}) error) {
-	c.unmarshaler = f
+//Unmarshal unmarshal byte slice to data by given munarshaler.
+//Return any error if raised
+func Unmarshal(name string, data []byte, v interface{}) error {
+	u := unmarshalers[name]
+	if u == nil {
+		return fmt.Errorf("unmarshaler : %w (%s)", ErrUnmarshalerNotRegistered, name)
+	}
+	return u.Unmarshal(data, v)
 }

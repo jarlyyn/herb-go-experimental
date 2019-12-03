@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+//SetValue set src value to dst.
+//return any error if rasied
 func SetValue(dst, src reflect.Value) error {
 	if !dst.CanSet() {
 		return ErrNotSetable
@@ -16,19 +18,27 @@ func SetValue(dst, src reflect.Value) error {
 	return nil
 }
 
+//Unifier unifier interface
 type Unifier interface {
+	//Unify unify value from assembler to reflect value
+	//Return whether unify successed or any error rasied
 	Unify(a *Assembler, rv reflect.Value) (bool, error)
 }
 
+//Unifiers unifier map grouped by type
 type Unifiers map[Type][]Unifier
 
+//Unify unify value from assembler to given interface
+//Return whether unify successed or any error rasied
 func (u *Unifiers) Unify(a *Assembler, v interface{}) (bool, error) {
 	rv := reflect.Indirect(reflect.ValueOf(v))
 
 	return u.UnifyReflectValue(a, rv)
 }
+
+//UnifyReflectValue unify value from assembler to reflect value
+//Return whether unify successed or any error rasied
 func (u *Unifiers) UnifyReflectValue(a *Assembler, rv reflect.Value) (bool, error) {
-	// rv = reflect.Indirect(rv)
 	tp, err := a.CheckType(rv.Type())
 	if err != nil {
 		return false, err
@@ -52,31 +62,67 @@ func (u *Unifiers) UnifyReflectValue(a *Assembler, rv reflect.Value) (bool, erro
 	return false, nil
 
 }
-func (u *Unifiers) Append(tp Type, unifier Unifier) {
+
+//Append append unifier to last by given type
+func (u *Unifiers) Append(tp Type, unifier Unifier) *Unifiers {
 	m := (*u)
 	v := m[tp]
 	v = append(v, unifier)
 	m[tp] = v
 	*u = m
+	return u
 }
-func (u *Unifiers) Insert(tp Type, unifier Unifier) {
+
+//AppendWith append with given unifiers
+func (u *Unifiers) AppendWith(unifiers *Unifiers) *Unifiers {
+	for k, v := range *unifiers {
+		for i := range v {
+			u.Append(k, v[i])
+		}
+	}
+	return u
+}
+
+//Insert insert unifier to first by given type
+func (u *Unifiers) Insert(tp Type, unifier Unifier) *Unifiers {
 	m := (*u)
 	v := []Unifier{unifier}
 	v = append(v, m[tp]...)
 	m[tp] = v
 	*u = m
-
+	return u
 }
 
+//InsertWith insert with given unifiers
+func (u *Unifiers) InsertWith(unifiers *Unifiers) *Unifiers {
+	for k, v := range *unifiers {
+		for i := range v {
+			u.Append(k, v[i])
+		}
+	}
+	return u
+}
+
+//NewUnifiers create new unifiers.
+func NewUnifiers() *Unifiers {
+	return &Unifiers{}
+}
+
+//String interface
 type String interface {
 	String() string
 }
+
+//UnifierFunc unifier func type
 type UnifierFunc func(a *Assembler, rv reflect.Value) (bool, error)
 
+//Unify unify value from assembler to reflect value
+//Return whether unify successed or any error rasied
 func (f UnifierFunc) Unify(a *Assembler, rv reflect.Value) (bool, error) {
 	return f(a, rv)
 }
 
+//UnifierBool unifier for bool field
 var UnifierBool = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v, err := a.Part().Value()
 	if err != nil {
@@ -93,6 +139,7 @@ var UnifierBool = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error)
 	return false, nil
 })
 
+//UnifierString unifier for string field
 var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v, err := a.Part().Value()
 	if err != nil {
@@ -119,6 +166,7 @@ var UnifierString = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	return false, nil
 })
 
+//UnifierNumber unifier for number field
 var UnifierNumber = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v, err := a.Part().Value()
 	if err != nil {
@@ -145,6 +193,7 @@ var UnifierNumber = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	return false, nil
 })
 
+//UnifierSlice unifier for slice field
 var UnifierSlice = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	iter, err := a.Part().Iter()
 	if err != nil {
@@ -175,6 +224,7 @@ var UnifierSlice = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error
 	return true, nil
 })
 
+//UnifierMap unifier for map field
 var UnifierMap = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	iter, err := a.Part().Iter()
 	if err != nil {
@@ -261,6 +311,7 @@ func convertIter(i *PartIter) (interface{}, error) {
 	return nil, nil
 }
 
+//UnifierEmptyInterface unifier for empty interface field
 var UnifierEmptyInterface = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	iter, err := a.Part().Iter()
 	if err != nil {
@@ -304,6 +355,9 @@ type structData struct {
 	civaluemap map[string]Part
 }
 
+//LoadValues load values form assembler to struct data
+//Return whether load successed and any error if raised
+//Load will fail if iter is nil
 func (d *structData) LoadValues() (bool, error) {
 	a := d.assembler
 	iter, err := a.Part().Iter()
@@ -329,6 +383,8 @@ func (d *structData) LoadValues() (bool, error) {
 	}
 	return true, nil
 }
+
+//IsAnonymous return if given field with tag is anonymous
 func (d *structData) IsAnonymous(field reflect.StructField, tag *Tag) bool {
 	if field.Type.Kind() != reflect.Struct {
 		return false
@@ -349,6 +405,8 @@ func (d *structData) IsAnonymous(field reflect.StructField, tag *Tag) bool {
 	}
 	return true
 }
+
+//WalkStruct walk struct fields of given reflect value and set field values
 func (d *structData) WalkStruct(rv reflect.Value) (bool, error) {
 	a := d.assembler
 	rt := rv.Type()
@@ -405,6 +463,8 @@ func (d *structData) WalkStruct(rv reflect.Value) (bool, error) {
 	return true, nil
 
 }
+
+//newStructData create new struct data
 func newStructData() *structData {
 	return &structData{
 		valuemap:   map[string]Part{},
@@ -412,6 +472,7 @@ func newStructData() *structData {
 	}
 }
 
+//UnifierStruct unifier for struct
 var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	sd := newStructData()
 	sd.assembler = a
@@ -434,6 +495,7 @@ var UnifierStruct = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, erro
 	return sd.WalkStruct(rv)
 })
 
+//UnifierLazyLoadFunc unifier for lazyload func
 var UnifierLazyLoadFunc = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	l := NewLazyLoader()
 	l.Assembler = a
@@ -444,6 +506,7 @@ var UnifierLazyLoadFunc = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool
 	return true, nil
 })
 
+//UnifierLazyLoader unifier for lazy loader
 var UnifierLazyLoader = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	l := NewLazyLoader()
 	l.Assembler = a
@@ -454,6 +517,7 @@ var UnifierLazyLoader = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, 
 	return true, nil
 })
 
+//UnifierPtr unifier for pointer
 var UnifierPtr = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) {
 	v := reflect.New(rv.Type().Elem())
 	err := SetValue(rv, v)
@@ -463,7 +527,9 @@ var UnifierPtr = UnifierFunc(func(a *Assembler, rv reflect.Value) (bool, error) 
 	return a.Config().Unifiers.UnifyReflectValue(a, v.Elem())
 })
 
-func SetCommonUnifiers(u *Unifiers) {
+//DefaultCommonUnifiers return default common unifiers
+func DefaultCommonUnifiers() *Unifiers {
+	var u = NewUnifiers()
 	u.Append(TypeBool, UnifierBool)
 	u.Append(TypeString, UnifierString)
 	u.Append(TypeInt, UnifierNumber)
@@ -479,5 +545,8 @@ func SetCommonUnifiers(u *Unifiers) {
 	u.Append(TypeEmptyInterface, UnifierEmptyInterface)
 	u.Append(TypeLazyLoadFunc, UnifierLazyLoadFunc)
 	u.Append(TypeLazyLoader, UnifierLazyLoader)
-
+	return u
 }
+
+//CommonUnifiers common unifiers user in NewCommonConfig
+var CommonUnifiers = NewUnifiers().AppendWith(DefaultCommonUnifiers())
