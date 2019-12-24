@@ -10,7 +10,7 @@ const ScopeSnsapiBase = "snsapi_base"
 const ScopeSnsapiUserinfo = "snsapi_userinfo"
 
 var Server = fetcher.MustPreset(&fetcher.ServerInfo{
-	Host: "https://api.weixin.qq.com",
+	URL: "https://api.weixin.qq.com",
 })
 
 var APIGetUserInfo = Server.EndPoint("GET", "/sns/userinfo")
