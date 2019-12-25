@@ -57,7 +57,7 @@ func (a *App) GetAccessToken() (string, error) {
 	resp, err := fetcher.DoAndParse(
 		&a.Client,
 		APIToken.With(a.ClientCredentialBuilder()),
-		fetcher.ShouldOK(fetcher.AsJSON(result)),
+		fetcher.Should200(fetcher.AsJSON(result)),
 	)
 	if err != nil {
 		return "", err
@@ -104,7 +104,7 @@ func (a *App) callApiWithAccessToken(api *fetcher.Preset, APIPresetBuilder func(
 	if err != nil {
 		return err
 	}
-	resp, err := fetcher.DoAndParse(&a.Client, preset, fetcher.ShouldOK(fetcher.AsJSON(apierr)))
+	resp, err := fetcher.DoAndParse(&a.Client, preset, fetcher.Should200(fetcher.AsJSON(apierr)))
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (a *App) callApiWithAccessToken(api *fetcher.Preset, APIPresetBuilder func(
 				return err
 			}
 			apierr = &ResultAPIError{}
-			resp, err = fetcher.DoAndParse(&a.Client, preset, fetcher.ShouldOK(fetcher.AsJSON(apierr)))
+			resp, err = fetcher.DoAndParse(&a.Client, preset, fetcher.Should200(fetcher.AsJSON(apierr)))
 			if err != nil {
 				return err
 			}
@@ -145,7 +145,7 @@ func (a *App) GetUserInfo(code string, scope string, lang string) (*Userinfo, er
 	resp, err := fetcher.DoAndParse(
 		&a.Client,
 		APIOauth2AccessToken.With(a.AuthorizationCodeBuilder(code)),
-		fetcher.ShouldOK(fetcher.AsJSON(result)),
+		fetcher.Should200(fetcher.AsJSON(result)),
 	)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (a *App) GetUserInfo(code string, scope string, lang string) (*Userinfo, er
 			fetcher.SetQuery("openid", result.OpenID),
 			fetcher.SetQuery("lang", lang),
 		),
-		fetcher.ShouldOK(fetcher.AsJSON(getuser)),
+		fetcher.Should200(fetcher.AsJSON(getuser)),
 	)
 	if err != nil {
 		return nil, err
