@@ -1,6 +1,9 @@
 package pattern
 
-import "net/http"
+import (
+	"net/http"
+	"path/filepath"
+)
 
 type Exts map[string]bool
 
@@ -9,5 +12,5 @@ func (e *Exts) IsEmpty() bool {
 }
 
 func (e *Exts) Match(r *http.Request) (bool, error) {
-	return (*e)[r.Method], nil
+	return (*e)[filepath.Ext(r.URL.Path)], nil
 }
