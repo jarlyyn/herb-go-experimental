@@ -1,4 +1,4 @@
-package pattern
+package requestfeature
 
 import (
 	"context"
@@ -32,13 +32,9 @@ func GetRequestIP(r *http.Request) net.IP {
 
 type IPNets []*net.IPNet
 
-func (i IPNets) IsEmpty() bool {
-	return len(i) == 0
-}
-
-func (i IPNets) Match(r *http.Request) (bool, error) {
-	if i.IsEmpty() {
-		return false, nil
+func (i IPNets) MatchRequest(r *http.Request) (bool, error) {
+	if len(i) == 0 {
+		return true, nil
 	}
 	ip := GetRequestIP(r)
 	if ip == nil {
