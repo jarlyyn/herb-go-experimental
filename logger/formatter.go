@@ -7,7 +7,7 @@ import (
 )
 
 type Formatter interface {
-	Format(v ...interface{}) []byte
+	Format(v ...interface{}) ([]byte, error)
 }
 
 type CsvFormatter struct {
@@ -28,3 +28,5 @@ func (f *CsvFormatter) Format(v ...interface{}) ([]byte, error) {
 	output := bytes.TrimRight(buf.Bytes(), "\n")
 	return output, nil
 }
+
+var DefaultFormatter = &CsvFormatter{}

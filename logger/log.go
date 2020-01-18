@@ -8,17 +8,17 @@ import (
 type Output interface {
 	MustOpen()
 	MustClose()
-	MustWrite([]byte)
+	MustOutput([]byte)
 }
 
-type nullOutput struct {
+type NullOutput struct {
 }
 
-func (o *nullOutput) MustOpen() {
+func (o *NullOutput) MustOpen() {
 }
-func (o *nullOutput) MustClose() {
+func (o *NullOutput) MustClose() {
 }
-func (o *nullOutput) MustWrite(p []byte) {
+func (o *NullOutput) MustOutput(p []byte) {
 }
 
 type IOWriterOutput struct {
@@ -30,7 +30,7 @@ func (o *IOWriterOutput) MustOpen() {
 func (o *IOWriterOutput) MustClose() {
 }
 
-func (o *IOWriterOutput) MustWrite(p []byte) {
+func (o *IOWriterOutput) MustOutput(p []byte) {
 	o.IOWriter.Write(p)
 }
 
@@ -42,7 +42,7 @@ var Stderr Output = &IOWriterOutput{
 	IOWriter: os.Stderr,
 }
 
-var Null Output = &nullOutput{}
+var Null Output = &NullOutput{}
 
 type FileOutput struct {
 	Path string
@@ -51,10 +51,11 @@ type FileOutput struct {
 }
 
 func (o *FileOutput) MustOpen() {
-	file, err := os.OpenFile(o.Path, os.O_CREATE|os.O_APPEND, o.Mode)
+	file, err := os.OpenFile(o.Path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, o.Mode)
 	if err != nil {
 		panic(err)
 	}
+	o.file = file
 }
 func (o *FileOutput) MustClose() {
 	err := o.file.Close()
@@ -62,7 +63,7 @@ func (o *FileOutput) MustClose() {
 		panic(err)
 	}
 }
-func (o *FileOutput) MustWrite(p []byte) {
+func (o *FileOutput) MustOutput(p []byte) {
 	_, err := o.file.Write(p)
 	if err != nil {
 		panic(err)

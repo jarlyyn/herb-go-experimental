@@ -5,14 +5,14 @@ import (
 )
 
 type Prefix interface {
-	NewPrefix() string
+	NewPrefix(LogLevel) string
 }
 
 type TimePrefix struct {
 	Layout string
 }
 
-func (p *TimePrefix) NewPrefix() string {
+func (p *TimePrefix) NewPrefix(LogLevel) string {
 	return time.Now().Format(p.Layout) + " "
 }
 
@@ -22,6 +22,6 @@ var DefaultTimePrefix = &TimePrefix{
 
 type FixedPrefix string
 
-func (p FixedPrefix) NewPrefix() string {
+func (p FixedPrefix) NewPrefix(LogLevel) string {
 	return string(p) + " "
 }
