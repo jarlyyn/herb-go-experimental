@@ -3,69 +3,81 @@ package logger
 import (
 	"io"
 	"os"
+	"sync"
 )
 
-type Output interface {
-	MustOpen()
-	MustClose()
-	MustOutput([]byte)
+type Writer interface {
+	Open() error
+	Close() error
+	Write(p []byte) (n int, err error)
 }
 
-type NullOutput struct {
+type NullWriter struct {
 }
 
-func (o *NullOutput) MustOpen() {
+func (o *NullWriter) Open() error {
+	return nil
 }
-func (o *NullOutput) MustClose() {
+func (o *NullWriter) Close() error {
+	return nil
 }
-func (o *NullOutput) MustOutput(p []byte) {
-}
-
-type IOWriterOutput struct {
-	IOWriter io.Writer
-}
-
-func (o *IOWriterOutput) MustOpen() {
-}
-func (o *IOWriterOutput) MustClose() {
+func (o *NullWriter) Write(p []byte) (n int, err error) {
+	return len(p), nil
 }
 
-func (o *IOWriterOutput) MustOutput(p []byte) {
-	o.IOWriter.Write(p)
+type IOWriter struct {
+	io.Writer
 }
 
-var Stdout Output = &IOWriterOutput{
-	IOWriter: os.Stdout,
+func (o *IOWriter) Open() error {
+	return nil
+}
+func (o *IOWriter) Close() error {
+	return nil
 }
 
-var Stderr Output = &IOWriterOutput{
-	IOWriter: os.Stderr,
+var Stdout Writer = &IOWriter{
+	Writer: os.Stdout,
 }
 
-var Null Output = &NullOutput{}
+var Stderr Writer = &IOWriter{
+	Writer: os.Stderr,
+}
 
-type FileOutput struct {
+var Null Writer = &NullWriter{}
+
+type FileWriter struct {
+	lock sync.RWMutex
 	Path string
 	Mode os.FileMode
 	file *os.File
 }
 
-func (o *FileOutput) MustOpen() {
+func (o *FileWriter) Open() error {
+	o.lock.Lock()
+	defer o.lock.Unlock()
 	file, err := os.OpenFile(o.Path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, o.Mode)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	o.file = file
+	return nil
 }
-func (o *FileOutput) MustClose() {
-	err := o.file.Close()
-	if err != nil {
-		panic(err)
-	}
+func (o *FileWriter) Close() error {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	o.file = nil
+	return o.file.Close()
 }
-func (o *FileOutput) MustOutput(p []byte) {
-	_, err := o.file.Write(p)
-	if err != nil {
-		panic(err)
+func (o *FileWriter) Write(p []byte) (n int, err error) {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.file.Write(p)
+}
+
+func NewFileWriter(path string, mode os.FileMode) *FileWriter {
+	return &FileWriter{
+		Path: path,
+		Mode: mode,
 	}
 }
