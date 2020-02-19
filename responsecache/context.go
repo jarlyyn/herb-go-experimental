@@ -29,7 +29,7 @@ var DefaultContextField = ContextField("responsecache")
 type Context struct {
 	http.ResponseWriter
 	Request    *http.Request
-	ID         string
+	Identifier func(*http.Request) string
 	TTL        time.Duration
 	Buffer     []byte
 	validated  bool
@@ -49,7 +49,7 @@ func (c *Context) Prepare(w http.ResponseWriter, r *http.Request) {
 
 func (c *Context) WriteHeader(statusCode int) {
 	c.StatusCode = statusCode
-	if c.ID != "" && c.Validator(c) {
+	if (c.Validator != nil && c.Validator(c)) || DefaultValidator(c) {
 		c.validated = true
 	}
 	c.ResponseWriter.WriteHeader(statusCode)

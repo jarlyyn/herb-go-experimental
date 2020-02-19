@@ -27,9 +27,6 @@ func (c *cached) Output(w http.ResponseWriter) error {
 }
 
 func cacheContext(ctx *Context) *cached {
-	if ctx.ID == "" || ctx.validated == false {
-		return nil
-	}
 	c := &cached{
 		StatusCode: ctx.StatusCode,
 		Header:     http.Header{},
