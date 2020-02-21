@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/herb-go/herb/cache"
 	"github.com/herb-go/herb/middleware"
 )
 
@@ -24,6 +25,48 @@ func (c ContextField) GetContext(r *http.Request) *Context {
 	return ctx
 }
 
+func (c ContextField) ServeMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	ctx := c.GetContext(r)
+	if ctx.Identifier != nil && ctx.Validator != nil && ctx.Cache != nil {
+		id := ctx.Identifier(r)
+		if id != "" {
+			page := &cached{}
+			err := ctx.Cache.Load(id, page, ctx.TTL, func(key string) (interface{}, error) {
+				ctx.Prepare(w, r)
+				next(ctx.NewWriter(), r)
+				page = cacheContext(ctx)
+				return page, nil
+			})
+			if err != nil {
+				if err != cache.ErrEntryTooLarge && err != cache.ErrNotCacheable {
+					panic(err)
+				}
+			}
+			if ctx.validated {
+				return
+			}
+			err = page.Output(w)
+			if err != nil {
+				panic(err)
+			}
+			return
+		}
+	}
+	next(w, r)
+}
+
+func (c ContextField) NewResponseCache(b ContextBuilder) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		ctx := c.GetContext(r)
+		b.BuildContext(ctx)
+		c.ServeMiddleware(w, r, next)
+	}
+}
+
+func New(b ContextBuilder) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return DefaultContextField.NewResponseCache(b)
+}
+
 var DefaultContextField = ContextField("responsecache")
 
 type Context struct {
@@ -35,6 +78,7 @@ type Context struct {
 	validated  bool
 	StatusCode int
 	Validator  func(*Context) bool
+	Cache      cache.Cacheable
 }
 
 func NewContext() *Context {
