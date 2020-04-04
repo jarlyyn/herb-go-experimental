@@ -1,6 +1,9 @@
 package cachehash
 
-type HashStore interface {
+type Store interface {
+	Open() error
+	Cloas() error
+	Flush() error
 	Hash(string) (string, error)
 	Lock(string) (func() error, error)
 	LoadHashData(hash string) (*HashData, error)
