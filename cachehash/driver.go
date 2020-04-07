@@ -7,6 +7,17 @@ import (
 	"github.com/herb-go/herb/cache"
 )
 
+type Store interface {
+	Open() error
+	Close() error
+	Flush() error
+	Hash(string) (string, error)
+	Lock(string) (func(), error)
+	Load(hash string) (*Hash, error)
+	Delete(hash string) error
+	Save(hash string, status *Status, data *Hash) error
+}
+
 type Driver struct {
 	cache.DriverUtil
 	Store        Store

@@ -1,15 +1,5 @@
 package cachehash
 
-type Store interface {
-	Open() error
-	Close() error
-	Flush() error
-	Hash(string) (string, error)
-	Lock(string) (func(), error)
-	Load(hash string) (*Hash, error)
-	Delete(hash string) error
-	Save(hash string, status *Status, data *Hash) error
-}
 type Data struct {
 	Key     string
 	Expired int64
@@ -69,19 +59,17 @@ func (h *Hash) set(data *Data, current int64) *Status {
 	status := NewStatus()
 	status.Changed = true
 	for k := range *h {
-		if (*h)[k].Key != data.Key || status.calc((*h)[k], current) {
+		if (*h)[k].Key != data.Key && status.calc((*h)[k], current) {
 			result = append(result, (*h)[k])
-			status.Size = status.Size + len((*h)[k].Data)
 		} else {
 			status.Delta = status.Delta - len((*h)[k].Data)
 		}
 	}
 	if status.calc(data, current) {
-		*h = append(*h, data)
-		status.Size = status.Size + len(data.Data)
+		result = append(result, data)
 		status.Delta = status.Delta + len(data.Data)
 	}
-	h = &result
+	*h = result
 	return status
 }
 func (h *Hash) update(data *Data, current int64) *Status {
@@ -99,7 +87,6 @@ func (h *Hash) update(data *Data, current int64) *Status {
 		}
 		if status.calc((*h)[k], current) {
 			result = append(result, (*h)[k])
-			status.Size = status.Size + len(data.Data)
 			status.Delta = status.Delta + delta
 		} else {
 			status.Delta = status.Delta - len(d.Data)
@@ -119,7 +106,6 @@ func (h *Hash) expired(key string, expired int64, current int64) *Status {
 		}
 		if status.calc((*h)[k], current) {
 			result = append(result, (*h)[k])
-			status.Size = status.Size + len((*h)[k].Data)
 		} else {
 			status.Delta = status.Delta - len((*h)[k].Data)
 		}
@@ -131,9 +117,8 @@ func (h *Hash) delete(key string, current int64) *Status {
 	result := make(Hash, 0, len(*h))
 	status := NewStatus()
 	for k := range *h {
-		if (*h)[k].Key != key || status.calc((*h)[k], current) {
+		if (*h)[k].Key != key && status.calc((*h)[k], current) {
 			result = append(result, (*h)[k])
-			status.Size = status.Size + len((*h)[k].Data)
 		} else {
 			status.Delta = status.Delta - len((*h)[k].Data)
 		}
@@ -147,7 +132,6 @@ func (h *Hash) scan(current int64) *Status {
 	for k := range *h {
 		if status.calc((*h)[k], current) {
 			result = append(result, (*h)[k])
-			status.Size = status.Size + len((*h)[k].Data)
 		} else {
 			status.Delta = status.Delta - len((*h)[k].Data)
 		}
@@ -162,7 +146,7 @@ func (h *Hash) get(key string, current int64) *Data {
 			if (*h)[k].Expired >= current {
 				return (*h)[k]
 			}
-			return (*h)[k]
+			return nil
 		}
 	}
 	return nil
