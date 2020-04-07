@@ -13,6 +13,13 @@ type Driver struct {
 	GcErrHanlder func(err error)
 }
 
+func NewDriver(Store Store) *Driver {
+	return &Driver{
+		Store:        Store,
+		GcErrHanlder: nil,
+	}
+}
+
 type context struct {
 	hash     string
 	unlocker func()

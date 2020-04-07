@@ -57,6 +57,10 @@ func NewStatus() *Status {
 
 type Hash []*Data
 
+func NewHash() *Hash {
+	h := Hash([]*Data{})
+	return &h
+}
 func (h *Hash) isEmpty() bool {
 	return len(*h) == 0
 }
