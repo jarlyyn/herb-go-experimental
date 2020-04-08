@@ -46,6 +46,10 @@ func TestTree(t *testing.T) {
 	if node3.DefualtTTL() != 3600*time.Second {
 		t.Fatal(node3.DefualtTTL())
 	}
+	node4 := c.Node("alias/test")
+	if node4.DefualtTTL() != 4800*time.Second {
+		t.Fatal(node4.DefualtTTL())
+	}
 	c1 := c.Collection("node1")
 	if c1.DefualtTTL() != 1800*time.Second {
 		t.Fatal(c1.DefualtTTL())
@@ -57,5 +61,9 @@ func TestTree(t *testing.T) {
 	c3 := c.Collection("test/test")
 	if c3.DefualtTTL() != 3600*time.Second {
 		t.Fatal(c3.DefualtTTL())
+	}
+	c4 := c.Collection("alias/test")
+	if c4.DefualtTTL() != 4800*time.Second {
+		t.Fatal(c4.DefualtTTL())
 	}
 }

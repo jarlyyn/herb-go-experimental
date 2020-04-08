@@ -42,19 +42,33 @@ func newChild(key string, cache *cache.Cache) *child {
 	}
 }
 
+//Tree cache tree struct
 type Tree struct {
+	Alias map[string]string
 	Debug bool
 	*cache.Cache
 	children *children
 }
 
+//NewTree create new cache tree
 func NewTree() *Tree {
 	c := children{}
 	return &Tree{
 		children: &c,
+		Alias:    map[string]string{},
 	}
 }
+
+func (t *Tree) getAlias(key string) string {
+	for k := range t.Alias {
+		if strings.HasPrefix(key, k) {
+			return t.Alias[k] + key[len(k):]
+		}
+	}
+	return key
+}
 func (t *Tree) find(key string) (string, *cache.Cache) {
+	key = t.getAlias(key)
 	for k := range *(t.children) {
 		if strings.HasPrefix(key, (*t.children)[k].key) {
 			return key[len((*t.children)[k].key):], (*t.children)[k].cache
@@ -63,6 +77,7 @@ func (t *Tree) find(key string) (string, *cache.Cache) {
 	return key, nil
 }
 
+//SetUtil set cache driver util
 func (t *Tree) SetUtil(u *cache.Util) {
 	uc := u.Clone()
 	uc.CollectionFactory = t.collectionFactory
@@ -91,12 +106,16 @@ func (t *Tree) nodeFactory(c cache.Cacheable, key string) *cache.Node {
 	return cache.DefaultNodeFactory(c, key)
 }
 
+//Config cache tree config struct
 type Config struct {
 	Debug    bool
+	Alias    map[string]string
 	Root     *cache.OptionConfig
 	Children map[string]*cache.OptionConfig
 }
 
+//Create create cachCreatee diriver.
+//Return driver created and any error if raised.
 func (c *Config) Create() (cache.Driver, error) {
 	var err error
 	d := NewTree()
@@ -114,6 +133,9 @@ func (c *Config) Create() (cache.Driver, error) {
 		*d.children = append(*d.children, newChild(cache.Key(k), c))
 	}
 	sort.Sort(d.children)
+	for k := range c.Alias {
+		d.Alias[cache.Key(k)] = cache.Key(c.Alias[k])
+	}
 	return d, nil
 }
 

@@ -6,6 +6,9 @@ var testConfig = `
 		"Marshaler": "json",
 		"Config":{
 			"Debug":true,
+			"Alias":{
+				"alias":"te"
+			},
 			"Root":{
 				"Driver":"dummycache",
 				"Marshaler": "json"
