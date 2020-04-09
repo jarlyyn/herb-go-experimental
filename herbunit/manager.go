@@ -5,7 +5,16 @@ import "reflect"
 type Unit struct {
 	Path      string
 	Name      string
+	comment   string
 	Component interface{}
+}
+
+func (u *Unit) WithComment(c string) *Unit {
+	u.comment = c
+	return u
+}
+func (u *Unit) Comment() string {
+	return u.comment
 }
 
 func New() *Unit {
