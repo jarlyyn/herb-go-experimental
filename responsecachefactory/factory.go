@@ -17,6 +17,14 @@ type Config struct {
 	TTLInSecond int64
 }
 
+func New() *Factory {
+	return &Factory{
+		RegisteredParams: map[string]responsecache.Param{},
+		Validators:       map[string]func(ctx *responsecache.Context) bool{},
+		Caches:           map[string]cache.Cacheable{},
+	}
+}
+
 type Factory struct {
 	RegisteredParams map[string]responsecache.Param
 	Validators       map[string]func(ctx *responsecache.Context) bool
@@ -38,7 +46,7 @@ func (f *Factory) WithCache(name string, c cache.Cacheable) *Factory {
 	return f
 }
 
-func (f *Factory) createMiddleware(name string, loader func(v interface{}) error) (middleware.Middleware, error) {
+func (f *Factory) CreateMiddleware(name string, loader func(v interface{}) error) (middleware.Middleware, error) {
 	c := &Config{}
 	params := make([]responsecache.Param, len(c.Params))
 	for k, v := range c.Params {
@@ -69,5 +77,5 @@ func (f *Factory) createMiddleware(name string, loader func(v interface{}) error
 }
 
 func (f *Factory) Factory() middlewarefactory.Factory {
-	return middlewarefactory.FactoryFunc(f.createMiddleware)
+	return middlewarefactory.FactoryFunc(f.CreateMiddleware)
 }
