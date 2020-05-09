@@ -31,39 +31,39 @@ func newTestCache(ttl int64) *cache.Cache {
 
 func TestTree(t *testing.T) {
 	c := newTestCache(1800)
-	if c.DefualtTTL() != 1800*time.Second {
+	if c.DefaultTTL() != 1800*time.Second {
 		t.Fatal(c)
 	}
 	node1 := c.Node("node1")
-	if node1.DefualtTTL() != 1800*time.Second {
-		t.Fatal(node1.DefualtTTL())
+	if node1.DefaultTTL() != 1800*time.Second {
+		t.Fatal(node1.DefaultTTL())
 	}
 	node2 := c.Node("test/test2/")
-	if node2.DefualtTTL() != 2400*time.Second {
-		t.Fatal(node2.DefualtTTL())
+	if node2.DefaultTTL() != 2400*time.Second {
+		t.Fatal(node2.DefaultTTL())
 	}
 	node3 := c.Node("test/test")
-	if node3.DefualtTTL() != 3600*time.Second {
-		t.Fatal(node3.DefualtTTL())
+	if node3.DefaultTTL() != 3600*time.Second {
+		t.Fatal(node3.DefaultTTL())
 	}
 	node4 := c.Node("alias/test")
-	if node4.DefualtTTL() != 4800*time.Second {
-		t.Fatal(node4.DefualtTTL())
+	if node4.DefaultTTL() != 4800*time.Second {
+		t.Fatal(node4.DefaultTTL())
 	}
 	c1 := c.Collection("node1")
-	if c1.DefualtTTL() != 1800*time.Second {
-		t.Fatal(c1.DefualtTTL())
+	if c1.DefaultTTL() != 1800*time.Second {
+		t.Fatal(c1.DefaultTTL())
 	}
 	c2 := c.Collection("test/test2/")
-	if c2.DefualtTTL() != 2400*time.Second {
-		t.Fatal(c2.DefualtTTL())
+	if c2.DefaultTTL() != 2400*time.Second {
+		t.Fatal(c2.DefaultTTL())
 	}
 	c3 := c.Collection("test/test")
-	if c3.DefualtTTL() != 3600*time.Second {
-		t.Fatal(c3.DefualtTTL())
+	if c3.DefaultTTL() != 3600*time.Second {
+		t.Fatal(c3.DefaultTTL())
 	}
 	c4 := c.Collection("alias/test")
-	if c4.DefualtTTL() != 4800*time.Second {
-		t.Fatal(c4.DefualtTTL())
+	if c4.DefaultTTL() != 4800*time.Second {
+		t.Fatal(c4.DefaultTTL())
 	}
 }

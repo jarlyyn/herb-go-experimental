@@ -80,11 +80,14 @@ func (t *Tree) find(key string) (string, *cache.Cache) {
 //SetUtil set cache driver util
 func (t *Tree) SetUtil(u *cache.Util) {
 	uc := u.Clone()
-	uc.CollectionFactory = t.collectionFactory
-	uc.NodeFactory = t.nodeFactory
+	uc.CacheByPrefix = t.cacheByPrefix
 	t.Driver.SetUtil(uc)
 }
-
+func (t *Tree) cacheByPrefix(c cache.Cacheable, key string) cache.Cacheable {
+	s := c.FinalKey(key)
+	if k, d := t.find(s); d != nil {
+	}
+}
 func (t *Tree) collectionFactory(c cache.Cacheable, key string, ttl time.Duration) *cache.Collection {
 	s := c.FinalKey(key)
 	if t.Debug {
