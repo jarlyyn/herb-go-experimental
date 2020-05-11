@@ -9,7 +9,7 @@ type Component struct {
 	Tags        *Tags
 	URL         *URL
 	Children    *Components
-	Value       *Value
+	Data        *Data
 	Options     *Options
 }
 
@@ -49,12 +49,13 @@ type Tags []Tag
 
 type Type string
 
-type Target string
-
 type Value interface{}
 
 type OptionName string
 
-type Option interface{}
+type Option struct {
+	Name  OptionName
+	Value interface{}
+}
 
-type Options map[OptionName]Option
+type Options []*Option

@@ -5,7 +5,8 @@ type Version struct {
 	Minor int
 }
 type Prototype struct {
-	Version    *Version
-	Root       *Component
-	Components []Type
+	Version     Version
+	Root        *Component
+	DataSources *DataSources
+	Components  []Type
 }
