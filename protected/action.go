@@ -2,20 +2,17 @@ package protected
 
 import (
 	"net/http"
+
+	"github.com/herb-go/herb/user/identifier/httpidentifier"
 )
 
-type Action interface {
+type Action struct {
 	http.Handler
-	Protecter
+	*httpidentifier.Protecter
 }
 
-type WrappedAction struct {
-	http.Handler
-	Protecter
-}
-
-func Wrap(h http.Handler, p Protecter) *WrappedAction {
-	return &WrappedAction{
+func Wrap(h http.Handler, p *httpidentifier.Protecter) *Action {
+	return &Action{
 		Handler:   h,
 		Protecter: p,
 	}

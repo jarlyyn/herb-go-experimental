@@ -2,13 +2,15 @@ package protected
 
 import (
 	"net/http"
+
+	"github.com/herb-go/herb/user/identifier/httpidentifier"
 )
 
 type Server struct {
 	Server    *http.Server
 	Mux       *http.ServeMux
 	Channels  *http.ServeMux
-	Protecter Protecter
+	Protecter *httpidentifier.Protecter
 }
 
 func NewServer() *Server {

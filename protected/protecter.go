@@ -3,22 +3,15 @@ package protected
 import (
 	"context"
 	"net/http"
+
+	"github.com/herb-go/herb/user/identifier/httpidentifier"
 )
 
 var DefaultProtecterFunc = func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	http.Error(w, http.StatusText(404), 404)
 }
 
-type Protecter interface {
-	Protect(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)
-}
-
-type ProtecterFunc func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)
-
-func (f ProtecterFunc) Protect(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	f(w, r, next)
-}
-func SetProtecter(r *http.Request, p Protecter) {
+func SetProtecter(r *http.Request, p *httpidentifier.Protecter) {
 	if p == nil {
 		return
 	}
@@ -26,14 +19,14 @@ func SetProtecter(r *http.Request, p Protecter) {
 	*r = *r.WithContext(ctx)
 }
 
-func GetProtecter(r *http.Request) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func getProtecter(r *http.Request) func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	v := r.Context().Value(ContextKeyProtecter)
 	if v != nil {
-		return v.(Protecter).Protect
+		return v.(*httpidentifier.Protecter).ServeMiddleware
 	}
 	return DefaultProtecterFunc
 }
 
 func Protect(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	GetProtecter(r)(w, r, next)
+	getProtecter(r)(w, r, next)
 }
