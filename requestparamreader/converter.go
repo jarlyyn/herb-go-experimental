@@ -1,7 +1,7 @@
 package requestparamreader
 
 type Converter interface {
-	ConvertParam([]byte) ([]byte, error)
+	ConvertParam([]byte) ([]byte, bool, error)
 }
 
 type ConverterFactory interface {
