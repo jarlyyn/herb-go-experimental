@@ -6,9 +6,9 @@ import (
 )
 
 var lock sync.Mutex
-var buildinReaderFactories = map[string]ReaderFactory{}
+var builtinReaderFactories = map[string]ReaderFactory{}
 var registeredReaderFactories = map[string]ReaderFactory{}
-var buildinConverterFactories = map[string]ConverterFactory{}
+var builtinConverterFactories = map[string]ConverterFactory{}
 var registeredConverterFactories = map[string]ConverterFactory{}
 
 var ErrFactoryNotRegistered = errors.New("err factory not registered")
@@ -27,12 +27,28 @@ func RegisterReaderFactory(name string, f ReaderFactory) {
 	registeredReaderFactories[name] = f
 }
 
+func initBuiltinReaderFactories() {
+	builtinReaderFactories["header"] = HeaderReaderFactory
+	builtinReaderFactories["query"] = QueryReaderFactory
+	builtinReaderFactories["form"] = FormReaderFactory
+	builtinReaderFactories["router"] = RouterReaderFactory
+	builtinReaderFactories["fixed"] = FixedReaderFactory
+	builtinReaderFactories["cookie"] = CookieReaderFactory
+	builtinReaderFactories["ip"] = IPAddressReaderFactory
+	builtinReaderFactories["method"] = MethodReaderFactory
+	builtinReaderFactories["path"] = PathReaderFactory
+	builtinReaderFactories["host"] = HostReaderFactory
+	builtinReaderFactories["user"] = UserReaderFactory
+	builtinReaderFactories["passwrod"] = PasswordReaderFactory
+
+}
+
 func GetReaderFactoryByName(name string) (ReaderFactory, error) {
 	f, ok := registeredReaderFactories[name]
 	if ok {
 		return f, nil
 	}
-	f, ok = buildinReaderFactories[name]
+	f, ok = builtinReaderFactories[name]
 	if ok {
 		return f, nil
 	}
@@ -50,7 +66,7 @@ func GetConverterFactoryByName(name string) (ConverterFactory, error) {
 	if ok {
 		return f, nil
 	}
-	f, ok = buildinConverterFactories[name]
+	f, ok = builtinConverterFactories[name]
 	if ok {
 		return f, nil
 	}

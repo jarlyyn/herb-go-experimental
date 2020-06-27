@@ -19,7 +19,7 @@ func (f ReaderFactoryFunc) CreateReader(loader func(v interface{}) error) (Reade
 	return f(loader)
 }
 
-func newCommonFactory(fieldloader func(r *http.Request, field string) ([]byte, error)) ReaderFactory {
+func newCommonReaderFactory(fieldloader func(r *http.Request, field string) ([]byte, error)) ReaderFactory {
 	return ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 		c := &CommonFieldConfig{}
 		err := loader(c)
@@ -37,27 +37,27 @@ func newCommonFactory(fieldloader func(r *http.Request, field string) ([]byte, e
 	})
 }
 
-var HeaderFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+var HeaderReaderFactory = newCommonReaderFactory(func(r *http.Request, field string) ([]byte, error) {
 	return []byte(r.Header.Get(field)), nil
 })
-var QueryFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+var QueryReaderFactory = newCommonReaderFactory(func(r *http.Request, field string) ([]byte, error) {
 	q := r.URL.Query()
 	return []byte(q.Get(field)), nil
 })
 
-var FormFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+var FormReaderFactory = newCommonReaderFactory(func(r *http.Request, field string) ([]byte, error) {
 	f := r.Form
 	return []byte(f.Get(field)), nil
 })
 
-var RouterFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+var RouterReaderFactory = newCommonReaderFactory(func(r *http.Request, field string) ([]byte, error) {
 	p := router.GetParams(r)
 	return []byte(p.Get(field)), nil
 })
-var FixedFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+var FixedReaderFactory = newCommonReaderFactory(func(r *http.Request, field string) ([]byte, error) {
 	return []byte(field), nil
 })
-var CookieFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+var CookieReaderFactory = newCommonReaderFactory(func(r *http.Request, field string) ([]byte, error) {
 	c, err := r.Cookie(field)
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -67,7 +67,7 @@ var CookieFactory = newCommonFactory(func(r *http.Request, field string) ([]byte
 	}
 	return []byte(c.Value), nil
 })
-var IPAddressFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+var IPAddressReaderFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 	return func(r *http.Request) ([]byte, error) {
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
@@ -77,32 +77,32 @@ var IPAddressFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) 
 	}, nil
 })
 
-var MethodFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+var MethodReaderFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 	return func(r *http.Request) ([]byte, error) {
 		return []byte(r.Method), nil
 	}, nil
 })
 
-var PathFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+var PathReaderFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 	return func(r *http.Request) ([]byte, error) {
 		return []byte(r.URL.Path), nil
 	}, nil
 })
 
-var HostFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+var HostReaderFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 	return func(r *http.Request) ([]byte, error) {
 		return []byte(r.Host), nil
 	}, nil
 })
 
-var UserFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+var UserReaderFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 	return func(r *http.Request) ([]byte, error) {
 		u, _, _ := r.BasicAuth()
 		return []byte(u), nil
 	}, nil
 })
 
-var PasswordFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+var PasswordReaderFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
 	return func(r *http.Request) ([]byte, error) {
 		_, p, _ := r.BasicAuth()
 		return []byte(p), nil
