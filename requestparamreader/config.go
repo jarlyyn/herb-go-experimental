@@ -4,9 +4,10 @@ type CommonFieldConfig struct {
 	Field string
 }
 type FieldConfig struct {
-	Name   string
-	Type   string
-	Config func(v interface{}) error
+	Name     string
+	Type     string
+	Config   func(v interface{}) error
+	Converts []*ConvertConfig
 }
 type ConvertConfig struct {
 	Name   string
@@ -14,6 +15,5 @@ type ConvertConfig struct {
 	Config func(v interface{}) error
 }
 type Config struct {
-	Fields   []*FieldConfig
-	Converts []*ConvertConfig
+	Fields []*FieldConfig
 }

@@ -1,6 +1,11 @@
 package requestparamreader
 
-import "net/http"
+import (
+	"net"
+	"net/http"
+
+	"github.com/herb-go/herb/middleware/router"
+)
 
 type Reader func(r *http.Request) ([]byte, error)
 
@@ -43,4 +48,63 @@ var QueryFactory = newCommonFactory(func(r *http.Request, field string) ([]byte,
 var FormFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
 	f := r.Form
 	return []byte(f.Get(field)), nil
+})
+
+var RouterFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+	p := router.GetParams(r)
+	return []byte(p.Get(field)), nil
+})
+var FixedFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+	return []byte(field), nil
+})
+var CookieFactory = newCommonFactory(func(r *http.Request, field string) ([]byte, error) {
+	c, err := r.Cookie(field)
+	if err != nil {
+		if err == http.ErrNoCookie {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return []byte(c.Value), nil
+})
+var IPAddressFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+	return func(r *http.Request) ([]byte, error) {
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(ip), nil
+	}, nil
+})
+
+var MethodFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+	return func(r *http.Request) ([]byte, error) {
+		return []byte(r.Method), nil
+	}, nil
+})
+
+var PathFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+	return func(r *http.Request) ([]byte, error) {
+		return []byte(r.URL.Path), nil
+	}, nil
+})
+
+var HostFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+	return func(r *http.Request) ([]byte, error) {
+		return []byte(r.Host), nil
+	}, nil
+})
+
+var UserFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+	return func(r *http.Request) ([]byte, error) {
+		u, _, _ := r.BasicAuth()
+		return []byte(u), nil
+	}, nil
+})
+
+var PasswordFactory = ReaderFactoryFunc(func(loader func(v interface{}) error) (Reader, error) {
+	return func(r *http.Request) ([]byte, error) {
+		_, p, _ := r.BasicAuth()
+		return []byte(p), nil
+	}, nil
 })
