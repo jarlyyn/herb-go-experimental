@@ -34,7 +34,7 @@ func TestMap(t *testing.T) {
 	if bytes.Compare(loaded.Secret, []byte("abcde")) != 0 {
 		t.Fatal(loaded)
 	}
-	o, err := Identify(m, loaded.ID, loaded.Secret)
+	o, err := IdentifyToken(m, loaded)
 	if o != "owner" || err != nil {
 		t.Fatal(o, err)
 	}

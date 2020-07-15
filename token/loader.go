@@ -21,3 +21,7 @@ func Identify(l Loader, id ID, secret Secret) (Owner, error) {
 	}
 	return "", nil
 }
+
+func IdentifyToken(l Loader, t *Token) (Owner, error) {
+	return Identify(l, t.ID, t.Secret)
+}
