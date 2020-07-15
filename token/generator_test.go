@@ -2,7 +2,7 @@ package token
 
 import "testing"
 
-func TestGenerator(t *testing.T) {
+func TestListGenerator(t *testing.T) {
 	list := []byte("abcde")
 	listmap := map[byte]bool{}
 	for _, v := range list {
@@ -37,4 +37,13 @@ func TestGenerator(t *testing.T) {
 		t.Fatal(s)
 	}
 
+}
+
+func TestBytesGenerator(t *testing.T) {
+	token := New()
+	token.ID = "test"
+	err := Regenerate(BytesGenerator(15), token)
+	if token == nil || len(token.Secret) != 15 || err != nil {
+		t.Fatal(token, err)
+	}
 }

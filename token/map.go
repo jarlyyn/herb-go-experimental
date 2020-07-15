@@ -6,17 +6,14 @@ import (
 	"time"
 )
 
-type mapData struct {
+type MapData struct {
 	ID        ID
 	Owner     Owner
 	Secret    Secret
 	ExpiredAt *time.Time
 }
 
-func (d *mapData) Expired() bool {
-	if d == nil {
-		return true
-	}
+func (d *MapData) Expired() bool {
 	if d.ExpiredAt != NeverExpired && d.ExpiredAt.Before(time.Now()) {
 		return true
 	}
@@ -26,7 +23,7 @@ func (d *mapData) Expired() bool {
 type Map struct {
 	lastID      int64
 	IDGenerator func() (string, error)
-	data        map[ID]*mapData
+	data        map[ID]*MapData
 	locker      sync.Mutex
 }
 
@@ -84,7 +81,7 @@ func (m *Map) Create(owner Owner, secret Secret, expiredat *time.Time) (*Token, 
 		return nil, err
 	}
 	id := ID(idstr)
-	m.data[id] = &mapData{
+	m.data[id] = &MapData{
 		Owner:     owner,
 		ID:        id,
 		Secret:    secret,
@@ -96,11 +93,13 @@ func (m *Map) Create(owner Owner, secret Secret, expiredat *time.Time) (*Token, 
 	t.Secret = secret
 	return t, nil
 }
-
-func NewMap() *Map {
-	m := &Map{
-		data: map[ID]*mapData{},
-	}
+func (m *Map) Reset() {
+	m.data = map[ID]*MapData{}
+	m.lastID = 0
 	m.IDGenerator = m.GenerateID
+}
+func NewMap() *Map {
+	m := &Map{}
+	m.Reset()
 	return m
 }
