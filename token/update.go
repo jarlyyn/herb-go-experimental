@@ -1,5 +1,5 @@
 package token
 
 type Updater interface {
-	Update(*Token) error
+	Update(ID, Secret) error
 }

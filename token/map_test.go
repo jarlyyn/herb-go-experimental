@@ -7,15 +7,17 @@ import (
 
 func TestMap(t *testing.T) {
 	m := NewMap()
-	regenerator := &Regenerator{
-		Storer:    m,
-		Generator: BytesGenerator(15),
-	}
-	token, err := regenerator.Regenerate("test")
+	token := New()
+	token.ID = "test"
+	err := Regenerate(BytesGenerator(15), token)
 	if token == nil || len(token.Secret) != 15 || err != nil {
 		t.Fatal(token, err)
 	}
-	loaded, err := m.Load("test")
+	token, err = m.Create("owner", token.Secret, NeverExpired)
+	if err != nil {
+		panic(err)
+	}
+	loaded, err := m.Load(token.ID)
 	if err != nil {
 		panic(err)
 	}

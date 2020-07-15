@@ -5,5 +5,5 @@ import (
 )
 
 type Refresher interface {
-	Refresh(ID, *time.Time)
+	Refresh(ID, *time.Time) error
 }
