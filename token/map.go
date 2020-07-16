@@ -36,7 +36,7 @@ func (m *Map) Load(id ID) (*Token, error) {
 	defer m.locker.Unlock()
 	data, ok := m.data[id]
 	if !ok || data.Expired() {
-		return nil, ErrIDNotFound
+		return nil, ErrTokenNotFound
 	}
 	token := New()
 	token.Owner = data.Owner
@@ -50,7 +50,7 @@ func (m *Map) Update(id ID, secret Secret) error {
 	defer m.locker.Unlock()
 	data, ok := m.data[id]
 	if !ok || data.Expired() {
-		return ErrIDNotFound
+		return ErrTokenNotFound
 	}
 	data.Secret = secret
 	return nil
@@ -60,7 +60,7 @@ func (m *Map) Refresh(id ID, expiredAt *time.Time) error {
 	defer m.locker.Unlock()
 	data, ok := m.data[id]
 	if !ok || data.Expired() {
-		return ErrIDNotFound
+		return ErrTokenNotFound
 	}
 	data.ExpiredAt = expiredAt
 	return nil

@@ -11,7 +11,7 @@ type Loader interface {
 func Identify(l Loader, id ID, secret Secret) (Owner, error) {
 	t, err := l.Load(id)
 	if err != nil {
-		if err == ErrIDNotFound {
+		if err == ErrTokenNotFound {
 			return "", nil
 		}
 		return "", err

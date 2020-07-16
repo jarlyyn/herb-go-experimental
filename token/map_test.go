@@ -20,7 +20,7 @@ func TestMap(t *testing.T) {
 		t.Fatal(loaded)
 	}
 	err = m.Update("notexist", []byte("abcde"))
-	if err != ErrIDNotFound {
+	if err != ErrTokenNotFound {
 		panic(err)
 	}
 	err = m.Update(token.ID, []byte("abcde"))
@@ -48,7 +48,7 @@ func TestMap(t *testing.T) {
 	}
 	expired := time.Now().Add(-time.Hour)
 	err = m.Refresh("notexist", &expired)
-	if err != ErrIDNotFound {
+	if err != ErrTokenNotFound {
 		panic(err)
 	}
 	err = m.Refresh(token.ID, &expired)
@@ -56,7 +56,7 @@ func TestMap(t *testing.T) {
 		panic(err)
 	}
 	loaded, err = m.Load(token.ID)
-	if err != ErrIDNotFound {
+	if err != ErrTokenNotFound {
 		panic(err)
 	}
 	token, err = GeneratAndCreate(m, BytesGenerator(15), "owner", &expired)
@@ -64,7 +64,7 @@ func TestMap(t *testing.T) {
 		t.Fatal(loaded, err)
 	}
 	err = m.Refresh(token.ID, &expired)
-	if err != ErrIDNotFound {
+	if err != ErrTokenNotFound {
 		panic(err)
 	}
 	err = m.Revoke(token.ID)
@@ -72,7 +72,7 @@ func TestMap(t *testing.T) {
 		t.Fatal(err)
 	}
 	loaded, err = m.Load(token.ID)
-	if loaded != nil || err != ErrIDNotFound {
+	if loaded != nil || err != ErrTokenNotFound {
 		t.Fatal(loaded, err)
 	}
 }
