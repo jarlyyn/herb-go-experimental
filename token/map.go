@@ -21,16 +21,20 @@ func (d *MapData) Expired() bool {
 }
 
 type Map struct {
-	lastID      int64
-	IDGenerator func() (string, error)
-	data        map[ID]*MapData
-	locker      sync.Mutex
+	lastID int64
+	Creator
+	Regenerator
+	data   map[ID]*MapData
+	locker sync.Mutex
 }
 
-func (m *Map) GenerateID() (string, error) {
+func (m *Map) GenerateID(o Owner) (*Token, error) {
 	m.lastID++
-	return strconv.FormatInt(m.lastID, 10), nil
+	t := o.NewToken()
+	t.ID = ID(strconv.FormatInt(m.lastID, 10))
+	return t, nil
 }
+
 func (m *Map) Load(id ID) (*Token, error) {
 	m.locker.Lock()
 	defer m.locker.Unlock()
@@ -73,30 +77,29 @@ func (m *Map) Revoke(id ID) error {
 	delete(m.data, id)
 	return nil
 }
-func (m *Map) Create(owner Owner, secret Secret, expiredat *time.Time) (*Token, error) {
+func (m *Map) Insert(t *Token, expiredat *time.Time) error {
 	m.locker.Lock()
 	defer m.locker.Unlock()
-	idstr, err := m.GenerateID()
-	if err != nil {
-		return nil, err
+	if t.ID == "" {
+		return ErrEmptyID
 	}
-	id := ID(idstr)
-	m.data[id] = &MapData{
-		Owner:     owner,
-		ID:        id,
-		Secret:    secret,
+	_, ok := m.data[t.ID]
+	if ok {
+		return ErrTokenExists
+	}
+	m.data[t.ID] = &MapData{
+		Owner:     t.Owner,
+		ID:        t.ID,
+		Secret:    t.Secret,
 		ExpiredAt: expiredat,
 	}
-	t := New()
-	t.Owner = owner
-	t.ID = id
-	t.Secret = secret
-	return t, nil
+	return nil
 }
 func (m *Map) Reset() {
 	m.data = map[ID]*MapData{}
 	m.lastID = 0
-	m.IDGenerator = m.GenerateID
+	m.Regenerator = NopRegenerator
+	m.Creator = CreatorFunc(m.GenerateID)
 }
 func NewMap() *Map {
 	m := &Map{}
