@@ -3,9 +3,9 @@ package fieldprotecter
 import (
 	"fmt"
 
-	"github.com/herb-go/herb/user/credential"
-	"github.com/herb-go/herb/user/credential/protecter"
+	"github.com/herb-go/herbsecurity/authority/credential"
 	"github.com/herb-go/httpinfomanager"
+	"github.com/herb-go/protect/protecter"
 	actionoverseer "github.com/herb-go/providers/herb/overseers/actionoverseer"
 	"github.com/herb-go/worker"
 )
@@ -20,8 +20,14 @@ type Config struct {
 func (c *Config) ApplyTo(p protecter.Protecter) error {
 	var credentialers []protecter.Credentialer
 	for k, v := range c.Fields {
-
-		credentialers = append(credentialers, &Credentialer{credentialType: credential.Type(k), field: v.Field()})
+		f, err := v.Field()
+		if err != nil {
+			return err
+		}
+		credentialers = append(credentialers, &Credentialer{
+			credentialName: credential.Name(k),
+			field:          f,
+		})
 	}
 	p.Credentialers = credentialers
 	if c.OnFailWorkerID != "" {

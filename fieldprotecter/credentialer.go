@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/herb-go/herb/middleware/httpinfo"
-	"github.com/herb-go/herb/user/credential"
+	"github.com/herb-go/herbsecurity/authority/credential"
 )
 
 type Credentialer struct {
-	credentialType credential.Type
+	credentialName credential.Name
 	field          httpinfo.Field
 }
 
-func (c *Credentialer) CredentialRequest(r *http.Request) credential.Credential {
+func (c *Credentialer) CredentialRequest(r *http.Request) credential.CredentialSource {
 	return &Credential{
 		request:      r,
 		credentialer: c,
