@@ -3,11 +3,11 @@ package fieldprotecter
 import (
 	"fmt"
 
+	actionoverseer "github.com/herb-go/herb-drivers/overseers/actionoverseer"
 	"github.com/herb-go/herbsecurity/authority/credential"
 	"github.com/herb-go/httpinfomanager"
 	"github.com/herb-go/protecter"
-	actionoverseer "github.com/herb-go/providers/herb/overseers/actionoverseer"
-	authenticatorfactoryoverseer "github.com/herb-go/providers/herb/overseers/authenticatorfactoryoverseer"
+	authenticatorfactoryoverseer "github.com/herb-go/protecter-drivers/overseers/authenticatorfactoryoverseer"
 	"github.com/herb-go/worker"
 )
 
