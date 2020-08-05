@@ -48,4 +48,4 @@ func (c *Config) ApplyTo(p protecter.Protecter) error {
 	}
 	p.Authenticator = auth
 	return nil
-}
+}W
