@@ -1,6 +1,6 @@
 package usersystem
 
-import "github.com/herb-go/herb/user/status"
+import "github.com/herb-go/user/status"
 
 type StatusService interface {
 	LoadStatus(...string) (map[string]status.Status, error)

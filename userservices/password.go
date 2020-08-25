@@ -1,6 +1,6 @@
 package usersystem
 
-import "github.com/herb-go/herb/user"
+import "github.com/herb-go/user"
 
 type PasswordService interface {
 	user.PasswordVerifier
