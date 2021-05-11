@@ -18,9 +18,8 @@
 
 工序的标准形式为
 
-type Receiver func(*Context)
 
-type Process func(ctx *Context,next Receiver)
+type Process func(ctx *Context,receiver func(*Context))
 
 
 ctx *Context可以替换为其他的需要在每次执行时展开的上下文
@@ -29,13 +28,15 @@ ctx *Context可以替换为其他的需要在每次执行时展开的上下文
 
 ```
 
-ComposeProcess(series []Process) Process{
-    return func(ctx *Context,next Receiver){{
+ComposeProcess(series ...Process) Process{
+    return func(ctx *Context,receiver func(*Context)){
         if len(series)==0{
             next(ctx)
             return
         }
-        ComposeProcess(series[1])(ctx,next)
+        series[0](ctx, func(*Context) {
+			ComposeProcess(series[1:]...)(w, r, next)
+		})
     }
 }   
 
