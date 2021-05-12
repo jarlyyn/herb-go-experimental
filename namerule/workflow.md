@@ -31,11 +31,11 @@ ctx *Context可以替换为其他的需要在每次执行时展开的上下文
 ComposeProcess(series ...Process) Process{
     return func(ctx *Context,receiver func(*Context)){
         if len(series)==0{
-            next(ctx)
+            receiver(ctx)
             return
         }
         series[0](ctx, func(*Context) {
-			ComposeProcess(series[1:]...)(w, r, next)
+			ComposeProcess(series[1:]...)(ctx, receiver)
 		})
     }
 }   
