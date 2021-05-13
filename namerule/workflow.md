@@ -34,8 +34,8 @@ ComposeProcess(series ...Process) Process{
             receiver(ctx)
             return
         }
-        series[0](ctx, func(*Context) {
-			ComposeProcess(series[1:]...)(ctx, receiver)
+        series[0](ctx, func(newctx *Context) {
+			ComposeProcess(series[1:]...)(newctx, receiver)
 		})
     }
 }   
